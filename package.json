@@ -1,0 +1,32 @@
+{
+  "name": "maverik-store",
+  "version": "1.0.0",
+  "description": "Maverik Store - Fullstack E-commerce Platform for Clothing & Fashion",
+  "type": "module",
+  "main": "vite.config.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "maverik",
+    "clothing",
+    "fashion",
+    "ecommerce",
+    "fullstack"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "sass": "^1.77.6",
+    "swiper": "^12.0.3",
+    "vite": "^6.4.1"
+  },
+  "devDependencies": {
+    "fast-glob": "^3.3.3"
+  }
+}

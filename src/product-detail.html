@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chi tiết sản phẩm - Maverik Store</title>
+    <style>
+      /* ── Thumbnail Gallery ─────────────────────────── */
+      .thumbnail-list { display: flex; flex-direction: column; gap: 8px; width: 72px; }
+      .thumbnail-item { width: 72px; height: 88px; object-fit: cover; cursor: pointer; border: 2px solid transparent; transition: border-color .2s; opacity: .75; }
+      .thumbnail-item.active, .thumbnail-item:hover { border-color: #212529; opacity: 1; }
+      .main-img-wrap { position: relative; overflow: hidden; background: #f5f5f5; }
+      .main-img-wrap img { width: 100%; height: 520px; object-fit: cover; transition: transform .4s ease; }
+      .main-img-wrap:hover img { transform: scale(1.04); }
+      /* ── Product Info ──────────────────────────────── */
+      .product-title { font-size: 1.35rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; line-height: 1.3; }
+      .product-price { font-size: 1.5rem; font-weight: 700; letter-spacing: .02em; }
+      .qty-control { display: flex; align-items: center; border: 1px solid #dee2e6; width: fit-content; }
+      .qty-control button { width: 36px; height: 36px; background: none; border: none; font-size: 1.1rem; cursor: pointer; transition: background .2s; }
+      .qty-control button:hover { background: #f0f0f0; }
+      .qty-control input { width: 48px; height: 36px; border: none; text-align: center; font-weight: 600; outline: none; }
+      .btn-notify { background: #198754; color: #fff; border: 2px solid #198754; border-radius: 0; font-weight: 700; font-size: .82rem; letter-spacing: .06em; text-transform: uppercase; padding: 10px 20px; transition: all .2s; }
+      .btn-notify:hover { background: #146c43; }
+      /* ── Description ───────────────────────────────── */
+      .desc-section { border-top: 1px solid #dee2e6; padding-top: 28px; }
+      .desc-label { font-size: .75rem; text-transform: uppercase; font-weight: 700; letter-spacing: .1em; color: #555; margin-bottom: 6px; }
+      .desc-table td { padding: 4px 0; font-size: .9rem; }
+      .desc-table td:first-child { color: #888; width: 110px; }
+      /* ── Related Products ──────────────────────────── */
+      .related-title { font-size: 1.4rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; text-align: center; }
+      .related-title::after { content: ''; display: block; width: 40px; height: 2px; background: #212529; margin: 8px auto 0; }
+      .related-card img { width: 100%; height: 260px; object-fit: cover; transition: transform .3s; }
+      .related-card:hover img { transform: scale(1.04); }
+      .related-card .card-name { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-top: 10px; text-align: center; }
+      .related-card .card-price { font-size: .9rem; font-weight: 700; text-align: center; margin-top: 4px; color: #212529; }
+      .related-card .card-status { font-size: .72rem; color: #888; text-align: center; margin-top: 2px; }
+      /* ── Breadcrumb, Misc ──────────────────────────── */
+      .breadcrumb-link { font-size: .78rem; color: #888; text-decoration: none; }
+      .breadcrumb-link:hover { color: #212529; }
+      .loading-pulse { animation: pulse 1.5s ease-in-out infinite; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; border-radius: 4px; }
+      @keyframes pulse { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+      .stock-badge { font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 10px; border-radius: 2px; }
+      /* ── Skeleton ──────────────────────────────────── */
+      .sk { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: pulse 1.5s infinite; border-radius: 4px; }
+    </style>
+  </head>
+  <body class="font-sans text-gray-800">
+
+    <!-- ══════════════════════════════ NAVBAR ══════════════════════════════ -->
+    <nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+      <div class="container-fluid px-0">
+        <a class="navbar-brand" href="index.html">
+          <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+            <span style="letter-spacing:.12rem;">Maverik</span>
+            <span>Store</span>
+          </span>
+        </a>
+        <div class="mx-auto d-lg-block d-none">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="about.html">About us</a></li>
+            <li class="nav-item"><a class="nav-link active" href="products.html">Products</a></li>
+            <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="d-flex align-items-center gap-4">
+          <button type="button" class="btn btn-outline-dark btn-sm fw-semibold d-none d-lg-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+            🔐 Login Now
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ══════════════════════════════ MAIN ══════════════════════════════ -->
+    <main class="py-5">
+      <div class="container">
+
+        <!-- Breadcrumb -->
+        <nav class="mb-4" id="detail-breadcrumb">
+          <span class="breadcrumb-link">
+            <a href="index.html" class="breadcrumb-link">Trang chủ</a>
+            &nbsp;/&nbsp;
+            <a href="products.html" class="breadcrumb-link">Sản phẩm</a>
+            &nbsp;/&nbsp;
+            <span id="breadcrumb-name" class="text-dark fw-semibold" style="font-size:.78rem;">Đang tải...</span>
+          </span>
+        </nav>
+
+        <!-- ── Product Detail Section ── -->
+        <div class="row g-5" id="product-detail-section">
+
+          <!-- Loading skeleton -->
+          <div class="col-12" id="detail-skeleton">
+            <div class="row g-5">
+              <div class="col-lg-1 d-none d-lg-block">
+                <div class="d-flex flex-column gap-2">
+                  <div class="sk" style="height:88px;"></div>
+                  <div class="sk" style="height:88px;"></div>
+                  <div class="sk" style="height:88px;"></div>
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="sk" style="height:520px;"></div>
+              </div>
+              <div class="col-lg-5">
+                <div class="sk mb-3" style="height:18px;width:60%;"></div>
+                <div class="sk mb-4" style="height:36px;width:85%;"></div>
+                <div class="sk mb-4" style="height:28px;width:40%;"></div>
+                <div class="sk mb-2" style="height:40px;width:50%;"></div>
+                <div class="sk mt-4" style="height:52px;"></div>
+                <div class="sk mt-2" style="height:52px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actual content (hidden until loaded) -->
+          <div class="col-12 d-none" id="detail-content">
+            <div class="row g-4 g-lg-5">
+              <!-- Thumbnails -->
+              <div class="col-lg-1 d-none d-lg-flex align-items-start">
+                <div class="thumbnail-list" id="thumbnail-list"></div>
+              </div>
+
+              <!-- Main Image -->
+              <div class="col-12 col-lg-5">
+                <div class="main-img-wrap">
+                  <img id="main-product-img" src="" alt="" />
+                </div>
+              </div>
+
+              <!-- Product Info -->
+              <div class="col-12 col-lg-6">
+                <!-- Breadcrumb name -->
+                <p class="text-muted mb-1" style="font-size:.78rem;" id="detail-category-name"></p>
+
+                <!-- Title -->
+                <h1 class="product-title mb-2" id="detail-name"></h1>
+
+                <!-- Stock status -->
+                <div class="mb-3" id="detail-stock"></div>
+
+                <!-- Price -->
+                <p class="product-price mb-4" id="detail-price"></p>
+                
+                <style>
+                  .size-selector, .color-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+                  .size-btn { border: 1px solid #e0e0e0; background: #fff; padding: 10px 16px; font-size: 0.85rem; cursor: pointer; border-radius: 0; transition: all 0.2s; min-width: 60px; text-align: center; color: #000; }
+                  .size-btn:hover { background: #000; color: #fff; border-color: #000; }
+                  .size-btn.active { background: #000; color: #fff; border-color: #000; }
+                  
+                  .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 2px; }
+                  .color-btn.active { border-color: #212529; }
+                  .color-btn-inner { width: 100%; height: 100%; border-radius: 50%; border: 1px solid #eee; }
+                </style>
+                
+                <!-- Color Selector -->
+                <p class="desc-label mb-2">Màu sắc</p>
+                <div class="color-selector" id="color-selector">
+                  <div class="color-btn active" data-color="Default" title="Mặc định">
+                    <div class="color-btn-inner" style="background-color: #dddddd;"></div>
+                  </div>
+                  <div class="color-btn" data-color="Black" title="Đen">
+                    <div class="color-btn-inner" style="background-color: #222222;"></div>
+                  </div>
+                </div>
+
+                <!-- Size Selector -->
+                <p class="desc-label mb-2">Kích thước</p>
+                <div class="size-selector mb-4" id="size-selector">
+                  <button class="size-btn active" data-size="Small">Small</button>
+                  <button class="size-btn" data-size="Medium">Medium</button>
+                  <button class="size-btn" data-size="Large">Large</button>
+                  <button class="size-btn" data-size="X-Large">X - Large</button>
+                </div>
+
+                <!-- Quantity -->
+                <div class="mb-4">
+                  <p class="desc-label mb-2">Số lượng</p>
+                  <div class="qty-control">
+                    <button id="qty-minus" onclick="changeQty(-1)">−</button>
+                    <input type="number" id="qty-input" value="1" min="1" max="99" />
+                    <button id="qty-plus" onclick="changeQty(1)">+</button>
+                  </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-grid gap-2 mb-3">
+                  <div class="d-grid d-sm-flex gap-2">
+                    <button class="btn btn-outline-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em;" id="btn-add-cart">
+                      🛒 Thêm vào giỏ
+                    </button>
+                    <button class="btn btn-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em;" id="btn-buy-now">
+                      Mua ngay
+                    </button>
+                  </div>
+                  <button class="btn btn-notify w-100" id="btn-notify">
+                    📧 Nhận thông báo khi có hàng
+                  </button>
+                </div>
+
+                <p class="text-muted" style="font-size:.78rem;">
+                  <i class="bi bi-truck me-1"></i>Giao hàng toàn quốc &nbsp;|&nbsp;
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>Đổi trả trong 7 ngày
+                </p>
+
+                <hr class="my-4" />
+
+                <!-- Description quick-view -->
+                <div id="detail-desc-short" class="text-muted" style="font-size:.9rem;line-height:1.7;"></div>
+              </div>
+            </div>
+
+            <!-- ── Full Description ── -->
+            <div class="row mt-5">
+              <div class="col-12">
+                <div class="desc-section">
+                  <h5 class="desc-label mb-3">Mô tả sản phẩm</h5>
+                  <div id="detail-desc-full" style="font-size:.92rem;line-height:1.8;color:#444;max-width:680px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /row -->
+
+        <!-- ════════════════ RELATED PRODUCTS ════════════════ -->
+        <section class="mt-5 pt-4">
+          <h2 class="related-title mb-5">Sản phẩm liên quan</h2>
+          <div class="row g-4" id="related-products-grid">
+            <!-- rendered by JS -->
+          </div>
+        </section>
+
+      </div><!-- /container -->
+    </main>
+
+    <!-- ══════════════════════════════ FOOTER ══════════════════════════════ -->
+    <footer class="bg-dark pt-5 footer mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 mb-4">
+            <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm text-white">
+              <span style="letter-spacing:.12rem;">Maverik</span>
+              <span>Store</span>
+            </span>
+            <p class="text-secondary mt-3 small">Nền tảng streetwear & thiết kế custom hàng đầu Việt Nam.</p>
+          </div>
+          <div class="col-lg-4 mb-4">
+            <h6 class="text-white fw-semibold text-uppercase mb-3" style="font-size:.75rem;letter-spacing:.1em;">Liên kết</h6>
+            <ul class="list-unstyled">
+              <li><a href="index.html" class="text-secondary text-decoration-none small">Trang chủ</a></li>
+              <li><a href="products.html" class="text-secondary text-decoration-none small">Sản phẩm</a></li>
+              <li><a href="about.html" class="text-secondary text-decoration-none small">Về chúng tôi</a></li>
+              <li><a href="contact.html" class="text-secondary text-decoration-none small">Liên hệ</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-4 mb-4">
+            <h6 class="text-white fw-semibold text-uppercase mb-3" style="font-size:.75rem;letter-spacing:.1em;">Liên hệ</h6>
+            <p class="text-secondary small mb-1"><i class="bi bi-telephone me-2"></i>+84 901 234 567</p>
+            <p class="text-secondary small"><i class="bi bi-envelope me-2"></i>info@maverik.vn</p>
+          </div>
+        </div>
+        <hr class="bg-secondary" />
+        <div class="pb-3 text-center">
+          <p class="text-secondary small mb-0">© 2026 Maverik Store — Nhóm 39. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ══════════════════════════════ LOGIN MODAL ══════════════════════════ -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow" style="border:none;">
+          <div class="modal-header border-0 pb-0">
+            <div class="w-100 text-center">
+              <h5 class="modal-title fw-bold"><i class="bi bi-lock-fill me-2" style="color:#d47f31;"></i>Đăng nhập</h5>
+              <p class="text-muted small mb-0">Truy cập tài khoản Maverik Store</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="loginFormModal">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Email</label>
+                <input type="email" class="form-control" id="loginEmailModal" placeholder="your@email.com" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Mật khẩu</label>
+                <input type="password" class="form-control" id="loginPasswordModal" placeholder="••••••••" required />
+              </div>
+              <button type="submit" class="btn btn-dark w-100 fw-semibold py-2">Đăng nhập</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./assets/js/main.js"></script>
+    <script type="module" src="./assets/js/product-detail.js"></script>
+  </body>
+</html>

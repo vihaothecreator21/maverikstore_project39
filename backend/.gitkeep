@@ -1,0 +1,16 @@
+# Backend API Server Template
+# This is a starter template for the backend API
+
+# Features to implement:
+# - User authentication (login, register, JWT)
+# - Product catalog (CRUD operations)
+# - Shopping cart management
+# - Order processing
+# - Payment integration
+# - Admin dashboard API
+
+# Suggested tech stack:
+# - Node.js + Express.js
+# - MongoDB or PostgreSQL
+# - JWT for authentication
+# - Bcrypt for password hashing
