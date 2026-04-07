@@ -252,56 +252,93 @@ async function handleAddToCart(product) {
   const qty = parseInt(document.getElementById("qty-input").value);
   const addBtn = document.getElementById("btn-add-cart");
   const originalText = addBtn.innerHTML;
+  const token = localStorage.getItem("authToken");
 
   try {
     addBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang thêm...`;
     addBtn.disabled = true;
 
-    // Lấy giỏ hàng từ localStorage
-    let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-
-    // Lấy link ảnh
-    const imgUrl =
-      product.images && product.images.length > 0
-        ? product.images[0].url
-        : product.imageUrl || "./assets/images/product-img-1.jpg";
-
-    // Tìm xem sản phẩm đã có trong giỏ chưa (cùng ID, Size, Color)
-    const existingIndex = cart.findIndex(
-      (item) =>
-        item.productId === product.id &&
-        item.size === selectedSize &&
-        item.color === selectedColor,
-    );
-
-    if (existingIndex > -1) {
-      cart[existingIndex].quantity += qty;
-    } else {
-      cart.push({
-        id: Date.now(), // Unique ID cho item trong giỏ
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        imageUrl: imgUrl,
-        size: selectedSize,
-        color: selectedColor,
-        quantity: qty,
+    if (token) {
+      // ✅ If logged in, call API
+      const response = await fetch(`${API_BASE}/cart/items`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: qty,
+          size: selectedSize,
+          color: selectedColor,
+        }),
       });
-    }
 
-    // Save lại vào localStorage
-    localStorage.setItem("maverik_cart", JSON.stringify(cart));
+      if (response.ok) {
+        window.dispatchEvent(new Event("cartUpdated"));
 
-    // Bắn event để update Navbar & Offcanvas
-    window.dispatchEvent(new Event("cartUpdated"));
+        const offcanvasEl = document.getElementById("cartOffcanvas");
+        if (offcanvasEl) {
+          const oc =
+            bootstrap.Offcanvas.getInstance(offcanvasEl) ||
+            new bootstrap.Offcanvas(offcanvasEl);
+          oc.show();
+        }
+        showToast("✅ Đã thêm vào giỏ hàng!");
+      } else {
+        const errorData = await response.json();
+        showToast("❌ " + (errorData.message || "Lỗi thêm giỏ"));
+      }
+    } else {
+      // ✅ If guest, use localStorage
+      // Lấy giỏ hàng từ localStorage
+      let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
 
-    // Automatically open the bootstrap offcanvas just like Maverik does!
-    const offcanvasEl = document.getElementById("cartOffcanvas");
-    if (offcanvasEl) {
-      const oc =
-        bootstrap.Offcanvas.getInstance(offcanvasEl) ||
-        new bootstrap.Offcanvas(offcanvasEl);
-      oc.show();
+      // Lấy link ảnh
+      const imgUrl =
+        product.images && product.images.length > 0
+          ? product.images[0].url
+          : product.imageUrl || "./assets/images/product-img-1.jpg";
+
+      // Tìm xem sản phẩm đã có trong giỏ chưa (cùng ID, Size, Color)
+      const existingIndex = cart.findIndex(
+        (item) =>
+          item.productId === product.id &&
+          item.size === selectedSize &&
+          item.color === selectedColor,
+      );
+
+      if (existingIndex > -1) {
+        cart[existingIndex].quantity += qty;
+      } else {
+        cart.push({
+          id: Date.now(), // Unique ID cho item trong giỏ
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          imageUrl: imgUrl,
+          size: selectedSize,
+          color: selectedColor,
+          quantity: qty,
+        });
+      }
+
+      // Save lại vào localStorage
+      localStorage.setItem("maverik_cart", JSON.stringify(cart));
+
+      // Bắn event để update Navbar & Offcanvas
+      window.dispatchEvent(new Event("cartUpdated"));
+
+      // Automatically open the bootstrap offcanvas
+      const offcanvasEl = document.getElementById("cartOffcanvas");
+      if (offcanvasEl) {
+        const oc =
+          bootstrap.Offcanvas.getInstance(offcanvasEl) ||
+          new bootstrap.Offcanvas(offcanvasEl);
+        oc.show();
+      }
+
+      showToast("✅ Đã thêm vào giỏ hàng!");
     }
 
     // Delay giả lập API cho mượt UI

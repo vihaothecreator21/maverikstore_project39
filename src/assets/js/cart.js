@@ -5,6 +5,17 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("cartUpdated", fetchCart);
 });
 
+// ✅ API Base configuration
+const getApiBase = () => {
+  const isDev =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  return isDev
+    ? "http://localhost:5000/api/v1"
+    : `${window.location.origin}/api/v1`;
+};
+const API_BASE = getApiBase();
+
 function injectCartOffcanvas() {
   const navContainer = document.querySelector(
     ".navbar .d-flex.align-items-center.gap-4",
@@ -188,15 +199,37 @@ function injectCartOffcanvas() {
   document.body.appendChild(ocWrapper);
 }
 
-// Read from localStorage
-function fetchCart() {
+// ✅ Read from API (if logged in) or localStorage (if guest)
+async function fetchCart() {
   const bodyEl = document.getElementById("ocCartBody");
   const badgeEl = document.getElementById("navCartBadge");
   const footerEl = document.getElementById("ocCartFooter");
   const totalEl = document.getElementById("ocCartTotal");
+  const token = localStorage.getItem("authToken");
+  let cart = [];
 
   try {
-    const cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+    if (token) {
+      // ✅ If logged in, fetch from API
+      try {
+        const response = await fetch(`${API_BASE}/cart`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === "success") {
+            cart = data.data.items || [];
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching cart from API:", err);
+        // Fallback to localStorage
+        cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+      }
+    } else {
+      // ✅ If guest, use localStorage
+      cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+    }
 
     // Calculate totals
     let totalItems = 0;
@@ -213,13 +246,13 @@ function fetchCart() {
       cart.forEach((item) => {
         html += `
           <div class="oc-item">
-            <img src="${item.imageUrl}" alt="${item.name}" onerror="this.src='./assets/images/product-img-1.jpg'" />
+            <img src="${item.imageUrl || item.product?.imageUrl}" alt="${item.name || item.product?.name}" onerror="this.src='./assets/images/product-img-1.jpg'" />
             <div class="oc-item-info">
-              <div class="oc-name">${item.name}</div>
+              <div class="oc-name">${item.name || item.product?.name}</div>
               <div class="oc-variant">${item.size} / ${item.color || "Default"}</div>
               <div class="oc-price-row">
                 <span class="oc-qty">${item.quantity}</span>
-                <span class="oc-price">${formatVND(item.price)}đ</span>
+                <span class="oc-price">${formatVND(item.price || item.product?.price)}đ</span>
               </div>
             </div>
             <button class="oc-remove" onclick="removeCartItemOc(${item.id})">×</button>
@@ -242,6 +275,7 @@ function fetchCart() {
     }
   } catch (err) {
     // Cart rendering error - silent fail
+    console.error("Error rendering cart:", err);
   }
 }
 
@@ -249,16 +283,37 @@ function formatVND(amount) {
   return new Intl.NumberFormat("vi-VN").format(amount);
 }
 
-// Global remove method for the offcanvas
-window.removeCartItemOc = function (itemId) {
-  try {
-    let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-    cart = cart.filter((item) => item.id !== itemId);
-    localStorage.setItem("maverik_cart", JSON.stringify(cart));
+// ✅ Global remove method for the offcanvas (supports both API and localStorage)
+window.removeCartItemOc = async function (itemId) {
+  const token = localStorage.getItem("authToken");
 
-    fetchCart();
+  try {
+    if (token) {
+      // ✅ If logged in, call API
+      try {
+        const response = await fetch(`${API_BASE}/cart/items/${itemId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          fetchCart(); // Refresh
+        } else {
+          console.error("Failed to remove item via API");
+        }
+      } catch (err) {
+        console.error("Error removing item via API:", err);
+      }
+    } else {
+      // ✅ If guest, use localStorage
+      let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+      cart = cart.filter((item) => item.id !== itemId);
+      localStorage.setItem("maverik_cart", JSON.stringify(cart));
+      fetchCart();
+    }
+
     window.dispatchEvent(new Event("cartUpdatedGlobal"));
   } catch (err) {
     // Failed to remove item - silent fail
+    console.error("Error in removeCartItemOc:", err);
   }
 };

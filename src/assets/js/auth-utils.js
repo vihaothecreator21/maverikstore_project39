@@ -18,7 +18,7 @@ const API_BASE = getApiBase();
  * Sync localStorage cart to server after login
  * @param {string} token - JWT auth token
  * @returns {Promise<Object|null>} - Synced cart or null on failure
- * 
+ *
  * ✅ Logic:
  * 1. Get localStorage cart
  * 2. Send POST /cart/sync to backend

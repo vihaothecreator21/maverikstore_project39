@@ -16,22 +16,53 @@ function loadFullCart() {
   const loading = document.getElementById("cart-loading");
   const content = document.getElementById("cart-content");
   const empty = document.getElementById("cart-empty");
+  const token = localStorage.getItem("authToken");
 
   loading.classList.remove("d-none");
   content.classList.add("d-none");
   empty.classList.add("d-none");
 
   try {
-    const cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+    if (token) {
+      // ✅ If logged in, fetch from API
+      fetch(`${API_BASE}/cart`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error("Failed to fetch cart");
+        })
+        .then((data) => {
+          if (data.status === "success") {
+            const cart = data.data.items || [];
+            setTimeout(() => {
+              if (cart.length > 0) {
+                renderCartItems(cart);
+              } else {
+                showEmptyState();
+              }
+            }, 200);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching cart from API:", err);
+          showEmptyState("Đã xảy ra lỗi khi tải giỏ hàng.");
+        });
+    } else {
+      // ✅ If guest, use localStorage
+      const cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
 
-    // Simulate loading delay for smooth UI
-    setTimeout(() => {
-      if (cart.length > 0) {
-        renderCartItems(cart);
-      } else {
-        showEmptyState();
-      }
-    }, 200);
+      // Simulate loading delay for smooth UI
+      setTimeout(() => {
+        if (cart.length > 0) {
+          renderCartItems(cart);
+        } else {
+          showEmptyState();
+        }
+      }, 200);
+    }
   } catch (err) {
     // Cart fetch error - silent fail
     showEmptyState("Đã xảy ra lỗi khi tải giỏ hàng.");
@@ -53,14 +84,19 @@ function renderCartItems(cartData) {
   let html = "";
   cartData.forEach((item) => {
     totalItems += item.quantity;
-    totalPrice += item.price * item.quantity;
+    // Handle both API format (item.product.price) and localStorage format (item.price)
+    const price = item.price || item.product?.price;
+    const name = item.name || item.product?.name;
+    const imageUrl = item.imageUrl || item.product?.imageUrl;
+
+    totalPrice += price * item.quantity;
 
     html += `
       <div class="cart-item-row" id="cart-item-row-${item.id}">
-        <img src="${item.imageUrl}" alt="${item.name}" class="ci-img" onerror="this.src='./assets/images/product-img-1.jpg'" />
+        <img src="${imageUrl}" alt="${name}" class="ci-img" onerror="this.src='./assets/images/product-img-1.jpg'" />
         
         <div class="ci-info">
-          <div class="ci-name">${item.name}</div>
+          <div class="ci-name">${name}</div>
           <div class="ci-variant">${item.size} ${item.color && item.color !== "Default" ? " / " + item.color : ""}</div>
           
           <div class="ci-qty-control mt-3">
@@ -71,9 +107,9 @@ function renderCartItems(cartData) {
         </div>
         
         <div class="ci-price-col">
-          <div class="ci-price">${formatVND(item.price)}đ</div>
+          <div class="ci-price">${formatVND(price)}đ</div>
           <div class="ci-total-label">Thành tiền:</div>
-          <div class="ci-total">${formatVND(item.price * item.quantity)}đ</div>
+          <div class="ci-total">${formatVND(price * item.quantity)}đ</div>
           
           <button class="ci-remove-btn" onclick="removeCartItem(${item.id})" title="Xóa sản phẩm">
             <i class="bi bi-trash3"></i>
@@ -108,36 +144,72 @@ function showEmptyState(msg) {
   }
 }
 
-window.updateItemQty = function (itemId, newQty) {
+window.updateItemQty = async function (itemId, newQty) {
   if (newQty < 1) return;
-  try {
-    let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-    const idx = cart.findIndex((i) => i.id === itemId);
-    if (idx > -1) {
-      cart[idx].quantity = newQty;
-      localStorage.setItem("maverik_cart", JSON.stringify(cart));
+  const token = localStorage.getItem("authToken");
 
-      loadFullCart();
-      window.dispatchEvent(new Event("cartUpdatedGlobal"));
+  try {
+    if (token) {
+      // ✅ If logged in, call API
+      const response = await fetch(`${API_BASE}/cart/items/${itemId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ quantity: newQty }),
+      });
+      if (response.ok) {
+        loadFullCart(); // Refresh
+      } else {
+        console.error("Failed to update qty via API");
+      }
+    } else {
+      // ✅ If guest, use localStorage
+      let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+      const idx = cart.findIndex((i) => i.id === itemId);
+      if (idx > -1) {
+        cart[idx].quantity = newQty;
+        localStorage.setItem("maverik_cart", JSON.stringify(cart));
+        loadFullCart();
+      }
     }
+
+    window.dispatchEvent(new Event("cartUpdatedGlobal"));
   } catch (err) {
-    // Silent fail
+    console.error("Error updating qty:", err);
   }
 };
 
-window.removeCartItem = function (itemId) {
+window.removeCartItem = async function (itemId) {
   const confirmDelete = confirm("Bạn có chắc muốn xóa sản phẩm này?");
   if (!confirmDelete) return;
 
-  try {
-    let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-    cart = cart.filter((i) => i.id !== itemId);
-    localStorage.setItem("maverik_cart", JSON.stringify(cart));
+  const token = localStorage.getItem("authToken");
 
-    loadFullCart();
+  try {
+    if (token) {
+      // ✅ If logged in, call API
+      const response = await fetch(`${API_BASE}/cart/items/${itemId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        loadFullCart(); // Refresh
+      } else {
+        console.error("Failed to remove item via API");
+      }
+    } else {
+      // ✅ If guest, use localStorage
+      let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+      cart = cart.filter((i) => i.id !== itemId);
+      localStorage.setItem("maverik_cart", JSON.stringify(cart));
+      loadFullCart();
+    }
+
     window.dispatchEvent(new Event("cartUpdatedGlobal"));
   } catch (err) {
-    // Silent fail
+    console.error("Error removing item:", err);
   }
 };
 
