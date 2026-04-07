@@ -330,27 +330,60 @@ function getPlaceholderImage(name) {
 }
 
 // ════════════════════════════════════════════════════════════
-// 9. ADD TO CART (placeholder — sẽ hoàn thiện ở bước Cart)
+// 9. ADD TO CART - Now supports guests with localStorage
 // ════════════════════════════════════════════════════════════
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".add-to-cart-btn");
   if (!btn) return;
 
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    // Chưa đăng nhập → mở modal login
-    const loginModal = document.getElementById("loginModal");
-    if (loginModal) {
-      new bootstrap.Modal(loginModal).show();
-    } else {
-      alert("Vui lòng đăng nhập để thêm vào giỏ hàng!");
-    }
-    return;
-  }
+  try {
+    const productId = parseInt(btn.dataset.productId);
+    const productName = btn.dataset.productName;
+    const productPrice = parseFloat(btn.dataset.productPrice);
+    const imageUrl =
+      btn.dataset.productImage || "./assets/images/product-img-1.jpg";
 
-  // TODO: Gọi API Cart khi đã làm module Cart
-  const name = btn.dataset.productName;
-  showToast(`✅ Đã thêm "${name}" vào giỏ hàng!`);
+    // ✅ Tạo item object
+    const newItem = {
+      id: Date.now(),
+      productId: productId,
+      name: productName,
+      price: productPrice,
+      imageUrl: imageUrl,
+      size: "One Size", // Default cho products.html
+      color: "Default", // Default cho products.html
+      quantity: 1,
+    };
+
+    // ✅ Lấy cart từ localStorage
+    let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+
+    // ✅ Kiểm tra xem đã có trong giỏ chưa
+    const existing = cart.findIndex(
+      (item) =>
+        item.productId === productId &&
+        item.size === newItem.size &&
+        item.color === newItem.color,
+    );
+
+    if (existing > -1) {
+      cart[existing].quantity += 1; // Tăng số lượng
+    } else {
+      cart.push(newItem); // Thêm mới
+    }
+
+    // ✅ Lưu vào localStorage
+    localStorage.setItem("maverik_cart", JSON.stringify(cart));
+
+    // ✅ Cập nhật navbar cart badge
+    window.dispatchEvent(new Event("cartUpdated"));
+
+    // ✅ Hiển thị thông báo
+    showToast(`✅ Đã thêm "${productName}" vào giỏ hàng!`);
+  } catch (err) {
+    console.error("Error adding to cart:", err);
+    showToast("❌ Lỗi khi thêm vào giỏ hàng");
+  }
 });
 
 function showToast(message) {
