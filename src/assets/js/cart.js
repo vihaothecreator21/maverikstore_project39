@@ -1,5 +1,3 @@
-
-
 document.addEventListener("DOMContentLoaded", () => {
   injectCartOffcanvas();
   fetchCart();
@@ -8,7 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function injectCartOffcanvas() {
-  const navContainer = document.querySelector(".navbar .d-flex.align-items-center.gap-4");
+  const navContainer = document.querySelector(
+    ".navbar .d-flex.align-items-center.gap-4",
+  );
   if (!navContainer) return;
 
   // Insert Cart Styling
@@ -197,26 +197,26 @@ function fetchCart() {
 
   try {
     const cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-    
+
     // Calculate totals
     let totalItems = 0;
     let totalPrice = 0;
-    cart.forEach(item => {
+    cart.forEach((item) => {
       totalItems += item.quantity;
       totalPrice += item.price * item.quantity;
     });
 
     if (badgeEl) badgeEl.textContent = totalItems.toString();
-    
+
     if (cart.length > 0) {
       let html = "";
-      cart.forEach(item => {
+      cart.forEach((item) => {
         html += `
           <div class="oc-item">
             <img src="${item.imageUrl}" alt="${item.name}" onerror="this.src='./assets/images/product-img-1.jpg'" />
             <div class="oc-item-info">
               <div class="oc-name">${item.name}</div>
-              <div class="oc-variant">${item.size} / ${item.color || 'Default'}</div>
+              <div class="oc-variant">${item.size} / ${item.color || "Default"}</div>
               <div class="oc-price-row">
                 <span class="oc-qty">${item.quantity}</span>
                 <span class="oc-price">${formatVND(item.price)}đ</span>
@@ -226,11 +226,11 @@ function fetchCart() {
           </div>
         `;
       });
-      if(bodyEl) bodyEl.innerHTML = html;
-      if(footerEl) footerEl.classList.remove("d-none");
-      if(totalEl) totalEl.textContent = formatVND(totalPrice) + "đ";
+      if (bodyEl) bodyEl.innerHTML = html;
+      if (footerEl) footerEl.classList.remove("d-none");
+      if (totalEl) totalEl.textContent = formatVND(totalPrice) + "đ";
     } else {
-      if(bodyEl) {
+      if (bodyEl) {
         bodyEl.innerHTML = `
           <div class="oc-empty">
             <i class="bi bi-cart3" style="font-size:2.5rem;color:#ccc;margin-bottom:12px;display:block;"></i>
@@ -238,10 +238,10 @@ function fetchCart() {
           </div>
         `;
       }
-      if(footerEl) footerEl.classList.add("d-none");
+      if (footerEl) footerEl.classList.add("d-none");
     }
   } catch (err) {
-    console.error("Cart rendering error:", err);
+    // Cart rendering error - silent fail
   }
 }
 
@@ -250,15 +250,15 @@ function formatVND(amount) {
 }
 
 // Global remove method for the offcanvas
-window.removeCartItemOc = function(itemId) {
+window.removeCartItemOc = function (itemId) {
   try {
     let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-    cart = cart.filter(item => item.id !== itemId);
+    cart = cart.filter((item) => item.id !== itemId);
     localStorage.setItem("maverik_cart", JSON.stringify(cart));
-    
+
     fetchCart();
     window.dispatchEvent(new Event("cartUpdatedGlobal"));
   } catch (err) {
-    console.error("Failed to remove item", err);
+    // Failed to remove item - silent fail
   }
 };

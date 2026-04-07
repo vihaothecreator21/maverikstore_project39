@@ -8,8 +8,7 @@ import { connectDatabase, disconnectDatabase } from "./config/database";
 
 // Import Middlewares
 import errorHandler from "./middlewares/errorHandler.middleware";
-import notFoundHandler from "./middlewares/notFound.middleware";
-
+import notFoundHandler from "./middlewares/notFound.middleware";import { cleanupRateLimitStore } from "./middlewares/rateLimit.middleware.js";
 // Import Routes
 import apiRoutes from "./routes";
 
@@ -85,6 +84,12 @@ const startServer = async (): Promise<void> => {
 ║ CORS Origins: ${env.CORS_ORIGINS.length} allowed         ║
 ╚════════════════════════════════════════╝
       `);
+
+      // Setup rate limit cleanup scheduler (runs every 1 hour)
+      setInterval(() => {
+        cleanupRateLimitStore();
+        console.log("🧹 [Rate Limit] Cleaned up expired entries");
+      }, 60 * 60 * 1000);
     });
   } catch (error) {
     console.error("✗ Failed to start server:", error);

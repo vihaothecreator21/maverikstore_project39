@@ -20,7 +20,7 @@ export class ProductService {
     return name
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")  // Remove diacritics
+      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
       .replace(/đ/g, "d")
       .replace(/[^a-z0-9\s-]/g, "")
       .trim()
@@ -118,25 +118,40 @@ export class ProductService {
 
   /**
    * Update an existing product by ID (Admin only)
+   * ⚠️ Fixed N+1 query: Uses updateOrThrow instead of (findById + update)
    */
   static async update(id: number, input: UpdateProductInput) {
-    // Make sure product exists
-    const existing = await ProductRepository.findById(id);
-    if (!existing) {
-      throw new APIError(
-        404,
-        `Product with ID ${id} not found`,
-        {},
-        "PRODUCT_NOT_FOUND",
-      );
-    }
-
-    // Re-generate slug only if name changed
+    // Get existing product using updateOrThrow pattern to avoid N+1
     let slugUpdate: { slug?: string } = {};
-    if (input.name && input.name !== existing.name) {
-      const baseSlug = this.generateSlug(input.name);
-      const slug = await this.ensureUniqueSlug(baseSlug, id);
-      slugUpdate = { slug };
+
+    // If name changed, we need to get existing name for comparison
+    if (input.name) {
+      const existing = await ProductRepository.findById(id);
+      if (!existing) {
+        throw new APIError(
+          404,
+          `Product with ID ${id} not found`,
+          {},
+          "PRODUCT_NOT_FOUND",
+        );
+      }
+
+      if (input.name !== existing.name) {
+        const baseSlug = this.generateSlug(input.name);
+        const slug = await this.ensureUniqueSlug(baseSlug, id);
+        slugUpdate = { slug };
+      }
+    } else {
+      // If name not changing, just verify product exists without fetching full data
+      const exists = await ProductRepository.productExists(id);
+      if (!exists) {
+        throw new APIError(
+          404,
+          `Product with ID ${id} not found`,
+          {},
+          "PRODUCT_NOT_FOUND",
+        );
+      }
     }
 
     const product = await ProductRepository.update(id, {
@@ -149,20 +164,18 @@ export class ProductService {
 
   /**
    * Delete a product by ID (Admin only)
+   * ⚠️ Fixed N+1 query: Delegates existence check to repository deleteOrThrow
    */
   static async delete(id: number) {
-    // Make sure product exists before deleting
-    const existing = await ProductRepository.findById(id);
-    if (!existing) {
-      throw new APIError(
-        404,
-        `Product with ID ${id} not found`,
-        {},
-        "PRODUCT_NOT_FOUND",
-      );
-    }
-
-    const deleted = await ProductRepository.delete(id);
+    // Repository will handle existence check, preventing N+1 query
+    const deleted = await ProductRepository.deleteOrThrow(id);
     return deleted;
+  }
+
+  /**
+   * Fix products with NULL or empty slugs (Helper for Prisma Studio data)
+   */
+  static async fixNullSlugs() {
+    return await ProductRepository.fixNullSlugs();
   }
 }

@@ -36,11 +36,10 @@ export const notFoundHandler = (req: Request, res: Response<ApiResponse<never>>)
   );
 
   res.status(404).json({
-    status: "error",
+    status: "error" as const,
     code: 404,
     message: error.message,
     details: error.details,
-    errorCode: error.code,
     timestamp: new Date().toISOString(),
   });
 };

@@ -5,7 +5,11 @@ import {
   UpdateProductSchema,
   ProductQuerySchema,
 } from "../schemas/product.schema";
-import { ValidationError, sendSuccess, HTTP_STATUS } from "../utils/apiResponse";
+import {
+  ValidationError,
+  sendSuccess,
+  HTTP_STATUS,
+} from "../utils/apiResponse";
 
 /**
  * Product Controller - HTTP Request Handler Layer
@@ -53,7 +57,12 @@ export class ProductController {
     }
 
     const product = await ProductService.getById(id);
-    return sendSuccess(res, product, "Product retrieved successfully", HTTP_STATUS.OK);
+    return sendSuccess(
+      res,
+      product,
+      "Product retrieved successfully",
+      HTTP_STATUS.OK,
+    );
   }
 
   /**
@@ -63,7 +72,12 @@ export class ProductController {
   static async getBySlug(req: Request, res: Response) {
     const { slug } = req.params;
     const product = await ProductService.getBySlug(slug);
-    return sendSuccess(res, product, "Product retrieved successfully", HTTP_STATUS.OK);
+    return sendSuccess(
+      res,
+      product,
+      "Product retrieved successfully",
+      HTTP_STATUS.OK,
+    );
   }
 
   /**
@@ -71,7 +85,7 @@ export class ProductController {
    * Create a new product (Admin only)
    */
   static async create(req: Request, res: Response) {
-    const validation = CreateProductSchema.safeParse(req.body);
+    const validation = await CreateProductSchema.safeParseAsync(req.body);
     if (!validation.success) {
       const errors: Record<string, string[]> = {};
       validation.error.errors.forEach((err) => {
@@ -83,7 +97,12 @@ export class ProductController {
     }
 
     const product = await ProductService.create(validation.data);
-    return sendSuccess(res, product, "Product created successfully", HTTP_STATUS.CREATED);
+    return sendSuccess(
+      res,
+      product,
+      "Product created successfully",
+      HTTP_STATUS.CREATED,
+    );
   }
 
   /**
@@ -98,7 +117,7 @@ export class ProductController {
       });
     }
 
-    const validation = UpdateProductSchema.safeParse(req.body);
+    const validation = await UpdateProductSchema.safeParseAsync(req.body);
     if (!validation.success) {
       const errors: Record<string, string[]> = {};
       validation.error.errors.forEach((err) => {
@@ -110,7 +129,12 @@ export class ProductController {
     }
 
     const product = await ProductService.update(id, validation.data);
-    return sendSuccess(res, product, "Product updated successfully", HTTP_STATUS.OK);
+    return sendSuccess(
+      res,
+      product,
+      "Product updated successfully",
+      HTTP_STATUS.OK,
+    );
   }
 
   /**
@@ -130,6 +154,20 @@ export class ProductController {
       res,
       deleted,
       `Product "${deleted.name}" deleted successfully`,
+      HTTP_STATUS.OK,
+    );
+  }
+
+  /**
+   * POST /api/v1/products/admin/fix-null-slugs
+   * Fix products with NULL or empty slugs (Admin/Debug endpoint)
+   */
+  static async fixNullSlugs(_req: Request, res: Response) {
+    const result = await ProductService.fixNullSlugs();
+    return sendSuccess(
+      res,
+      result,
+      `Fixed ${result.fixed} products with NULL slugs`,
       HTTP_STATUS.OK,
     );
   }

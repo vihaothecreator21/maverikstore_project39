@@ -59,7 +59,7 @@ model Product {
   id              Int     @id @default(autoincrement())
   categoryId      Int
   name            String  @db.VarChar(255)
-  slug            String  @unique @db.VarChar(255)
+  slug            String?  @unique @db.VarChar(255)
   price           Float
   stockQuantity   Int     @default(0)
   description     String? @db.Text
@@ -78,6 +78,8 @@ model Product {
   @@index([categoryId])
   @@index([slug])
   @@index([name])
+  @@index([categoryId, slug])
+  @@index([categoryId, name])
 }
 
 // ProductImages Table
@@ -163,6 +165,7 @@ model OrderDetail {
 
   @@index([orderId])
   @@index([productId])
+  @@index([orderId, productId])
 }
 
 // Payments Table
@@ -199,6 +202,7 @@ model Review {
 
   @@unique([userId, productId])
   @@index([productId])
+  @@index([userId])
 }
 
 // Favorites Table
@@ -214,4 +218,5 @@ model Favorite {
 
   @@unique([userId, productId])
   @@index([productId])
+  @@index([userId])
 }

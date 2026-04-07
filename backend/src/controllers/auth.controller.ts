@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { LoginSchema, RegisterSchema } from "../schemas/auth.schema";
-import { ValidationError, sendSuccess } from "../utils/apiResponse";
-import { HTTP_STATUS } from "../utils/apiResponse";
+import {
+  ValidationError,
+  sendSuccess,
+  HTTP_STATUS,
+} from "../utils/apiResponse";
 
 /**
  * Auth Controller - HTTP Request Handlers

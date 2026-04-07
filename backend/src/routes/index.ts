@@ -73,8 +73,8 @@ router.use(`/${process.env.API_VERSION || "v1"}/products`, productRoutes);
 router.use(`/${process.env.API_VERSION || "v1"}/categories`, categoryRoutes);
 
 // ==================== Cart Routes ====================
-import { cartRoutes } from './cart.routes';
-router.use(`/${process.env.API_VERSION || 'v1'}/cart`, cartRoutes);
+import { cartRoutes } from "./cart.routes";
+router.use(`/${process.env.API_VERSION || "v1"}/cart`, cartRoutes);
 
 // ==================== Order Routes ====================
 // @TODO: Implement when ready

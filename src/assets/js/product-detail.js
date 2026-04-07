@@ -3,8 +3,16 @@
  * Fetch product by slug từ URL và render lên product-detail.html
  */
 
-const API_BASE = "http://localhost:5000/api/v1";
-import * as bootstrap from 'bootstrap';
+const getApiBase = () => {
+  const isDev =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  return isDev
+    ? "http://localhost:5000/api/v1"
+    : `${window.location.origin}/api/v1`;
+};
+const API_BASE = getApiBase();
+import * as bootstrap from "bootstrap";
 
 // ── Lấy slug từ URL (?slug=...) ──────────────────────────
 const params = new URLSearchParams(window.location.search);
@@ -36,7 +44,6 @@ async function loadProduct() {
     loadRelatedProducts(json.data.category?.id, json.data.id);
   } catch (err) {
     showError("Lỗi kết nối đến server. Vui lòng kiểm tra backend.");
-    console.error(err);
   }
 }
 
@@ -65,7 +72,9 @@ function renderProduct(product) {
     : `<span class="stock-badge bg-secondary text-white">Hết hàng</span>`;
 
   // Price
-  document.getElementById("detail-price").textContent = formatVND(product.price);
+  document.getElementById("detail-price").textContent = formatVND(
+    product.price,
+  );
 
   // Description (short preview in right col)
   const shortDesc = document.getElementById("detail-desc-short");
@@ -137,7 +146,9 @@ function buildGallery(product) {
     };
     img.addEventListener("click", () => {
       mainImg.src = imgUrl;
-      thumbList.querySelectorAll(".thumbnail-item").forEach((t) => t.classList.remove("active"));
+      thumbList
+        .querySelectorAll(".thumbnail-item")
+        .forEach((t) => t.classList.remove("active"));
       img.classList.add("active");
     });
     thumbList.appendChild(img);
@@ -171,7 +182,7 @@ async function loadRelatedProducts(categoryId, excludeId) {
 
     grid.innerHTML = related.map((p) => buildRelatedCard(p)).join("");
   } catch (err) {
-    console.warn("Không tải được sản phẩm liên quan:", err);
+    // Error loading related products - silent fail
   }
 }
 
@@ -218,7 +229,9 @@ let selectedColor = "Default";
 
 document.getElementById("size-selector")?.addEventListener("click", (e) => {
   if (e.target.classList.contains("size-btn")) {
-    document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".size-btn")
+      .forEach((b) => b.classList.remove("active"));
     e.target.classList.add("active");
     selectedSize = e.target.dataset.size;
   }
@@ -227,7 +240,9 @@ document.getElementById("size-selector")?.addEventListener("click", (e) => {
 document.getElementById("color-selector")?.addEventListener("click", (e) => {
   const btn = e.target.closest(".color-btn");
   if (btn) {
-    document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".color-btn")
+      .forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     selectedColor = btn.dataset.color;
   }
@@ -237,7 +252,7 @@ async function handleAddToCart(product) {
   const qty = parseInt(document.getElementById("qty-input").value);
   const addBtn = document.getElementById("btn-add-cart");
   const originalText = addBtn.innerHTML;
-  
+
   try {
     addBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang thêm...`;
     addBtn.disabled = true;
@@ -246,15 +261,17 @@ async function handleAddToCart(product) {
     let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
 
     // Lấy link ảnh
-    const imgUrl = product.images && product.images.length > 0 
-      ? product.images[0].url 
-      : product.imageUrl || "./assets/images/product-img-1.jpg";
+    const imgUrl =
+      product.images && product.images.length > 0
+        ? product.images[0].url
+        : product.imageUrl || "./assets/images/product-img-1.jpg";
 
     // Tìm xem sản phẩm đã có trong giỏ chưa (cùng ID, Size, Color)
     const existingIndex = cart.findIndex(
-      item => item.productId === product.id && 
-              item.size === selectedSize && 
-              item.color === selectedColor
+      (item) =>
+        item.productId === product.id &&
+        item.size === selectedSize &&
+        item.color === selectedColor,
     );
 
     if (existingIndex > -1) {
@@ -268,7 +285,7 @@ async function handleAddToCart(product) {
         imageUrl: imgUrl,
         size: selectedSize,
         color: selectedColor,
-        quantity: qty
+        quantity: qty,
       });
     }
 
@@ -277,17 +294,18 @@ async function handleAddToCart(product) {
 
     // Bắn event để update Navbar & Offcanvas
     window.dispatchEvent(new Event("cartUpdated"));
-    
+
     // Automatically open the bootstrap offcanvas just like Maverik does!
-    const offcanvasEl = document.getElementById('cartOffcanvas');
+    const offcanvasEl = document.getElementById("cartOffcanvas");
     if (offcanvasEl) {
-      const oc = bootstrap.Offcanvas.getInstance(offcanvasEl) || new bootstrap.Offcanvas(offcanvasEl);
+      const oc =
+        bootstrap.Offcanvas.getInstance(offcanvasEl) ||
+        new bootstrap.Offcanvas(offcanvasEl);
       oc.show();
     }
 
     // Delay giả lập API cho mượt UI
-    await new Promise(resolve => setTimeout(resolve, 300));
-
+    await new Promise((resolve) => setTimeout(resolve, 300));
   } catch (err) {
     showToast(`❌ Lỗi: ${err.message}`);
   } finally {
@@ -302,14 +320,15 @@ function handleBuyNow(product) {
   addBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Chờ...`;
   addBtn.disabled = true;
 
-  handleAddToCart(product).then(() => {
-    window.location.href = "cart.html";
-  }).finally(() => {
-     addBtn.innerHTML = originalText;
-     addBtn.disabled = false;
-  });
+  handleAddToCart(product)
+    .then(() => {
+      window.location.href = "cart.html";
+    })
+    .finally(() => {
+      addBtn.innerHTML = originalText;
+      addBtn.disabled = false;
+    });
 }
-
 
 // ════════════════════════════════════════════════════════════
 // 7. ERROR STATE
@@ -330,7 +349,10 @@ function showError(msg) {
 // 8. HELPERS
 // ════════════════════════════════════════════════════════════
 function formatVND(price) {
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
 }
 
 function truncate(str, max) {

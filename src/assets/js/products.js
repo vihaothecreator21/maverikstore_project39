@@ -3,7 +3,15 @@
  * Fetch danh sách sản phẩm từ Backend API và render lên giao diện
  */
 
-const API_BASE = "http://localhost:5000/api/v1";
+const getApiBase = () => {
+  const isDev =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  return isDev
+    ? "http://localhost:5000/api/v1"
+    : `${window.location.origin}/api/v1`;
+};
+const API_BASE = getApiBase();
 
 // ── State ─────────────────────────────────────────────────────
 let currentPage = 1;
@@ -49,7 +57,7 @@ async function loadCategories() {
           <a href="#" class="category-link text-dark" data-id="${cat.id}">
             ${cat.name}
           </a>
-        </li>`
+        </li>`,
       );
     });
 
@@ -57,7 +65,9 @@ async function loadCategories() {
     list.querySelectorAll(".category-link").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
-        list.querySelectorAll(".category-link").forEach((l) => l.classList.remove("active-cat", "fw-semibold"));
+        list
+          .querySelectorAll(".category-link")
+          .forEach((l) => l.classList.remove("active-cat", "fw-semibold"));
         link.classList.add("active-cat", "fw-semibold");
         currentCategoryId = link.dataset.id || null;
         currentPage = 1;
@@ -65,7 +75,7 @@ async function loadCategories() {
       });
     });
   } catch (err) {
-    console.warn("Không thể tải danh mục:", err);
+    // Error loading categories - silent fail
   }
 }
 
@@ -97,7 +107,6 @@ async function loadProducts() {
     updateProductCount(json.meta.total);
   } catch (err) {
     showError("Lỗi kết nối đến server. Vui lòng kiểm tra backend.");
-    console.error(err);
   }
 }
 
@@ -276,7 +285,7 @@ function showSkeleton() {
         </div>
       </div>
     </div>
-  `
+  `,
     )
     .join("");
 
