@@ -381,6 +381,8 @@
 </div>
 
 <script type="module">
+  import { syncCartAfterLogin } from "./assets/js/auth-utils.js";
+
   // Expose toggle function globally for onclick handlers
   window.togglePasswordVisibility = function(inputId) {
     const input = document.getElementById(inputId);
@@ -423,13 +425,31 @@
     }
   };
 
+  let isLoginProcessing = false;
+
   document.getElementById('loginFormModal')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     if (!this.checkValidity()) { e.stopPropagation(); this.classList.add('was-validated'); return; }
+
+    // Prevent multiple submissions
+    if (isLoginProcessing) return;
+    isLoginProcessing = true;
+
     const email = document.getElementById('loginEmailModal').value.trim();
     const password = document.getElementById('loginPasswordModal').value;
     const rememberMe = document.getElementById('rememberMeModal').checked;
+    
+    // Get login button for loading state
+    const loginBtn = document.querySelector('#loginModal .modal-footer button[type="submit"]');
+    const originalBtnText = loginBtn?.innerHTML || '✅ Đăng nhập';
+
     try {
+      // ✅ Show "Đang đăng nhập..." state
+      if (loginBtn) {
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang đăng nhập...';
+        loginBtn.disabled = true;
+      }
+
       const response = await fetch('http://localhost:5000/api/v1/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -439,15 +459,38 @@
         localStorage.setItem('authToken', data.data.token);
         if (rememberMe) localStorage.setItem('userEmail', email);
         localStorage.setItem('user', JSON.stringify(data.data.user));
-        alert('✅ Login successful!');
+
+        // ✅ Show "Đang đồng bộ giỏ hàng..." state
+        if (loginBtn) {
+          loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang đồng bộ giỏ hàng...';
+        }
+
+        // ✅ Sync cart before reload
+        await syncCartAfterLogin(data.data.token);
+
+        // ✅ Show success before reload
+        alert('✅ Login & sync successful!');
         window.location.reload();
       } else {
         alert('❌ ' + (data.message || 'Login failed'));
+        // Reset button on error
+        if (loginBtn) {
+          loginBtn.innerHTML = originalBtnText;
+          loginBtn.disabled = false;
+          isLoginProcessing = false;
+        }
       }
     } catch (error) {
       alert('❌ Network error');
+      // Reset button on error
+      if (loginBtn) {
+        loginBtn.innerHTML = originalBtnText;
+        loginBtn.disabled = false;
+        isLoginProcessing = false;
+      }
     }
   });
+
   document.getElementById('registerFormModal')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     if (!this.checkValidity()) { e.stopPropagation(); this.classList.add('was-validated'); return; }
