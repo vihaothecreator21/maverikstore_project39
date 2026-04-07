@@ -1,94 +1,305 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Giỏ hàng của bạn - Maverik Store</title>
     <style>
-      body { background: #fafafa; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-      .cart-title { font-size: 2rem; font-weight: 300; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-top: 20px; margin-bottom: 50px; }
-      
+      body {
+        background: #fafafa;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+      .cart-title {
+        font-size: 2rem;
+        font-weight: 300;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 50px;
+      }
+
       /* ── Left Column: Items ────────────────────────── */
-      .cart-items-wrapper { background: #fdfdfd; padding: 24px; border: 1px solid #eee; margin-bottom: 30px; }
-      .cart-count-header { font-size: 0.85rem; padding-bottom: 16px; border-bottom: 1px solid #eaeaea; margin-bottom: 0; color: #555; }
-      .cart-item-row { display: flex; align-items: flex-start; padding: 24px 0; border-bottom: 1px solid #f0f0f0; position: relative; }
-      .cart-item-row:last-child { border-bottom: none; }
-      .ci-img { width: 90px; height: 110px; object-fit: cover; background: #f5f5f5; flex-shrink: 0; }
-      .ci-info { flex: 1; padding: 0 24px; min-width: 0; }
-      .ci-name { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em; }
-      .ci-variant { font-size: 0.8rem; color: #888; font-weight: 300; }
-      
+      .cart-items-wrapper {
+        background: #fdfdfd;
+        padding: 24px;
+        border: 1px solid #eee;
+        margin-bottom: 30px;
+      }
+      .cart-count-header {
+        font-size: 0.85rem;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eaeaea;
+        margin-bottom: 0;
+        color: #555;
+      }
+      .cart-item-row {
+        display: flex;
+        align-items: flex-start;
+        padding: 24px 0;
+        border-bottom: 1px solid #f0f0f0;
+        position: relative;
+      }
+      .cart-item-row:last-child {
+        border-bottom: none;
+      }
+      .ci-img {
+        width: 90px;
+        height: 110px;
+        object-fit: cover;
+        background: #f5f5f5;
+        flex-shrink: 0;
+      }
+      .ci-info {
+        flex: 1;
+        padding: 0 24px;
+        min-width: 0;
+      }
+      .ci-name {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        letter-spacing: 0.05em;
+      }
+      .ci-variant {
+        font-size: 0.8rem;
+        color: #888;
+        font-weight: 300;
+      }
+
       /* Qty Control */
-      .ci-qty-control { display: flex; align-items: center; margin-top: 15px; }
-      .ci-qty-btn { width: 28px; height: 28px; border: 1px solid #ddd; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; color: #555; }
-      .ci-qty-btn:hover { background: #f5f5f5; }
-      .ci-qty-input { width: 40px; height: 28px; border: 1px solid #ddd; border-left: none; border-right: none; text-align: center; outline: none; font-size: 0.85rem; pointer-events: none; }
-      
+      .ci-qty-control {
+        display: flex;
+        align-items: center;
+        margin-top: 15px;
+      }
+      .ci-qty-btn {
+        width: 28px;
+        height: 28px;
+        border: 1px solid #ddd;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s;
+        color: #555;
+      }
+      .ci-qty-btn:hover {
+        background: #f5f5f5;
+      }
+      .ci-qty-input {
+        width: 40px;
+        height: 28px;
+        border: 1px solid #ddd;
+        border-left: none;
+        border-right: none;
+        text-align: center;
+        outline: none;
+        font-size: 0.85rem;
+        pointer-events: none;
+      }
+
       /* Price Column */
-      .ci-price-col { width: 140px; text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-      .ci-price { font-size: 0.95rem; color: #666; margin-bottom: 12px; }
-      .ci-total-label { font-size: 0.75rem; color: #999; margin-bottom: 2px; }
-      .ci-total { font-size: 1rem; font-weight: 700; color: #c43228; } /* Maverik Red */
-      .ci-remove-btn { background: none; border: none; font-size: 1.1rem; color: #999; cursor: pointer; margin-top: 16px; padding: 0; transition: color 0.2s; }
-      .ci-remove-btn:hover { color: #000; }
+      .ci-price-col {
+        width: 140px;
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+      .ci-price {
+        font-size: 0.95rem;
+        color: #666;
+        margin-bottom: 12px;
+      }
+      .ci-total-label {
+        font-size: 0.75rem;
+        color: #999;
+        margin-bottom: 2px;
+      }
+      .ci-total {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #c43228;
+      } /* Maverik Red */
+      .ci-remove-btn {
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        color: #999;
+        cursor: pointer;
+        margin-top: 16px;
+        padding: 0;
+        transition: color 0.2s;
+      }
+      .ci-remove-btn:hover {
+        color: #000;
+      }
 
       /* Policy & Note */
-      .cart-bottom-info { display: flex; gap: 40px; }
-      .cart-note { flex: 1; }
-      .cart-note label { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; display: block; }
-      .cart-note textarea { width: 100%; height: 140px; border: 1px solid #e0e0e0; padding: 12px; resize: none; outline: none; background: #fdfdfd; font-size: 0.9rem; }
-      .cart-note textarea:focus { border-color: #212529; }
-      
-      .cart-policy { flex: 1; }
-      .cart-policy h6 { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
-      .cart-policy ul { list-style: none; padding: 0; margin: 0; }
-      .cart-policy li { display: flex; align-items: flex-start; margin-bottom: 12px; color: #555; font-size: 0.85rem; line-height: 1.5; font-weight: 300; }
-      .cart-policy li::before { content: "→"; display: inline-block; margin-right: 8px; font-weight: bold; }
+      .cart-bottom-info {
+        display: flex;
+        gap: 40px;
+      }
+      .cart-note {
+        flex: 1;
+      }
+      .cart-note label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: block;
+      }
+      .cart-note textarea {
+        width: 100%;
+        height: 140px;
+        border: 1px solid #e0e0e0;
+        padding: 12px;
+        resize: none;
+        outline: none;
+        background: #fdfdfd;
+        font-size: 0.9rem;
+      }
+      .cart-note textarea:focus {
+        border-color: #212529;
+      }
+
+      .cart-policy {
+        flex: 1;
+      }
+      .cart-policy h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .cart-policy ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .cart-policy li {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        color: #555;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        font-weight: 300;
+      }
+      .cart-policy li::before {
+        content: "→";
+        display: inline-block;
+        margin-right: 8px;
+        font-weight: bold;
+      }
 
       /* ── Right Column: Summary ─────────────────────── */
-      .cart-summary-box { background: #fdfdfd; border: 1px solid #eee; padding: 30px; position: sticky; top: 20px; }
-      .cs-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eaeaea; }
-      .cs-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-      .cs-label { font-size: 0.95rem; font-weight: 700; }
-      .cs-val { font-size: 1.15rem; font-weight: 700; }
-      .cs-hint { font-size: 0.8rem; color: #888; margin-top: 16px; margin-bottom: 30px; font-weight: 300; line-height: 1.5; }
-      
-      .continue-shopping { text-align: right; margin-bottom: 16px; margin-top: -30px; }
-      .continue-shopping a { color: #555; font-size: 0.85rem; text-decoration: none; transition: color 0.2s; }
-      .continue-shopping a:hover { color: #000; }
-      
-      .empty-cart-view { text-align: center; padding: 80px 20px; background: #fff; border: 1px solid #eee; border-radius: 2px; }
+      .cart-summary-box {
+        background: #fdfdfd;
+        border: 1px solid #eee;
+        padding: 30px;
+        position: sticky;
+        top: 20px;
+      }
+      .cs-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eaeaea;
+      }
+      .cs-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .cs-label {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+      .cs-val {
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+      .cs-hint {
+        font-size: 0.8rem;
+        color: #888;
+        margin-top: 16px;
+        margin-bottom: 30px;
+        font-weight: 300;
+        line-height: 1.5;
+      }
+
+      .continue-shopping {
+        text-align: right;
+        margin-bottom: 16px;
+        margin-top: -30px;
+      }
+      .continue-shopping a {
+        color: #555;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .continue-shopping a:hover {
+        color: #000;
+      }
+
+      .empty-cart-view {
+        text-align: center;
+        padding: 80px 20px;
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 2px;
+      }
     </style>
   </head>
   <body class="font-sans text-gray-800">
-
     <!-- ══════════════════════════════ NAVBAR ══════════════════════════════ -->
-    <nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+    <nav
+      class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom"
+    >
       <div class="container-fluid px-0">
         <a class="navbar-brand" href="index.html">
           <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
-            <span style="letter-spacing:.12rem;">Maverik</span>
+            <span style="letter-spacing: 0.12rem">Maverik</span>
             <span>Store</span>
           </span>
         </a>
         <div class="mx-auto d-lg-block d-none">
           <ul class="navbar-nav">
-            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="about.html">About us</a></li>
-            <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
-            <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">About us</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="products.html">Products</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contact</a>
+            </li>
           </ul>
         </div>
         <div class="d-flex align-items-center gap-4">
-          <button type="button" class="btn btn-outline-dark btn-sm fw-semibold d-none d-lg-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+          <button
+            type="button"
+            class="btn btn-outline-dark btn-sm fw-semibold d-none d-lg-flex align-items-center gap-2"
+            data-bs-toggle="modal"
+            data-bs-target="#loginModal"
+          >
             🔐 Login Now
           </button>
-          
+
           <!-- User Dropdown (hidden by default, shown when logged in) -->
           <div class="dropdown d-none d-lg-flex" id="userNavDropdown">
-            <button 
-              class="btn btn-outline-dark btn-sm fw-semibold" 
-              type="button" 
+            <button
+              class="btn btn-outline-dark btn-sm fw-semibold"
+              type="button"
               id="userMenuBtn"
               data-bs-toggle="dropdown"
             >
@@ -106,10 +317,15 @@
     <main class="py-5">
       <div class="container">
         <!-- Breadcrumb -->
-        <nav class="mb-5 d-flex justify-content-start text-muted" style="font-size:.85rem;">
-          <a href="index.html" class="text-muted text-decoration-none">Trang chủ</a> 
-          <span class="mx-2">/</span> 
-          <span id="breadcrumb-count" style="color: #999;">Giỏ hàng (0)</span>
+        <nav
+          class="mb-5 d-flex justify-content-start text-muted"
+          style="font-size: 0.85rem"
+        >
+          <a href="index.html" class="text-muted text-decoration-none"
+            >Trang chủ</a
+          >
+          <span class="mx-2">/</span>
+          <span id="breadcrumb-count" style="color: #999">Giỏ hàng (0)</span>
         </nav>
 
         <h1 class="cart-title">Giỏ hàng của bạn</h1>
@@ -122,8 +338,14 @@
           <!-- Left Column -->
           <div class="col-lg-8 mb-4">
             <div class="cart-items-wrapper">
-              <p class="cart-count-header">Bạn đang có <strong class="text-dark" id="txt-item-count">0 sản phẩm</strong> trong giỏ hàng</p>
-              
+              <p class="cart-count-header">
+                Bạn đang có
+                <strong class="text-dark" id="txt-item-count"
+                  >0 sản phẩm</strong
+                >
+                trong giỏ hàng
+              </p>
+
               <!-- Items list renders here -->
               <div id="cart-items-container"></div>
             </div>
@@ -138,7 +360,10 @@
                 <ul>
                   <li>Bảo hành 1 đổi 1 đối với lỗi sản phẩm</li>
                   <li>Sản phẩm còn đủ hộp, hóa đơn, chưa qua sử dụng.</li>
-                  <li>Sản phẩm sale chỉ hỗ trợ đổi size (nếu cửa hàng còn) trong 7 ngày trên toàn hệ thống.</li>
+                  <li>
+                    Sản phẩm sale chỉ hỗ trợ đổi size (nếu cửa hàng còn) trong 7
+                    ngày trên toàn hệ thống.
+                  </li>
                 </ul>
               </div>
             </div>
@@ -149,30 +374,46 @@
             <div class="continue-shopping">
               <a href="products.html">Tiếp tục mua hàng →</a>
             </div>
-            
+
             <div class="cart-summary-box">
               <div class="cs-title">Thông tin đơn hàng</div>
-              
+
               <div class="cs-row">
                 <span class="cs-label">Tổng tiền:</span>
                 <span class="cs-val" id="summary-total">0đ</span>
               </div>
-              
-              <p class="cs-hint">Bạn có thể nhập mã giảm giá ở trang thanh toán</p>
-              
-              <button class="btn btn-dark rounded-0 fw-bold py-3 w-100" id="btn-goto-checkout" style="letter-spacing: .08em; font-size: .95rem;">THANH TOÁN</button>
+
+              <p class="cs-hint">
+                Bạn có thể nhập mã giảm giá ở trang thanh toán
+              </p>
+
+              <button
+                class="btn btn-dark rounded-0 fw-bold py-3 w-100"
+                id="btn-goto-checkout"
+                style="letter-spacing: 0.08em; font-size: 0.95rem"
+              >
+                THANH TOÁN
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Empty State -->
         <div id="cart-empty" class="empty-cart-view d-none">
-          <i class="bi bi-cart-x mb-4 d-block" style="font-size:4rem;color:#ddd;"></i>
+          <i
+            class="bi bi-cart-x mb-4 d-block"
+            style="font-size: 4rem; color: #ddd"
+          ></i>
           <h4 class="mb-3">Giỏ hàng của bạn đang trống</h4>
-          <p class="text-muted mb-4">Hãy tiếp tục khám phá các sản phẩm của chúng tôi!</p>
-          <a href="products.html" class="btn btn-dark px-4 py-2 text-uppercase fw-bold">Tiếp tục mua sắm</a>
+          <p class="text-muted mb-4">
+            Hãy tiếp tục khám phá các sản phẩm của chúng tôi!
+          </p>
+          <a
+            href="products.html"
+            class="btn btn-dark px-4 py-2 text-uppercase fw-bold"
+            >Tiếp tục mua sắm</a
+          >
         </div>
-
       </div>
     </main>
 
