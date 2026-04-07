@@ -41,6 +41,22 @@
         <button type="button" class="btn btn-outline-dark btn-sm fw-semibold d-none d-lg-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#loginModal">
             🔐 Login Now
         </button>
+        
+        <!-- User Dropdown (hidden by default, shown when logged in) -->
+        <div class="dropdown d-none d-lg-flex" id="userNavDropdown">
+          <button 
+            class="btn btn-outline-dark btn-sm fw-semibold" 
+            type="button" 
+            id="userMenuBtn"
+            data-bs-toggle="dropdown"
+          >
+            👤 <span id="userNameDisplay">User</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu">
+            <!-- Built dynamically by navbar.js -->
+          </ul>
+        </div>
+        
         <span class="d-flex align-items-center gap-2 fw-bold">
             <span>
                 <i class="bi bi-telephone"></i>
@@ -385,7 +401,25 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+  // Expose logout function globally
+  window.handleLogout = async function() {
+    const confirmed = window.confirm('Bạn có chắc muốn đăng xuất?');
+    if (!confirmed) return;
+    try {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('maverik_cart');
+      window.dispatchEvent(new Event('cartUpdated'));
+      alert('✅ Đã đăng xuất');
+      window.location.href = './index.html';
+    } catch (err) {
+      console.error('Logout error:', err);
+      window.location.href = './index.html';
+    }
+  };
+  
   document.getElementById('toggleLoginPwdModal')?.addEventListener('click', function() {
     const input = document.getElementById('loginPasswordModal');
     const icon = this.querySelector('i');

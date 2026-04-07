@@ -169,6 +169,7 @@ function buildProductCard(product) {
               data-product-id="${product.id}"
               data-product-name="${product.name}"
               data-product-price="${product.price}"
+              data-product-image="${image}"
               ${!inStock ? "disabled" : ""}
             >
               ${inStock ? '<i class="bi bi-cart-plus me-1"></i>Thêm giỏ' : "Hết hàng"}
