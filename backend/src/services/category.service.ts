@@ -1,7 +1,10 @@
 import slugify from "slugify";
 import { CategoryRepository } from "../repositories/category.repository";
 import { APIError } from "../utils/apiResponse";
-import { CreateCategoryInput, UpdateCategoryInput } from "../schemas/category.schema";
+import {
+  CreateCategoryInput,
+  UpdateCategoryInput,
+} from "../schemas/category.schema";
 
 export class CategoryService {
   static async getAll() {
@@ -10,13 +13,14 @@ export class CategoryService {
 
   static async getById(id: number) {
     const cat = await CategoryRepository.findById(id);
-    if (!cat) throw new APIError(404, `Category not found`, {}, "CATEGORY_NOT_FOUND");
+    if (!cat)
+      throw new APIError(404, `Category not found`, {}, "CATEGORY_NOT_FOUND");
     return cat;
   }
 
   private static async generateUniqueSlug(
     name: string,
-    excludeId?: number
+    excludeId?: number,
   ): Promise<string> {
     // Generate base slug with Vietnamese support
     let baseSlug = slugify(name, {
@@ -31,7 +35,7 @@ export class CategoryService {
     // Check for collision and auto-append numbers if needed
     while (true) {
       const existing = await CategoryRepository.findBySlug(slug);
-      
+
       // If no existing with this slug, or existing is the same category being updated, use it
       if (!existing || (excludeId && existing.id === excludeId)) {
         return slug;
@@ -45,8 +49,7 @@ export class CategoryService {
 
   static async create(data: CreateCategoryInput) {
     // Generate slug from name if not provided
-    const slug =
-      data.slug || (await this.generateUniqueSlug(data.name));
+    const slug = data.slug || (await this.generateUniqueSlug(data.name));
 
     return CategoryRepository.create({
       name: data.name,
@@ -83,7 +86,7 @@ export class CategoryService {
         400,
         `Cannot delete category with ${productCount} product(s)`,
         {},
-        "CATEGORY_HAS_PRODUCTS"
+        "CATEGORY_HAS_PRODUCTS",
       );
     }
 

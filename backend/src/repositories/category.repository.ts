@@ -39,7 +39,7 @@ export class CategoryRepository {
       name?: string;
       slug?: string;
       description?: string;
-    }
+    },
   ) {
     return prisma.category.update({
       where: { id },

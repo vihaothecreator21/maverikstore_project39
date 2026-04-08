@@ -2,7 +2,10 @@ import { Router, Request, Response } from "express";
 import { CategoryService } from "../services/category.service";
 import { catchAsync } from "../utils/catchAsync";
 import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse";
-import { CreateCategorySchema, UpdateCategorySchema } from "../schemas/category.schema";
+import {
+  CreateCategorySchema,
+  UpdateCategorySchema,
+} from "../schemas/category.schema";
 
 export const categoryRoutes = Router();
 
@@ -42,7 +45,7 @@ categoryRoutes.post(
     // Validate request body using Zod schema
     const data = CreateCategorySchema.parse(req.body);
     const category = await CategoryService.create(data);
-    
+
     return sendSuccess(
       res,
       category,
@@ -60,7 +63,7 @@ categoryRoutes.put(
     // Validate request body using Zod schema
     const data = UpdateCategorySchema.parse(req.body);
     const category = await CategoryService.update(id, data);
-    
+
     return sendSuccess(
       res,
       category,
@@ -76,7 +79,7 @@ categoryRoutes.delete(
   catchAsync(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const category = await CategoryService.delete(id);
-    
+
     return sendSuccess(
       res,
       category,
