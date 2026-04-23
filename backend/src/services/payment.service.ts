@@ -14,10 +14,18 @@ import * as qs from "qs";
  * Sắp xếp object theo thứ tự alphabet của key (VNPay yêu cầu)
  * KHÔNG encode ở đây. VNPay Node.js demo yêu cầu dùng chuỗi thô để hash.
  */
-function sortObject(obj: Record<string, string | number>): Record<string, string | number> {
-  const sorted: Record<string, string | number> = {};
-  for (const key of Object.keys(obj).sort()) {
-    sorted[key] = obj[key];
+function sortObject(obj: Record<string, string | number>): Record<string, string> {
+  const sorted: Record<string, string> = {};
+  const str: string[] = [];
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      str.push(encodeURIComponent(key));
+    }
+  }
+  str.sort();
+  for (let key = 0; key < str.length; key++) {
+    const originalKey = decodeURIComponent(str[key]);
+    sorted[str[key]] = encodeURIComponent(String(obj[originalKey])).replace(/%20/g, "+");
   }
   return sorted;
 }
@@ -111,7 +119,7 @@ function verifyVNPaySignature(
     .update(Buffer.from(signData, "utf-8"))
     .digest("hex");
 
-  return signed === receivedHash;
+  return signed.toLowerCase() === receivedHash.toLowerCase();
 }
 
 /**
