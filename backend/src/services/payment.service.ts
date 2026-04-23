@@ -104,10 +104,10 @@ function verifyVNPaySignature(
   const receivedHash = params["vnp_SecureHash"];
   if (!receivedHash) return false;
 
-  // Loại bỏ vnp_SecureHash và vnp_SecureHashType khỏi params
+  // Loại bỏ vnp_SecureHash, vnp_SecureHashType và các param không bắt đầu bằng vnp_ khỏi params
   const dataParams: Record<string, string> = {};
   for (const [k, v] of Object.entries(params)) {
-    if (k !== "vnp_SecureHash" && k !== "vnp_SecureHashType") {
+    if (k.startsWith("vnp_") && k !== "vnp_SecureHash" && k !== "vnp_SecureHashType") {
       dataParams[k] = v;
     }
   }
