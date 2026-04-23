@@ -14,18 +14,12 @@ import * as qs from "qs";
  * Sắp xếp object theo thứ tự alphabet của key (VNPay yêu cầu)
  * KHÔNG encode ở đây. VNPay Node.js demo yêu cầu dùng chuỗi thô để hash.
  */
-function sortObject(obj: Record<string, string | number>): Record<string, string> {
+function sortObject(obj: Record<string, any>): Record<string, string> {
   const sorted: Record<string, string> = {};
-  const str: string[] = [];
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      str.push(encodeURIComponent(key));
+  for (const key of Object.keys(obj).sort()) {
+    if (obj[key] !== "" && obj[key] !== undefined && obj[key] !== null) {
+      sorted[key] = String(obj[key]);
     }
-  }
-  str.sort();
-  for (let key = 0; key < str.length; key++) {
-    const originalKey = decodeURIComponent(str[key]);
-    sorted[str[key]] = encodeURIComponent(String(obj[originalKey])).replace(/%20/g, "+");
   }
   return sorted;
 }
@@ -80,17 +74,20 @@ function buildVNPayUrl(params: {
   };
 
   const sorted   = sortObject(vnpParams);
+  // 1. Dữ liệu trong chuỗi signData dùng để Hash KHÔNG được URL Encode
   const signData = qs.stringify(sorted, { encode: false });
 
-  // HMAC-SHA512 với key = hashSecret
+  // 2. HMAC-SHA512 với key = hashSecret
   const signed = crypto
     .createHmac("sha512", params.hashSecret)
     .update(Buffer.from(signData, "utf-8"))
     .digest("hex");
 
-  // Thêm chữ ký vào params rồi build URL cuối
+  // 3. Thêm chữ ký vào params rồi build URL cuối
   const finalParams = { ...sorted, vnp_SecureHash: signed };
-  return `${VNPAY_URL}?${qs.stringify(finalParams, { encode: false })}`;
+  
+  // 4. Chỉ URL cuối cùng sau khi đã có mã Hash mới được URL Encode các tham số
+  return `${VNPAY_URL}?${qs.stringify(finalParams, { encode: true })}`;
 }
 
 /**
@@ -112,7 +109,9 @@ function verifyVNPaySignature(
     }
   }
 
-  const sorted   = sortObject(dataParams as Record<string, string>);
+  const sorted   = sortObject(dataParams);
+  // params từ req.query đã được express tự động URL Decode, nên sorted hiện là un-encoded.
+  // Tạo chuỗi signData KHÔNG URL Encode để hash
   const signData = qs.stringify(sorted, { encode: false });
   const signed   = crypto
     .createHmac("sha512", hashSecret)
