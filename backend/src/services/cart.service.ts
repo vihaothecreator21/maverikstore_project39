@@ -20,7 +20,8 @@ export class CartService {
     let totalPrice = 0;
     const items =
       cart?.items.map((item) => {
-        const itemTotal = item.product.price * item.quantity;
+        // ✅ FIX: price là Prisma.Decimal, cần .toNumber() trước khi tính toán
+        const itemTotal = Number(item.product.price) * item.quantity;
         totalPrice += itemTotal;
         return { ...item, itemTotal };
       }) || [];

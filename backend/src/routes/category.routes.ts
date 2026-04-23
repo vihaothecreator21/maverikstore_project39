@@ -6,10 +6,11 @@ import {
   CreateCategorySchema,
   UpdateCategorySchema,
 } from "../schemas/category.schema";
+import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware";
 
 export const categoryRoutes = Router();
 
-// GET /api/v1/categories
+// GET /api/v1/categories — Public
 categoryRoutes.get(
   "/",
   catchAsync(async (_req: Request, res: Response) => {
@@ -23,7 +24,7 @@ categoryRoutes.get(
   }),
 );
 
-// GET /api/v1/categories/:id
+// GET /api/v1/categories/:id — Public
 categoryRoutes.get(
   "/:id",
   catchAsync(async (req: Request, res: Response) => {
@@ -38,14 +39,15 @@ categoryRoutes.get(
   }),
 );
 
-// POST /api/v1/categories - Create category
+// POST /api/v1/categories — Admin only
+// ✅ FIX: Thêm authMiddleware + requireAdmin
 categoryRoutes.post(
   "/",
+  authMiddleware,
+  requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
-    // Validate request body using Zod schema
     const data = CreateCategorySchema.parse(req.body);
     const category = await CategoryService.create(data);
-
     return sendSuccess(
       res,
       category,
@@ -55,15 +57,16 @@ categoryRoutes.post(
   }),
 );
 
-// PUT /api/v1/categories/:id - Update category
+// PUT /api/v1/categories/:id — Admin only
+// ✅ FIX: Thêm authMiddleware + requireAdmin
 categoryRoutes.put(
   "/:id",
+  authMiddleware,
+  requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
-    // Validate request body using Zod schema
     const data = UpdateCategorySchema.parse(req.body);
     const category = await CategoryService.update(id, data);
-
     return sendSuccess(
       res,
       category,
@@ -73,13 +76,15 @@ categoryRoutes.put(
   }),
 );
 
-// DELETE /api/v1/categories/:id - Delete category
+// DELETE /api/v1/categories/:id — Admin only
+// ✅ FIX: Thêm authMiddleware + requireAdmin
 categoryRoutes.delete(
   "/:id",
+  authMiddleware,
+  requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const category = await CategoryService.delete(id);
-
     return sendSuccess(
       res,
       category,

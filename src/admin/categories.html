@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Danh mục — Maverik Admin</title>
+  <link rel="stylesheet" href="./assets/fonts/bootstrap-icons.css" />
+  <link rel="stylesheet" href="./assets/admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo"><div class="sidebar-logo-text">Maverik</div><div class="sidebar-logo-sub">Admin Dashboard</div></div>
+    <nav class="sidebar-nav">
+      <span class="nav-label">Menu chính</span>
+      <a href="index.html"      class="sidebar-link" data-page="dashboard"><i class="bi bi-grid-1x2"></i>Tổng quan</a>
+      <a href="products.html"   class="sidebar-link" data-page="products"><i class="bi bi-box-seam"></i>Sản phẩm</a>
+      <a href="categories.html" class="sidebar-link" data-page="categories"><i class="bi bi-folder2"></i>Danh mục</a>
+      <a href="orders.html"     class="sidebar-link" data-page="orders"><i class="bi bi-bag-check"></i>Đơn hàng</a>
+      <a href="revenue.html"    class="sidebar-link" data-page="revenue"><i class="bi bi-bar-chart-line"></i>Doanh thu</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-initials">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="sidebar-username">Admin</div><div class="sidebar-user-role" id="sidebar-role">Admin</div></div>
+      </div>
+      <button class="btn-sidebar-logout" id="btn-admin-logout"><i class="bi bi-box-arrow-right"></i>Đăng xuất</button>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-title">📁 Quản lý Danh mục</div>
+    </div>
+
+    <div class="admin-content" style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+      <!-- Categories Table -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Danh sách danh mục</span></div>
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Tên</th><th>Slug</th><th>Sản phẩm</th><th>Thao tác</th></tr></thead>
+            <tbody id="categories-tbody">
+              <tr><td colspan="5" class="loading-state"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add/Edit Form -->
+      <div class="card">
+        <div class="card-header"><span class="card-title" id="cat-form-title">Thêm danh mục mới</span></div>
+        <div class="card-body">
+          <form id="cat-form" novalidate>
+            <input type="hidden" id="cat-id" />
+            <div class="form-field">
+              <label class="form-label">Tên danh mục *</label>
+              <input type="text" class="form-input" id="cat-name" placeholder="Sofa, Bàn ăn, Tủ..." required />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Slug (URL)</label>
+              <input type="text" class="form-input" id="cat-slug" placeholder="sofa, ban-an, tu..." />
+              <div style="font-size:.73rem;color:#aaa;margin-top:4px;">Tự động tạo nếu để trống</div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Mô tả</label>
+              <textarea class="form-textarea" id="cat-desc" style="min-height:80px;" placeholder="Mô tả danh mục..."></textarea>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button type="submit" class="btn btn-primary" id="cat-submit">Thêm danh mục</button>
+              <button type="button" class="btn btn-outline" id="cat-reset" style="display:none;">Hủy chỉnh sửa</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete -->
+<div class="modal-backdrop" id="cat-delete-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title">⚠️ Xác nhận xóa danh mục</div>
+    <p style="color:#8b91a7;font-size:.88rem;">Xóa danh mục <strong id="cat-delete-name"></strong>? Nếu có sản phẩm trong danh mục này, thao tác có thể thất bại.</p>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" id="cat-delete-cancel">Hủy</button>
+      <button type="button" class="btn btn-danger" id="cat-delete-confirm">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./assets/js/admin-categories.js"></script>
+</body>
+</html>

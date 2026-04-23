@@ -1,320 +1,205 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Furnish Store</title>
+    <title>Đăng nhập — Maverik Furniture</title>
+    <meta name="description" content="Đăng nhập vào tài khoản Maverik Furniture của bạn" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", "Helvetica Neue", sans-serif;
+        background: #f5f5f2;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Navbar ────────────────────────────────────────── */
+      .auth-nav {
+        background: #fff;
+        border-bottom: 1px solid #ebebeb;
+        padding: 16px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand-text { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.2; color: #1a1a1a; text-decoration: none; }
+      .nav-link-subtle { font-size: 0.82rem; color: #888; text-decoration: none; }
+      .nav-link-subtle:hover { color: #1a1a1a; }
+
+      /* ── Main ──────────────────────────────────────────── */
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 20px;
+      }
+      .auth-card {
+        background: #fff;
+        width: 100%;
+        max-width: 440px;
+        padding: 48px;
+        border: 1px solid #e8e8e8;
+      }
+
+      .auth-logo { text-align: center; margin-bottom: 32px; }
+      .auth-logo-icon {
+        width: 48px; height: 48px; background: #1a1a1a;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.2rem; color: #fff;
+      }
+      .auth-title { font-size: 1.5rem; font-weight: 300; letter-spacing: 0.04em; text-align: center; margin-bottom: 6px; }
+      .auth-subtitle { font-size: 0.83rem; color: #888; text-align: center; margin-bottom: 36px; }
+
+      /* ── Form ──────────────────────────────────────────── */
+      .form-group { margin-bottom: 20px; }
+      label.field-label { display: block; font-size: 0.78rem; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+      .field-input {
+        width: 100%; padding: 12px 14px; border: 1px solid #ddd;
+        border-radius: 0; font-size: 0.9rem; font-family: inherit;
+        background: #fdfdfd; transition: border-color 0.2s;
+        outline: none;
+      }
+      .field-input:focus { border-color: #1a1a1a; background: #fff; }
+      .field-input.is-invalid { border-color: #e53935; }
+      .invalid-msg { font-size: 0.75rem; color: #e53935; margin-top: 5px; display: none; }
+      .field-input.is-invalid + .invalid-msg,
+      .field-input.is-invalid ~ .invalid-msg { display: block; }
+
+      .input-group { position: relative; }
+      .input-group .field-input { padding-right: 46px; }
+      .toggle-pw {
+        position: absolute; right: 0; top: 0; height: 100%;
+        width: 44px; background: none; border: none; cursor: pointer;
+        color: #888; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+      }
+      .toggle-pw:hover { color: #1a1a1a; }
+
+      .form-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+      .remember-check { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #555; cursor: pointer; }
+      .remember-check input[type="checkbox"] { accent-color: #1a1a1a; width: 15px; height: 15px; }
+      .forgot-link { font-size: 0.82rem; color: #888; text-decoration: none; }
+      .forgot-link:hover { color: #1a1a1a; }
+
+      /* ── Submit Button ─────────────────────────────────── */
+      .btn-submit {
+        width: 100%; padding: 14px; background: #1a1a1a; color: #fff;
+        border: none; font-size: 0.82rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        cursor: pointer; transition: background 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+      }
+      .btn-submit:hover:not(:disabled) { background: #333; }
+      .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+      .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ── Divider & Social ──────────────────────────────── */
+      .divider { display: flex; align-items: center; gap: 16px; margin: 24px 0; }
+      .divider-line { flex: 1; height: 1px; background: #ebebeb; }
+      .divider-text { font-size: 0.75rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; }
+
+      .btn-social {
+        width: 100%; padding: 12px; background: #fff; color: #1a1a1a;
+        border: 1px solid #ddd; font-size: 0.85rem; font-weight: 500;
+        cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+        transition: border-color 0.2s, background 0.2s;
+      }
+      .btn-social:hover { border-color: #1a1a1a; background: #fafafa; }
+
+      /* ── Footer link ───────────────────────────────────── */
+      .auth-footer { text-align: center; margin-top: 28px; font-size: 0.83rem; color: #888; }
+      .auth-footer a { color: #1a1a1a; font-weight: 600; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+      .auth-footer a:hover { border-color: #1a1a1a; }
+
+      @media (max-width: 480px) {
+        .auth-card { padding: 32px 24px; }
+        .auth-nav { padding: 14px 20px; }
+      }
+    </style>
   </head>
   <body>
-    <!-- Navigation -->
-    <nav
-      class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom"
-    >
-      <div class="container-fluid px-0">
-        <a class="navbar-brand" href="index.html">
-          <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
-            <span class="" style="letter-spacing: 0.12rem">Furnish</span>
-            <span>Template</span>
-          </span>
-        </a>
-
-        <div class="mx-auto d-lg-block d-none">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link" href="index.html">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="about.html">About us</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="products.html">Products</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="testimonials.html">Testimonials</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="contact.html">Contact</a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="d-flex align-items-center gap-4">
-          <span class="d-flex align-items-center gap-2 fw-bold">
-            <span>
-              <i class="bi bi-telephone"></i>
-            </span>
-            <span>+901234576</span>
-          </span>
-          <a
-            class=""
-            data-bs-toggle="offcanvas"
-            href="#offcanvasExample"
-            role="button"
-            aria-controls="offcanvasExample"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="currentColor"
-              class="bi bi-list"
-              viewBox="0 0 16 16"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"
-              />
-            </svg>
-          </a>
-        </div>
-      </div>
+    <!-- Navbar -->
+    <nav class="auth-nav">
+      <a href="index.html" class="brand-text">
+        <div>Maverik</div>
+        <div>Furniture</div>
+      </a>
+      <a href="products.html" class="nav-link-subtle">
+        <i class="bi bi-arrow-left me-1"></i>Tiếp tục mua sắm
+      </a>
     </nav>
 
-    <!-- Login Section -->
     <main>
-      <section class="py-lg-8 pt-6 pb-lg-8">
-        <div class="container">
-          <div class="row justify-content-center">
-            <div class="col-lg-5 col-md-6 col-12">
-              <!-- Login Card -->
-              <div class="shadow-lg rounded-3 p-6 bg-white">
-                <div class="text-center mb-6">
-                  <h1 class="h3 fw-bold mb-2">Welcome Back</h1>
-                  <p class="text-muted" style="font-size: 0.95rem">
-                    Sign in to your Furnish Store account
-                  </p>
-                </div>
-
-                <!-- Login Form -->
-                <form id="loginForm" class="needs-validation" novalidate>
-                  <!-- Email Input -->
-                  <div class="mb-4">
-                    <label for="email" class="form-label fw-semibold"
-                      >Email Address</label
-                    >
-                    <input
-                      type="email"
-                      class="form-control form-control-lg"
-                      id="email"
-                      placeholder="Enter your email"
-                      required
-                    />
-                    <div class="invalid-feedback d-block">
-                      Please enter a valid email address.
-                    </div>
-                  </div>
-
-                  <!-- Password Input -->
-                  <div class="mb-4">
-                    <label for="password" class="form-label fw-semibold"
-                      >Password</label
-                    >
-                    <div class="input-group">
-                      <input
-                        type="password"
-                        class="form-control form-control-lg"
-                        id="password"
-                        placeholder="Enter your password"
-                        required
-                      />
-                      <button
-                        class="btn btn-outline-secondary"
-                        type="button"
-                        id="togglePassword"
-                        style="border-color: #dee2e6"
-                      >
-                        <i class="bi bi-eye"></i>
-                      </button>
-                    </div>
-                    <div class="invalid-feedback d-block">
-                      Password is required.
-                    </div>
-                  </div>
-
-                  <!-- Remember Me & Forgot Password -->
-                  <div
-                    class="d-flex justify-content-between align-items-center mb-4"
-                  >
-                    <div class="form-check">
-                      <input
-                        class="form-check-input"
-                        type="checkbox"
-                        id="rememberMe"
-                      />
-                      <label class="form-check-label" for="rememberMe">
-                        Remember me
-                      </label>
-                    </div>
-                    <a
-                      href="#"
-                      class="text-decoration-none fw-semibold"
-                      style="color: #d47f31"
-                      >Forgot Password?</a
-                    >
-                  </div>
-
-                  <!-- Login Button -->
-                  <button
-                    type="submit"
-                    class="btn btn-dark btn-lg w-100 fw-semibold py-3 mb-4"
-                  >
-                    <span id="loginBtnText">Sign In</span>
-                    <span
-                      id="loginSpinner"
-                      class="spinner-border spinner-border-sm ms-2"
-                      role="status"
-                      style="display: none"
-                    >
-                      <span class="visually-hidden">Loading...</span>
-                    </span>
-                  </button>
-
-                  <!-- Divider -->
-                  <div class="position-relative mb-4">
-                    <hr class="my-3" />
-                    <span
-                      class="position-absolute top-50 start-50 translate-middle bg-white px-3"
-                      style="font-size: 0.875rem; color: #6c757d"
-                      >OR</span
-                    >
-                  </div>
-
-                  <!-- Social Login -->
-                  <div class="d-grid gap-2">
-                    <button
-                      type="button"
-                      class="btn btn-outline-secondary btn-lg py-3"
-                    >
-                      <i class="bi bi-google"></i> Continue with Google
-                    </button>
-                  </div>
-                </form>
-
-                <!-- Sign Up Link -->
-                <div class="text-center mt-5">
-                  <p class="text-muted">
-                    Don't have an account?
-                    <a
-                      href="register.html"
-                      class="text-decoration-none fw-semibold"
-                      style="color: #d47f31"
-                      >Sign Up</a
-                    >
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div class="auth-card">
+        <!-- Logo + Title -->
+        <div class="auth-logo">
+          <div class="auth-logo-icon"><i class="bi bi-person"></i></div>
         </div>
-      </section>
+        <h1 class="auth-title">Đăng nhập</h1>
+        <p class="auth-subtitle">Chào mừng trở lại Maverik Furniture</p>
+
+        <!-- Login Form -->
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label class="field-label" for="email">Email</label>
+            <div class="input-group">
+              <input type="email" class="field-input" id="email"
+                placeholder="your@email.com" autocomplete="email" required />
+            </div>
+            <div class="invalid-msg" id="emailError">Email không hợp lệ</div>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label" for="password">Mật khẩu</label>
+            <div class="input-group">
+              <input type="password" class="field-input" id="password"
+                placeholder="Nhập mật khẩu" autocomplete="current-password" required />
+              <button type="button" class="toggle-pw" id="togglePassword" aria-label="Hiện/ẩn mật khẩu">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            <div class="invalid-msg" id="passwordError">Mật khẩu không được trống</div>
+          </div>
+
+          <div class="form-row">
+            <label class="remember-check">
+              <input type="checkbox" id="rememberMe" />
+              Nhớ tôi
+            </label>
+            <a href="#" class="forgot-link">Quên mật khẩu?</a>
+          </div>
+
+          <button type="submit" class="btn-submit" id="loginBtn">
+            <span class="spinner" id="loginSpinner"></span>
+            <span id="loginBtnText">Đăng nhập</span>
+          </button>
+
+          <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">hoặc</span>
+            <div class="divider-line"></div>
+          </div>
+
+          <button type="button" class="btn-social">
+            <i class="bi bi-google"></i>Đăng nhập với Google
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a>
+        </div>
+      </div>
     </main>
 
-    <!-- Footer placeholder -->
-    <footer class="bg-dark text-white py-6 mt-8">
-      <div class="container text-center">
-        <p>&copy; 2024 Furnish Store. All rights reserved.</p>
-      </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script type="module" src="./assets/js/main.js"></script>
-    <script>
-      // Toggle Password Visibility
-      document
-        .getElementById("togglePassword")
-        ?.addEventListener("click", function () {
-          const passwordInput = document.getElementById("password");
-          const icon = this.querySelector("i");
-
-          if (passwordInput.type === "password") {
-            passwordInput.type = "text";
-            icon.classList.remove("bi-eye");
-            icon.classList.add("bi-eye-slash");
-          } else {
-            passwordInput.type = "password";
-            icon.classList.remove("bi-eye-slash");
-            icon.classList.add("bi-eye");
-          }
-        });
-
-      // Form Validation & Submit
-      document
-        .getElementById("loginForm")
-        ?.addEventListener("submit", async function (e) {
-          e.preventDefault();
-
-          // Bootstrap validation
-          if (!this.checkValidity()) {
-            e.stopPropagation();
-            this.classList.add("was-validated");
-            return;
-          }
-
-          const email = document.getElementById("email").value.trim();
-          const password = document.getElementById("password").value;
-          const rememberMe = document.getElementById("rememberMe").checked;
-
-          // Show loading state
-          const loginBtn = this.querySelector('button[type="submit"]');
-          const spinner = document.getElementById("loginSpinner");
-          const btnText = document.getElementById("loginBtnText");
-
-          loginBtn.disabled = true;
-          spinner.style.display = "inline-block";
-          btnText.textContent = "Signing In";
-
-          try {
-            // Call API
-            const response = await fetch(
-              "http://localhost:5000/api/v1/auth/login",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  email,
-                  password,
-                }),
-              },
-            );
-
-            const data = await response.json();
-
-            if (response.ok && data.status === "success") {
-              // Save token & user info
-              localStorage.setItem("authToken", data.data.token);
-              if (rememberMe) {
-                localStorage.setItem("userEmail", email);
-              }
-              localStorage.setItem("user", JSON.stringify(data.data.user));
-
-              // Show success message
-              alert("Login successful!");
-
-              // Redirect to dashboard/home
-              window.location.href = "index.html";
-            } else {
-              alert(data.message || "Login failed. Please try again.");
-            }
-          } catch (error) {
-            console.error("Login error:", error);
-            alert("An error occurred. Please try again later.");
-          } finally {
-            loginBtn.disabled = false;
-            spinner.style.display = "none";
-            btnText.textContent = "Sign In";
-          }
-        });
-
-      // Auto-fill email if "Remember Me" was checked before
-      window.addEventListener("DOMContentLoaded", () => {
-        const savedEmail = localStorage.getItem("userEmail");
-        if (savedEmail) {
-          document.getElementById("email").value = savedEmail;
-          document.getElementById("rememberMe").checked = true;
-        }
-      });
-    </script>
+    <script type="module" src="./assets/js/login.js"></script>
   </body>
 </html>

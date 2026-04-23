@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đơn hàng — Maverik Admin</title>
+  <link rel="stylesheet" href="./assets/fonts/bootstrap-icons.css" />
+  <link rel="stylesheet" href="./assets/admin.css" />
+  <style>
+    .order-detail-row { display: none; background: #fafbfd; }
+    .order-detail-row.open { display: table-row; }
+    .order-detail-box { padding: 16px 22px; font-size: .83rem; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .detail-label { font-weight: 600; color: #8b91a7; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .status-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo"><div class="sidebar-logo-text">Maverik</div><div class="sidebar-logo-sub">Admin Dashboard</div></div>
+    <nav class="sidebar-nav">
+      <span class="nav-label">Menu chính</span>
+      <a href="index.html"      class="sidebar-link" data-page="dashboard"><i class="bi bi-grid-1x2"></i>Tổng quan</a>
+      <a href="products.html"   class="sidebar-link" data-page="products"><i class="bi bi-box-seam"></i>Sản phẩm</a>
+      <a href="categories.html" class="sidebar-link" data-page="categories"><i class="bi bi-folder2"></i>Danh mục</a>
+      <a href="orders.html"     class="sidebar-link" data-page="orders"><i class="bi bi-bag-check"></i>Đơn hàng</a>
+      <a href="revenue.html"    class="sidebar-link" data-page="revenue"><i class="bi bi-bar-chart-line"></i>Doanh thu</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-initials">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="sidebar-username">Admin</div><div class="sidebar-user-role" id="sidebar-role">Admin</div></div>
+      </div>
+      <button class="btn-sidebar-logout" id="btn-admin-logout"><i class="bi bi-box-arrow-right"></i>Đăng xuất</button>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-title">📋 Quản lý Đơn hàng</div>
+      <div class="topbar-actions">
+        <span id="orders-count" style="font-size:.82rem;color:#8b91a7;"></span>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <!-- Status Filter Tabs -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;">
+        <button class="btn btn-primary btn-sm active-tab" data-status="" id="tab-all">Tất cả</button>
+        <button class="btn btn-outline btn-sm" data-status="PENDING">⏳ Chờ xác nhận</button>
+        <button class="btn btn-outline btn-sm" data-status="CONFIRMED">✅ Đã xác nhận</button>
+        <button class="btn btn-outline btn-sm" data-status="PROCESSING">🔄 Đang xử lý</button>
+        <button class="btn btn-outline btn-sm" data-status="SHIPPING">🚚 Đang giao</button>
+        <button class="btn btn-outline btn-sm" data-status="DELIVERED">📦 Đã giao</button>
+        <button class="btn btn-outline btn-sm" data-status="COMPLETED">🏁 Hoàn thành</button>
+        <button class="btn btn-outline btn-sm" data-status="CANCELLED">❌ Đã hủy</button>
+      </div>
+
+      <!-- Search -->
+      <div class="filter-bar">
+        <input class="search-input" type="text" id="search-orders" placeholder="Tìm #ID hoặc tên khách hàng..." />
+      </div>
+
+      <!-- Orders Table -->
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#ID</th>
+                <th>Khách hàng</th>
+                <th>Tổng tiền</th>
+                <th>PT Thanh toán</th>
+                <th>Trạng thái</th>
+                <th>Ngày đặt</th>
+                <th style="text-align:center;">Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody">
+              <tr><td colspan="7" class="loading-state"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-body" style="padding:12px 22px;">
+          <div id="orders-pagination" class="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./assets/js/admin-orders.js"></script>
+</body>
+</html>

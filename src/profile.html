@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tài khoản — Maverik Furniture</title>
+    <meta name="description" content="Quản lý thông tin tài khoản Maverik Furniture" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: "Inter", sans-serif; background: #f5f5f2; color: #1a1a1a; }
+
+      /* ── Navbar ────────────────────────────────────────── */
+      .profile-nav {
+        background: #fff; border-bottom: 1px solid #ebebeb;
+        padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+        position: sticky; top: 0; z-index: 100;
+      }
+      .brand { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.2; color: #1a1a1a; text-decoration: none; }
+      .nav-links { display: flex; gap: 24px; align-items: center; }
+      .nav-links a { font-size: 0.83rem; color: #666; text-decoration: none; transition: color .2s; }
+      .nav-links a:hover { color: #1a1a1a; }
+
+      /* ── Layout ────────────────────────────────────────── */
+      .profile-page { max-width: 1000px; margin: 0 auto; padding: 40px 20px 80px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
+
+      /* ── Sidebar Card ──────────────────────────────────── */
+      .profile-sidebar { background: #fff; border: 1px solid #e8e8e8; padding: 32px 24px; text-align: center; }
+      .avatar {
+        width: 72px; height: 72px; background: #1a1a1a;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; font-weight: 700; color: #fff;
+        margin: 0 auto 16px;
+      }
+      .profile-username { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+      .profile-email-display { font-size: 0.8rem; color: #888; margin-bottom: 6px; }
+      .profile-role-badge { display: inline-block; padding: 3px 10px; border: 1px solid #ddd; font-size: 0.72rem; color: #666; margin-bottom: 24px; text-transform: uppercase; letter-spacing: .06em; }
+
+      /* Sidebar tabs */
+      .sidebar-nav { border-top: 1px solid #f0f0f0; padding-top: 20px; }
+      .tab-btn {
+        width: 100%; text-align: left; padding: 11px 14px;
+        background: none; border: none; cursor: pointer;
+        font-size: 0.85rem; color: #666; display: flex; align-items: center; gap: 10px;
+        transition: background .15s, color .15s; border-radius: 4px; margin-bottom: 4px;
+      }
+      .tab-btn:hover { background: #f5f5f2; color: #1a1a1a; }
+      .tab-btn.active { background: #1a1a1a; color: #fff; }
+      .tab-btn i { font-size: 1rem; width: 20px; text-align: center; }
+
+      .btn-logout {
+        width: 100%; margin-top: 24px; padding: 10px;
+        background: none; border: 1px solid #f0eded; cursor: pointer;
+        font-size: 0.82rem; color: #c43228; display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: background .15s;
+      }
+      .btn-logout:hover { background: #fef2f2; }
+
+      /* ── Main Content ──────────────────────────────────── */
+      .profile-content { background: #fff; border: 1px solid #e8e8e8; }
+      .tab-pane { display: none; padding: 36px; }
+      .tab-pane.active { display: block; }
+      .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #f0f0f0; color: #444; }
+
+      /* ── Form ──────────────────────────────────────────── */
+      .field-group { margin-bottom: 20px; }
+      label.field-label { display: block; font-size: 0.76rem; font-weight: 600; color: #555; margin-bottom: 7px; text-transform: uppercase; letter-spacing: .06em; }
+      .field-input {
+        width: 100%; padding: 11px 14px; border: 1px solid #ddd;
+        font-size: 0.9rem; font-family: inherit; background: #fdfdfd;
+        transition: border-color .2s; outline: none;
+      }
+      .field-input:focus { border-color: #1a1a1a; background: #fff; }
+      .field-input.is-invalid { border-color: #e53935; }
+      textarea.field-input { resize: vertical; min-height: 88px; }
+      .field-hint { font-size: 0.75rem; color: #aaa; margin-top: 5px; }
+      .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+      /* Password toggle */
+      .pw-group { position: relative; }
+      .pw-group .field-input { padding-right: 46px; }
+      .toggle-pw {
+        position: absolute; right: 0; top: 0; height: 100%; width: 44px;
+        background: none; border: none; cursor: pointer; color: #888; font-size: 1rem;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .toggle-pw:hover { color: #1a1a1a; }
+
+      .btn-save {
+        padding: 12px 32px; background: #1a1a1a; color: #fff;
+        border: none; font-size: 0.8rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .1em; cursor: pointer;
+        transition: background .2s;
+      }
+      .btn-save:hover:not(:disabled) { background: #333; }
+      .btn-save:disabled { opacity: 0.55; cursor: not-allowed; }
+
+      /* ── Orders Tab ────────────────────────────────────── */
+      .order-card { border: 1px solid #f0f0f0; padding: 16px 18px; margin-bottom: 10px; transition: border-color .15s; }
+      .order-card:hover { border-color: #ddd; }
+      .order-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 0.84rem; }
+      .order-id { font-weight: 700; }
+      .order-date { color: #aaa; font-size: 0.78rem; flex: 1; }
+      .order-status { padding: 3px 10px; border: 1px solid; font-size: 0.72rem; font-weight: 600; letter-spacing: .04em; }
+      .order-card-body { display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; }
+      .order-total strong { color: #1a1a1a; }
+
+      .btn-small { display: inline-block; margin-top: 12px; padding: 8px 20px; background: #1a1a1a; color: #fff; text-decoration: none; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+
+      /* Spinner */
+      .spinner-ring {
+        width: 28px; height: 28px; border: 3px solid #eee;
+        border-top-color: #1a1a1a; border-radius: 50%;
+        animation: spin .8s linear infinite; margin: 0 auto;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ── Responsive ────────────────────────────────────── */
+      @media (max-width: 768px) {
+        .profile-page { grid-template-columns: 1fr; }
+        .profile-sidebar { text-align: left; }
+        .sidebar-nav { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 16px; }
+        .tab-btn { width: auto; }
+        .form-row-2 { grid-template-columns: 1fr; }
+        .tab-pane { padding: 24px 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="profile-nav">
+      <a href="index.html" class="brand">
+        <div>Maverik</div>
+        <div>Furniture</div>
+      </a>
+      <div class="nav-links">
+        <a href="products.html"><i class="bi bi-grid me-1"></i>Sản phẩm</a>
+        <a href="cart.html"><i class="bi bi-bag me-1"></i>Giỏ hàng</a>
+      </div>
+    </nav>
+
+    <div class="profile-page">
+      <!-- ── Sidebar ─────────────────────────────────────── -->
+      <aside class="profile-sidebar">
+        <div class="avatar" id="avatar-initials">?</div>
+        <div class="profile-username" id="profile-name">Đang tải...</div>
+        <div class="profile-email-display" id="profile-email"></div>
+        <div class="profile-role-badge" id="profile-role">Khách hàng</div>
+
+        <nav class="sidebar-nav">
+          <button class="tab-btn active" data-tab="tab-info">
+            <i class="bi bi-person"></i>Thông tin cá nhân
+          </button>
+          <button class="tab-btn" data-tab="tab-password">
+            <i class="bi bi-shield-lock"></i>Đổi mật khẩu
+          </button>
+          <button class="tab-btn" data-tab="tab-orders">
+            <i class="bi bi-bag"></i>Lịch sử đơn hàng
+          </button>
+        </nav>
+
+        <button class="btn-logout" id="btn-logout">
+          <i class="bi bi-box-arrow-right"></i>Đăng xuất
+        </button>
+      </aside>
+
+      <!-- ── Content ─────────────────────────────────────── -->
+      <main class="profile-content">
+
+        <!-- Tab 1: Thông tin cá nhân -->
+        <div id="tab-info" class="tab-pane active">
+          <div class="section-title">Thông tin cá nhân</div>
+          <form id="form-profile" novalidate>
+            <div class="form-row-2">
+              <div class="field-group">
+                <label class="field-label" for="inp-fullname">Họ và tên</label>
+                <input type="text" class="field-input" id="inp-fullname" placeholder="Nguyễn Văn A" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="inp-email">Email</label>
+                <input type="email" class="field-input" id="inp-email" placeholder="your@email.com" />
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="inp-phone">Số điện thoại</label>
+              <input type="tel" class="field-input" id="inp-phone" placeholder="0912 345 678" />
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="inp-address">Địa chỉ giao hàng</label>
+              <textarea class="field-input" id="inp-address"
+                placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"></textarea>
+              <div class="field-hint">
+                <i class="bi bi-info-circle"></i>
+                Địa chỉ này sẽ tự động điền vào form giao hàng khi bạn thanh toán
+              </div>
+            </div>
+            <button type="submit" class="btn-save" id="btn-save-profile">Lưu thay đổi</button>
+          </form>
+        </div>
+
+        <!-- Tab 2: Đổi mật khẩu -->
+        <div id="tab-password" class="tab-pane">
+          <div class="section-title">Đổi mật khẩu</div>
+          <form id="form-password" novalidate style="max-width: 420px;">
+            <div class="field-group">
+              <label class="field-label" for="inp-cur-pw">Mật khẩu hiện tại</label>
+              <div class="pw-group">
+                <input type="password" class="field-input" id="inp-cur-pw" placeholder="Nhập mật khẩu hiện tại" />
+                <button type="button" class="toggle-pw" data-target="inp-cur-pw"><i class="bi bi-eye"></i></button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="inp-new-pw">Mật khẩu mới</label>
+              <div class="pw-group">
+                <input type="password" class="field-input" id="inp-new-pw" placeholder="Ít nhất 8 ký tự, chữ hoa + số" />
+                <button type="button" class="toggle-pw" data-target="inp-new-pw"><i class="bi bi-eye"></i></button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="inp-confirm-pw">Xác nhận mật khẩu mới</label>
+              <div class="pw-group">
+                <input type="password" class="field-input" id="inp-confirm-pw" placeholder="Nhập lại mật khẩu mới" />
+                <button type="button" class="toggle-pw" data-target="inp-confirm-pw"><i class="bi bi-eye"></i></button>
+              </div>
+            </div>
+            <button type="submit" class="btn-save" id="btn-change-pw">Đổi mật khẩu</button>
+          </form>
+        </div>
+
+        <!-- Tab 3: Lịch sử đơn hàng -->
+        <div id="tab-orders" class="tab-pane">
+          <div class="section-title">Lịch sử đơn hàng</div>
+          <div id="orders-list">
+            <div style="text-align:center; padding:30px; color:#bbb;">
+              <i class="bi bi-bag" style="font-size:2rem;"></i>
+              <p class="mt-2" style="font-size:0.85rem;">Chọn tab để tải lịch sử đơn hàng</p>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <script>
+      // Password toggles (shared inline script)
+      document.querySelectorAll(".toggle-pw").forEach((btn) => {
+        btn.addEventListener("click", function() {
+          const targetId = this.dataset.target;
+          if (!targetId) return;
+          const input = document.getElementById(targetId);
+          const icon  = this.querySelector("i");
+          if (!input || !icon) return;
+          const isHidden = input.type === "password";
+          input.type = isHidden ? "text" : "password";
+          icon.classList.toggle("bi-eye",       !isHidden);
+          icon.classList.toggle("bi-eye-slash",  isHidden);
+        });
+      });
+    </script>
+    <script type="module" src="./assets/js/profile.js"></script>
+  </body>
+</html>

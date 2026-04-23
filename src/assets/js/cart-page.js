@@ -215,10 +215,15 @@ window.removeCartItem = async function (itemId) {
 
 document.getElementById("btn-goto-checkout")?.addEventListener("click", () => {
   const note = document.getElementById("order-note")?.value || "";
-  localStorage.setItem("checkout_note", note);
-  alert(
-    "Tính năng Checkout chưa được kích hoạt. Sẽ thực hiện trong tương lai!",
-  );
+  if (note) localStorage.setItem("checkout_note", note);
+
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    // Chưa đăng nhập → redirect sang checkout (sẽ hiện auth gate)
+    window.location.href = "checkout.html";
+    return;
+  }
+  window.location.href = "checkout.html";
 });
 
 function formatVND(amount) {

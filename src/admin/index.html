@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Maverik Admin</title>
+  <link rel="stylesheet" href="./assets/fonts/bootstrap-icons.css" />
+  <script src="./assets/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="./assets/admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-text">Maverik</div>
+      <div class="sidebar-logo-sub">Admin Dashboard</div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-label">Menu chính</span>
+      <a href="index.html"      class="sidebar-link" data-page="dashboard"><i class="bi bi-grid-1x2"></i>Tổng quan</a>
+      <a href="products.html"   class="sidebar-link" data-page="products"><i class="bi bi-box-seam"></i>Sản phẩm</a>
+      <a href="categories.html" class="sidebar-link" data-page="categories"><i class="bi bi-folder2"></i>Danh mục</a>
+      <a href="orders.html"     class="sidebar-link" data-page="orders"><i class="bi bi-bag-check"></i>Đơn hàng</a>
+      <a href="revenue.html"    class="sidebar-link" data-page="revenue"><i class="bi bi-bar-chart-line"></i>Doanh thu</a>
+      <span class="nav-label">Cài đặt</span>
+      <a href="/profile.html"   class="sidebar-link"><i class="bi bi-person-circle"></i>Tài khoản</a>
+      <a href="/index.html"     class="sidebar-link" target="_blank"><i class="bi bi-shop"></i>Xem cửa hàng</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-initials">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-username">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-role">Admin</div>
+        </div>
+      </div>
+      <button class="btn-sidebar-logout" id="btn-admin-logout">
+        <i class="bi bi-box-arrow-right"></i>Đăng xuất
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="admin-main">
+    <!-- Top Bar -->
+    <div class="admin-topbar">
+      <div class="topbar-title">📊 Tổng quan</div>
+      <div class="topbar-actions">
+        <span id="stat-pending" style="font-size:.8rem;color:#f59e0b;font-weight:600;"></span>
+        <span style="font-size:.8rem;color:#8b91a7;" id="topbar-date"></span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="admin-content">
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="bi bi-currency-dollar"></i></div>
+          <div>
+            <div class="stat-value" id="stat-revenue">—</div>
+            <div class="stat-label">Doanh thu hôm nay</div>
+            <div style="font-size:.72rem;color:#8b91a7;margin-top:2px;" id="stat-revenue-sub"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon indigo"><i class="bi bi-bag-check"></i></div>
+          <div>
+            <div class="stat-value" id="stat-orders">—</div>
+            <div class="stat-label">Tổng đơn hàng</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+          <div>
+            <div class="stat-value" id="stat-customers">—</div>
+            <div class="stat-label">Khách hàng</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+          <div>
+            <div class="stat-value" id="stat-lowstock">—</div>
+            <div class="stat-label">Sản phẩm sắp hết hàng</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts — Revenue Bar Chart full width -->
+      <div style="margin-bottom:24px;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📈 Doanh thu 7 ngày gần nhất</span>
+            <a href="revenue.html" style="font-size:.78rem;color:#6366f1;text-decoration:none;">Xem chi tiết →</a>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:280px;">
+              <canvas id="revenue-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Orders -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🕐 Đơn hàng gần đây</span>
+          <a href="orders.html" style="font-size:.78rem;color:#6366f1;text-decoration:none;">Xem tất cả →</a>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#ID</th>
+                <th>Khách hàng</th>
+                <th>Ngày đặt</th>
+                <th>Trạng thái</th>
+                <th>Tổng tiền</th>
+              </tr>
+            </thead>
+            <tbody id="recent-orders-body">
+              <tr><td colspan="5" class="loading-state"><div class="spinner spinner-sm" style="margin:0 auto;display:block;"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /admin-content -->
+  </div><!-- /admin-main -->
+</div><!-- /admin-layout -->
+
+<script>
+  document.getElementById("topbar-date").textContent =
+    new Date().toLocaleDateString("vi-VN", { weekday:"long", day:"2-digit", month:"long", year:"numeric" });
+</script>
+<script type="module" src="./assets/js/admin-dashboard.js"></script>
+</body>
+</html>

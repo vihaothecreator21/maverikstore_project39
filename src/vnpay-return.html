@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kết quả thanh toán - Maverik Store</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #f8f8f6;
+        font-family: "Inter", "Helvetica Neue", sans-serif;
+        color: #1a1a1a;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Navbar ── */
+      .navbar {
+        background: #fff;
+        border-bottom: 1px solid #ebebeb;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+      }
+      .brand { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; color: #1a1a1a; line-height: 1.2; }
+
+      /* ── Main container ── */
+      .page-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+      }
+
+      .result-card {
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        max-width: 540px;
+        width: 100%;
+        padding: 56px 48px;
+        text-align: center;
+      }
+
+      /* ── Status icon ── */
+      .status-icon {
+        font-size: 64px;
+        margin-bottom: 24px;
+        display: block;
+      }
+      .status-icon.success { color: #2e7d32; }
+      .status-icon.fail    { color: #c43228; }
+      .status-icon.loading { color: #888; animation: spin 1s linear infinite; }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .result-title {
+        font-size: 1.5rem;
+        font-weight: 300;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .result-subtitle {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 32px;
+        line-height: 1.6;
+      }
+
+      /* ── Info table ── */
+      .info-table {
+        background: #f9f9f7;
+        border: 1px solid #f0f0ee;
+        padding: 20px 24px;
+        margin-bottom: 32px;
+        text-align: left;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        font-size: 0.86rem;
+        border-bottom: 1px solid #f0f0ee;
+      }
+      .info-row:last-child { border-bottom: none; }
+      .info-row .label { color: #888; }
+      .info-row .value { font-weight: 600; }
+      .info-row .value.success { color: #2e7d32; }
+      .info-row .value.fail    { color: #c43228; }
+
+      /* ── Action buttons ── */
+      .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+      .btn {
+        padding: 14px 28px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+      }
+      .btn-primary { background: #1a1a1a; color: #fff; }
+      .btn-primary:hover { background: #333; color: #fff; }
+      .btn-outline { background: #fff; color: #1a1a1a; border: 1.5px solid #1a1a1a; }
+      .btn-outline:hover { background: #f5f5f5; }
+
+      /* Divider badge */
+      .vnpay-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.72rem;
+        color: #888;
+        margin-top: 24px;
+      }
+      .vnpay-badge img { height: 16px; opacity: 0.6; }
+
+      @media (max-width: 600px) {
+        .result-card { padding: 36px 24px; }
+        .result-title { font-size: 1.2rem; }
+        .btn { width: 100%; justify-content: center; }
+        .btn-group { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <a href="index.html" class="brand">
+        <div>Maverik</div>
+        <div>Furniture</div>
+      </a>
+    </nav>
+
+    <!-- Main content (rendered by JS) -->
+    <div class="page-wrap">
+      <div class="result-card" id="result-card">
+        <!-- Loading state -->
+        <i class="bi bi-arrow-clockwise status-icon loading" id="icon-loading"></i>
+        <div class="result-title">Đang xử lý...</div>
+        <div class="result-subtitle">Vui lòng chờ trong giây lát</div>
+      </div>
+    </div>
+
+    <script>
+      // ── Đọc params từ URL ─────────────────────────────────────────
+      const params  = new URLSearchParams(window.location.search);
+      const isSuccess    = params.get("isSuccess") === "true";
+      const orderId      = params.get("orderId")   || "—";
+      const amount       = parseInt(params.get("amount")  || "0", 10);
+      const responseCode = params.get("responseCode") || "99";
+      const message      = decodeURIComponent(params.get("message") || "Không xác định");
+
+      // ── Format VNĐ ───────────────────────────────────────────────
+      const formatVND = (n) =>
+        new Intl.NumberFormat("vi-VN").format(n) + "đ";
+
+      // ── Render kết quả ───────────────────────────────────────────
+      function render() {
+        const card = document.getElementById("result-card");
+
+        if (isSuccess) {
+          card.innerHTML = `
+            <i class="bi bi-check-circle-fill status-icon success"></i>
+            <div class="result-title">Thanh toán thành công!</div>
+            <div class="result-subtitle">
+              Cảm ơn bạn đã mua hàng tại Maverik Store.<br>
+              Đơn hàng của bạn đang được xử lý.
+            </div>
+
+            <div class="info-table">
+              <div class="info-row">
+                <span class="label">Mã đơn hàng</span>
+                <span class="value">#${orderId}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Số tiền</span>
+                <span class="value">${formatVND(amount)}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Phương thức</span>
+                <span class="value">VNPay</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Trạng thái</span>
+                <span class="value success">✓ Thành công</span>
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <a href="profile.html#orders" class="btn btn-primary">
+                <i class="bi bi-bag-check"></i>
+                Xem đơn hàng
+              </a>
+              <a href="products.html" class="btn btn-outline">
+                <i class="bi bi-arrow-left"></i>
+                Tiếp tục mua sắm
+              </a>
+            </div>
+
+            <div class="vnpay-badge">
+              <i class="bi bi-shield-check"></i>
+              Thanh toán bảo mật bởi VNPay Sandbox
+            </div>
+          `;
+        } else {
+          card.innerHTML = `
+            <i class="bi bi-x-circle-fill status-icon fail"></i>
+            <div class="result-title">Thanh toán thất bại</div>
+            <div class="result-subtitle">
+              ${message}<br>
+              <small style="color:#aaa;">Mã lỗi: ${responseCode}</small>
+            </div>
+
+            <div class="info-table">
+              <div class="info-row">
+                <span class="label">Mã đơn hàng</span>
+                <span class="value">#${orderId}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Số tiền</span>
+                <span class="value">${amount > 0 ? formatVND(amount) : "—"}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Trạng thái</span>
+                <span class="value fail">✗ Thất bại</span>
+              </div>
+            </div>
+
+            <p style="font-size:0.83rem; color:#666; margin-bottom:24px;">
+              Đơn hàng của bạn vẫn được giữ.
+              Bạn có thể thử thanh toán lại hoặc chọn phương thức khác.
+            </p>
+
+            <div class="btn-group">
+              <a href="checkout.html" class="btn btn-primary">
+                <i class="bi bi-arrow-repeat"></i>
+                Thử lại
+              </a>
+              <a href="products.html" class="btn btn-outline">
+                <i class="bi bi-house"></i>
+                Về trang chủ
+              </a>
+            </div>
+
+            <div class="vnpay-badge">
+              <i class="bi bi-shield-exclamation"></i>
+              Phiên thanh toán VNPay Sandbox đã kết thúc
+            </div>
+          `;
+        }
+      }
+
+      // Render ngay (không cần wait thêm vì dữ liệu lấy từ URL params)
+      render();
+    </script>
+  </body>
+</html>

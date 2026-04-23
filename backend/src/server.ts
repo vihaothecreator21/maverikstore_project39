@@ -8,9 +8,12 @@ import { connectDatabase, disconnectDatabase } from "./config/database";
 
 // Import Middlewares
 import errorHandler from "./middlewares/errorHandler.middleware";
-import notFoundHandler from "./middlewares/notFound.middleware";import { cleanupRateLimitStore } from "./middlewares/rateLimit.middleware.js";
+import notFoundHandler from "./middlewares/notFound.middleware";
+import { cleanupRateLimitStore } from "./middlewares/rateLimit.middleware.js";
 // Import Routes
 import apiRoutes from "./routes";
+// Import Jobs
+import { startOrderTimeoutJob } from "./jobs/orderTimeout.job";
 
 // ==================== Configuration ====================
 
@@ -90,6 +93,9 @@ const startServer = async (): Promise<void> => {
         cleanupRateLimitStore();
         console.log("🧹 [Rate Limit] Cleaned up expired entries");
       }, 60 * 60 * 1000);
+
+      // ✅ Start Order Timeout Job (UC-05: hủy đơn PENDING > 15 phút)
+      startOrderTimeoutJob();
     });
   } catch (error) {
     console.error("✗ Failed to start server:", error);

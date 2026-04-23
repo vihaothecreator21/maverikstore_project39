@@ -54,6 +54,13 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(["debug", "info", "warn", "error"])
     .default("debug"),
+
+  // VNPay Configuration
+  VNPAY_TMN_CODE:       z.string().min(1).default("MF33CGUI"),
+  VNPAY_HASH_SECRET:    z.string().min(1).default("LN6Q8B39MD9DC7368TP3CXM300VZVLIK"),
+  VNPAY_RETURN_URL:     z.string().url().default("http://localhost:5000/api/v1/payments/vnpay/return"),
+  VNPAY_FRONTEND_RETURN: z.string().url().default("http://localhost:3000/vnpay-return.html"),
+  VNPAY_IPN_URL:        z.string().default("http://localhost:5000/api/v1/payments/vnpay/ipn"),
 });
 
 /**

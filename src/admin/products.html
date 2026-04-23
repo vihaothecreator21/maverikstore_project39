@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sản phẩm — Maverik Admin</title>
+  <link rel="stylesheet" href="./assets/fonts/bootstrap-icons.css" />
+  <link rel="stylesheet" href="./assets/admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo"><div class="sidebar-logo-text">Maverik</div><div class="sidebar-logo-sub">Admin Dashboard</div></div>
+    <nav class="sidebar-nav">
+      <span class="nav-label">Menu chính</span>
+      <a href="index.html"      class="sidebar-link" data-page="dashboard"><i class="bi bi-grid-1x2"></i>Tổng quan</a>
+      <a href="products.html"   class="sidebar-link" data-page="products"><i class="bi bi-box-seam"></i>Sản phẩm</a>
+      <a href="categories.html" class="sidebar-link" data-page="categories"><i class="bi bi-folder2"></i>Danh mục</a>
+      <a href="orders.html"     class="sidebar-link" data-page="orders"><i class="bi bi-bag-check"></i>Đơn hàng</a>
+      <a href="revenue.html"    class="sidebar-link" data-page="revenue"><i class="bi bi-bar-chart-line"></i>Doanh thu</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-initials">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="sidebar-username">Admin</div><div class="sidebar-user-role" id="sidebar-role">Admin</div></div>
+      </div>
+      <button class="btn-sidebar-logout" id="btn-admin-logout"><i class="bi bi-box-arrow-right"></i>Đăng xuất</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-title">📦 Quản lý Sản phẩm</div>
+      <button class="btn btn-primary" id="btn-add-product"><i class="bi bi-plus-lg"></i>Thêm sản phẩm</button>
+    </div>
+
+    <div class="admin-content">
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <input class="search-input" type="text" id="search-products" placeholder="Tìm kiếm sản phẩm..." />
+        <select class="filter-select" id="filter-category"><option value="">Tất cả danh mục</option></select>
+        <select class="filter-select" id="filter-stock">
+          <option value="">Tất cả tồn kho</option>
+          <option value="low">Sắp hết (&lt; 10)</option>
+          <option value="out">Hết hàng (0)</option>
+        </select>
+      </div>
+
+      <!-- Products Table -->
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>Giá</th>
+                <th>Tồn kho</th>
+                <th style="text-align:center;">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="products-tbody">
+              <tr><td colspan="7" class="loading-state"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-body" style="padding:12px 22px;">
+          <div id="products-pagination" class="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Thêm/Sửa sản phẩm -->
+<div class="modal-backdrop" id="product-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Thêm sản phẩm mới</div>
+    <form id="product-form" novalidate>
+      <input type="hidden" id="product-id" />
+      <div class="form-row-2">
+        <div class="form-field">
+          <label class="form-label">Tên sản phẩm *</label>
+          <input type="text" class="form-input" id="pf-name" placeholder="Ghế sofa Maverik..." required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Danh mục *</label>
+          <select class="form-select" id="pf-category" required>
+            <option value="">Chọn danh mục</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-field">
+          <label class="form-label">Giá (VND) *</label>
+          <input type="number" class="form-input" id="pf-price" placeholder="1500000" min="0" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Tồn kho *</label>
+          <input type="number" class="form-input" id="pf-stock" placeholder="50" min="0" required />
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">URL Hình ảnh</label>
+        <input type="url" class="form-input" id="pf-image" placeholder="https://..." />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Mô tả sản phẩm</label>
+        <textarea class="form-textarea" id="pf-desc" placeholder="Mô tả chi tiết..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="modal-cancel">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="modal-submit">Lưu sản phẩm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-backdrop" id="delete-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title">⚠️ Xác nhận xóa</div>
+    <p style="color:#8b91a7;font-size:.88rem;">Bạn có chắc muốn xóa sản phẩm <strong id="delete-name"></strong>? Hành động này không thể hoàn tác.</p>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" id="delete-cancel">Hủy</button>
+      <button type="button" class="btn btn-danger" id="delete-confirm">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./assets/js/admin-products.js"></script>
+</body>
+</html>

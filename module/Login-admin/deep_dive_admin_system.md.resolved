@@ -1,0 +1,484 @@
+# 🔬 Phân tích sâu hệ thống Admin — Maverik Store
+> **3 chủ đề:** A. RBAC | B. Business Logic & Query | C. RESTful API Design
+
+---
+
+## A. Phân quyền RBAC — Luồng đi đầy đủ từ Token đến API
+
+### A1. Role được định nghĩa ở đâu?
+
+Nguồn sự thật duy nhất về Role là **Prisma Schema**:
+
+**File:** [`backend/prisma/schema.prisma:17`](file:///c:/Users/vihao/.gemini/antigravity/scratch/maverikstore_project39/backend/prisma/schema.prisma)
+
+```prisma
+// Dòng 17-21
+enum Role {
+  CUSTOMER      // Người mua hàng bình thường
+  ADMIN         // Quản trị viên
+  SUPER_ADMIN   // Siêu quản trị
+}
+
+// Dòng 57 — Default khi tạo user mới
+model User {
+  role  Role  @default(CUSTOMER)  // Mặc định luôn là CUSTOMER
+}
+```
+
+> **Điều này có nghĩa:** Chỉ có 3 role tồn tại trong hệ thống. Muốn thêm role mới phải sửa file này trước tiên.
+
+---
+
+### A2. Token được tạo ra như thế nào?
+
+Khi login thành công, `AuthService.generateToken()` tạo JWT:
+
+**File:** [`backend/src/services/auth.service.ts:17`](file:///c:/Users/vihao/.gemini/antigravity/scratch/maverikstore_project39/backend/src/services/auth.service.ts)
+
+```ts
+// Dòng 17-33
+static generateToken(userId: number, email: string, role: string): string {
+  const token = jwt.sign(
+    {
+      userId,   // ← ID user trong DB
+      email,    // ← Email
+      role,     // ← Vai trò: "ADMIN", "CUSTOMER"...
+    },
+    env.JWT_SECRET,    // ← Khóa bí mật (chỉ server biết)
+    { expiresIn: env.JWT_EXPIRE }  // ← Hạn dùng, ví dụ "7d"
+  );
+  return token;
+}
+```
+
+Token được gọi ở 2 nơi:
+- Dòng 82: Sau khi **đăng ký** (`register`)
+- Dòng 126: Sau khi **đăng nhập** (`login`)
+
+---
+
+### A3. Luồng đầy đủ khi Request đến Admin API
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Browser gửi: GET /api/v1/admin/stats                               │
+│               Header: Authorization: Bearer eyJhbGci...             │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────── BƯỚC 1 ─┐
+│  auth.middleware.ts:13                                               │
+│  Đọc header: Authorization: "Bearer eyJhbGci..."                    │
+│  Nếu không có → 401 Unauthorized                                    │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────── BƯỚC 2 ─┐
+│  auth.middleware.ts:24                                               │
+│  Tách: "Bearer eyJhbGci..." → token = "eyJhbGci..."                 │
+│  jwt.verify(token, JWT_SECRET) → { userId: 1, role: "ADMIN" }       │
+│  Nếu token giả/hết hạn → 401 Unauthorized                          │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────── BƯỚC 3 ─┐
+│  auth.middleware.ts:32  ← ⚡ ĐIỂM KHÁC BIỆT QUAN TRỌNG             │
+│  prisma.user.findUnique({ where: { id: decoded.userId } })          │
+│                                                                      │
+│  Tại sao query DB thêm lần này?                                     │
+│  → Token chỉ cho biết "lúc login user là ADMIN"                     │
+│  → Nhưng sau đó Admin có thể bị downgrade thành CUSTOMER trong DB   │
+│  → Token cũ vẫn còn hạn → nếu tin token → lỗ hổng bảo mật!        │
+│                                                                      │
+│  Giải pháp: LUÔN lấy role từ DB (dòng 48)                          │
+│  (req as any).userRole = userExists.role; // Từ DB, không từ token  │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────── BƯỚC 4 ─┐
+│  auth.middleware.ts:60  → requireAdmin middleware                    │
+│  const role = (req as any).userRole;                                │
+│                                                                      │
+│  if (role !== "ADMIN" && role !== "SUPER_ADMIN") {                  │
+│    → 403 Forbidden ❌                                               │
+│  }                                                                   │
+│  next() → ✅ Cho phép vào Controller                                │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────── BƯỚC 5 ─┐
+│  AdminController.getDashboardStats → AdminService → Prisma → DB     │
+│  Trả về JSON response                                               │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### A4. Muốn thêm role mới "MODERATOR" — Cần sửa ở đâu?
+
+Giả sử bạn muốn thêm `MODERATOR` — chỉ được xem báo cáo, không được xóa sản phẩm. Đây là **checklist đầy đủ**:
+
+#### 1️⃣ `backend/prisma/schema.prisma:17` — Thêm vào enum
+
+```diff
+enum Role {
+  CUSTOMER
+  ADMIN
++ MODERATOR   // ← Thêm vào đây
+  SUPER_ADMIN
+}
+```
+
+#### 2️⃣ Chạy Prisma Migration (Database)
+
+```bash
+npx prisma migrate dev --name add_moderator_role
+```
+Lệnh này cập nhật cấu trúc enum trong MySQL database thật sự.
+
+#### 3️⃣ `backend/src/middlewares/auth.middleware.ts:60` — Thêm middleware mới
+
+```ts
+// Middleware dành riêng cho Moderator
+export const requireModerator = (req, res, next) => {
+  const role = (req as any).userRole;
+  if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(role)) {
+    sendError(res, ..., HTTP_STATUS.FORBIDDEN);
+    return;
+  }
+  next();
+};
+```
+
+#### 4️⃣ `backend/src/routes/admin.routes.ts` — Dùng middleware mới cho route phù hợp
+
+```ts
+// Route chỉ đọc → Moderator được phép
+adminRoutes.get("/stats",    authMiddleware, requireModerator,
+  catchAsync(AdminController.getDashboardStats));
+
+// Route nguy hiểm → Chỉ Admin mới được
+adminRoutes.delete("/products/:id", authMiddleware, requireAdmin,
+  catchAsync(...));
+```
+
+#### 5️⃣ `src/admin/assets/js/admin-guard.js:11` — Cập nhật Client Guard
+
+```js
+if (!["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)) {
+  window.location.href = "/login.html";
+}
+```
+
+> **Tóm lại:** RBAC trong project này **không tập trung** vào 1 file config mà **phân tán**: Schema.prisma (định nghĩa), auth.middleware.ts (enforce), admin.routes.ts (gắn vào route), admin-guard.js (UI). Khi thêm role mới phải sửa cả 4 chỗ này.
+
+---
+
+## B. Business Logic & Query Optimization
+
+### B1. Logic tính toán ở đâu?
+
+Toàn bộ logic nghiệp vụ nằm trong:
+
+**File:** [`backend/src/services/admin.service.ts`](file:///c:/Users/vihao/.gemini/antigravity/scratch/maverikstore_project39/backend/src/services/admin.service.ts)
+
+Controller chỉ làm 1 việc: **nhận request → gọi service → trả response**. Nó không tính toán gì cả:
+
+```ts
+// admin.controller.ts:14 — Cực kỳ gọn
+static async getDashboardStats(_req, res) {
+  const stats = await AdminService.getDashboardStats(); // ← Delegate hết
+  return sendSuccess(res, stats, "Dashboard statistics retrieved");
+}
+```
+
+---
+
+### B2. Phân tích Query — Kỹ thuật `Promise.all` song song
+
+Đây là đoạn code quan trọng nhất về hiệu suất:
+
+```ts
+// admin.service.ts:26 (đã được cập nhật)
+const [
+  totalOrders,
+  ordersByStatus,
+  totalProducts,
+  totalCustomers,
+  revenueCompleted,
+  revenueAll,
+  lowStockProducts,
+  pendingOrders,
+  todayRevenueCompleted,  // ← Query doanh thu hôm nay
+  todayRevenueAll,
+  todayOrderCount,
+] = await Promise.all([    // ← TẤT CẢ chạy cùng lúc!
+  prisma.order.count(),
+  prisma.order.groupBy({ by: ["status"], _count: { id: true } }),
+  prisma.product.count(),
+  prisma.user.count({ where: { role: "CUSTOMER" } }),
+  prisma.order.aggregate({
+    where: { status: OrderStatus.COMPLETED },
+    _sum: { totalAmount: true },
+  }),
+  // ... 6 queries nữa
+]);
+```
+
+**Tại sao dùng `Promise.all` thay vì `await` từng cái?**
+
+```
+❌ Cách chậm (sequential):        ✅ Cách nhanh (parallel):
+await query1()  → 50ms             Promise.all([
+await query2()  → 50ms               query1(),   ─┐
+await query3()  → 50ms               query2(),    ├─ Cùng chạy → 50ms
+await query4()  → 50ms               query3(),    │
+                                     query4(),   ─┘
+Tổng: 200ms                        ]) 
+                                   Tổng: ~50ms (bằng query chậm nhất)
+```
+
+Với 11 queries trong `getDashboardStats`, nếu dùng sequential sẽ mất ~550ms. `Promise.all` giúp giảm xuống còn ~50ms — **nhanh hơn ~10 lần**.
+
+---
+
+### B3. Phân tích từng loại Query
+
+**① `prisma.order.count()` — Đếm đơn hàng**
+
+```ts
+prisma.order.count()
+// SQL tương đương:
+// SELECT COUNT(*) FROM orders;
+```
+
+Đây là query đơn giản nhất. Prisma ORM sẽ dịch thành SQL và index tự động trên primary key.
+
+---
+
+**② `prisma.order.groupBy()` — Đếm đơn theo từng trạng thái**
+
+```ts
+prisma.order.groupBy({
+  by: ["status"],           // GROUP BY status
+  _count: { id: true },    // COUNT(id)
+})
+// SQL tương đương:
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+```
+
+Kết quả trả về là mảng:
+```json
+[
+  { "status": "PENDING",   "_count": { "id": 3 } },
+  { "status": "COMPLETED", "_count": { "id": 12 } },
+  { "status": "CANCELLED", "_count": { "id": 2 } }
+]
+```
+
+Code service sau đó map thành object dễ dùng hơn (dòng ~97):
+```ts
+const statusMap = {};
+ordersByStatus.forEach(row => {
+  statusMap[row.status] = row._count.id;
+});
+// Kết quả: { PENDING: 3, COMPLETED: 12, CANCELLED: 2 }
+```
+
+---
+
+**③ `prisma.order.aggregate()` — Tính tổng doanh thu**
+
+```ts
+prisma.order.aggregate({
+  where: {
+    status: OrderStatus.COMPLETED,                           // Chỉ COMPLETED
+    createdAt: { gte: todayStart, lte: todayEnd },          // Hôm nay
+  },
+  _sum: { totalAmount: true },                              // SUM(totalAmount)
+})
+// SQL tương đương:
+// SELECT SUM(totalAmount) FROM orders
+// WHERE status = 'COMPLETED'
+// AND createdAt >= '2026-04-17 00:00:00'
+// AND createdAt <= '2026-04-17 23:59:59';
+```
+
+> **Tại sao dùng `Decimal` trong schema thay vì `Float`?** (Schema dòng 169)  
+> `Float` là dấu chấm động nhị phân → **có lỗi làm tròn**  
+> Ví dụ: `0.1 + 0.2 = 0.30000000000000004` trong JavaScript  
+> `Decimal` lưu chính xác tuyệt đối → bắt buộc dùng cho tiền tệ
+
+---
+
+**④ `getRevenueByPeriod()` — Query chart doanh thu theo thời gian**
+
+```ts
+// admin.service.ts:153
+const orders = await prisma.order.findMany({
+  where: {
+    status: { in: [OrderStatus.COMPLETED, OrderStatus.DELIVERED] },
+    createdAt: { gte: startDate, lte: endDate },
+  },
+  select: {
+    totalAmount: true,
+    createdAt: true,    // Chỉ lấy 2 cột cần thiết (không lấy toàn bộ row)
+  },
+  orderBy: { createdAt: "asc" },
+});
+```
+
+Câu hỏi hay: **Tại sao không dùng `groupBy` ở đây mà lại `findMany` rồi group bằng JS?**
+
+Vì SQL `GROUP BY DATE(createdAt)` phụ thuộc vào timezone của DB server (thường là UTC), trong khi chúng ta cần group theo **giờ Việt Nam (UTC+7)**. Giải pháp: lấy data về → group bằng JS với offset múi giờ:
+
+```ts
+const TZ_OFFSET_MS = 7 * 60 * 60 * 1000; // +7h
+const localDate = new Date(order.createdAt.getTime() + TZ_OFFSET_MS);
+key = localDate.toISOString().slice(0, 10); // "2026-04-17" theo giờ VN
+```
+
+---
+
+### B4. Index Database — Tối ưu hóa cho dữ liệu lớn
+
+Nhìn vào schema, team đã đặt **Index** ở những chỗ thường xuyên được query:
+
+```prisma
+// schema.prisma:184-186 — Order model
+@@index([userId])      // Query đơn hàng của 1 user
+@@index([status])      // Lọc đơn theo status (PENDING, COMPLETED...)
+@@index([createdAt])   // Query đơn theo khoảng thời gian (dashboard chart)
+```
+
+**Không có index:** DB phải scan toàn bộ bảng → `O(n)` - càng nhiều đơn càng chậm  
+**Có index:** DB dùng cấu trúc B-Tree → `O(log n)` - 1 triệu đơn vẫn nhanh
+
+> **Ví dụ thực tế:** Như tra từ điển — không có index, bạn đọc từng trang từ đầu. Có index, bạn tra bảng chữ cái ở cuối sách, tìm trang chính xác ngay lập tức.
+
+---
+
+## C. RESTful API — Thiết kế và lý do lựa chọn
+
+### C1. Hệ thống đang dùng gì?
+
+**RESTful API** — không phải GraphQL.
+
+Dấu hiệu nhận biết:
+- URL mô tả tài nguyên (`/admin/stats`, `/admin/revenue`)
+- Dùng HTTP verbs (`GET`, `POST`, `PATCH`, `DELETE`)
+- Không có endpoint `/graphql` hay query language
+
+---
+
+### C2. Toàn bộ Endpoints Admin
+
+#### 📊 Admin Analytics (`/api/v1/admin/...`)
+**File:** [`backend/src/routes/admin.routes.ts`](file:///c:/Users/vihao/.gemini/antigravity/scratch/maverikstore_project39/backend/src/routes/admin.routes.ts)
+
+| Method | Endpoint | Chức năng | Response chính |
+|--------|----------|-----------|----------------|
+| `GET` | `/admin/stats` | Stats tổng quan Dashboard | `{ revenue, today, orders, products, customers }` |
+| `GET` | `/admin/revenue` | Doanh thu theo thời gian | `[{ period, revenue, orderCount }]` |
+| `GET` | `/admin/revenue/payment` | Doanh thu theo PTTT | `[{ method, total, count }]` |
+| `GET` | `/admin/products/stats` | Best sellers, low stock | `{ bestSellers, lowStock, byCategory }` |
+| `GET` | `/admin/customers/stats` | Thống kê khách hàng | `{ total, newThisMonth, topSpenders }` |
+| `GET` | `/admin/export/orders` | Xuất dữ liệu đơn hàng | `[{ orderId, date, ... }]` (flat array) |
+
+**Query params quan trọng:**
+```
+GET /admin/revenue?period=day&start=2026-04-01&end=2026-04-17
+                   ↑ day|week|month|year
+```
+
+#### 📦 Admin Order Management (`/api/v1/admin/orders/...`)
+**File:** [`backend/src/routes/order.routes.ts:16`](file:///c:/Users/vihao/.gemini/antigravity/scratch/maverikstore_project39/backend/src/routes/order.routes.ts)
+
+| Method | Endpoint | Chức năng |
+|--------|----------|-----------|
+| `GET` | `/admin/orders` | Danh sách tất cả đơn hàng (có pagination) |
+| `GET` | `/admin/orders/:id` | Chi tiết 1 đơn hàng |
+| `PATCH` | `/admin/orders/:id/status` | Cập nhật trạng thái đơn |
+
+---
+
+### C3. Cấu trúc Response — Chuẩn hóa 100%
+
+**File:** [`backend/src/utils/apiResponse.ts:45`](file:///c:/Users/vihao/.gemini/antigravity/scratch/maverikstore_project39/backend/src/utils/apiResponse.ts)
+
+Mọi response trong hệ thống đều theo cùng một format:
+
+```ts
+// Định nghĩa tại dòng 45
+interface ApiResponse<T> {
+  status:    "success" | "error";  // Luôn có
+  code:      number;               // HTTP Status code
+  message:   string;               // Mô tả
+  data?:     T;                    // Dữ liệu thật (chỉ khi success)
+  timestamp: string;               // ISO timestamp
+  meta?: {                         // Cho pagination
+    page, limit, total, pages
+  };
+}
+```
+
+**Ví dụ response thành công:**
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "Dashboard statistics retrieved",
+  "data": {
+    "today": { "gross": 0, "net": 0, "orderCount": 0, "date": "2026-04-17" },
+    "revenue": { "gross": 24000000, "net": 18000000, "aov": 450000 },
+    "orders": { "total": 53, "pending": 3 },
+    "products": { "total": 120, "lowStock": 5 },
+    "customers": { "total": 87 }
+  },
+  "timestamp": "2026-04-17T00:59:00.000Z"
+}
+```
+
+**Ví dụ response lỗi:**
+```json
+{
+  "status": "error",
+  "code": 403,
+  "message": "Access denied. Admin privileges required.",
+  "code": "FORBIDDEN",
+  "timestamp": "2026-04-17T00:59:00.000Z"
+}
+```
+
+---
+
+### C4. Tại sao chọn REST thay vì GraphQL?
+
+| Tiêu chí | REST (project này) | GraphQL |
+|----------|-------------------|---------|
+| **Độ phức tạp** | Đơn giản, dễ học | Phức tạp hơn, learning curve cao |
+| **Caching** | Native HTTP cache | Cần setup thêm |
+| **Phù hợp với** | CRUD, Dashboard rõ ràng | Nhiều client khác nhau, nested data phức tạp |
+| **Tooling** | Postman, curl — thân quen | Cần GraphQL client riêng |
+| **Over-fetching** | Có thể xảy ra | Không — lấy đúng field cần |
+
+**Lý do REST phù hợp với project này:**
+1. Dashboard admin có **các endpoint rõ ràng, ít thay đổi** — không cần flexibility của GraphQL
+2. Dữ liệu trả về **đã được thiết kế tốt** (không over-fetch vì dùng `select: { field: true }` trong Prisma)
+3. Team nhỏ → REST dễ maintain hơn, ít boilerplate hơn
+4. Tích hợp với Express dễ dàng, không cần thư viện bổ sung
+
+> **GraphQL phù hợp khi:** Bạn có nhiều loại client (mobile app, web, tablet) cần data khác nhau từ cùng 1 endpoint, hoặc dữ liệu có cấu trúc phân cấp rất sâu và phức tạp.
+
+---
+
+## 🔑 Tổng kết — 3 điểm cốt lõi cần nhớ
+
+> [!IMPORTANT]
+> **RBAC:** Role sống trong DB (schema.prisma), được gắn vào token lúc login, nhưng **luôn verify lại từ DB** mỗi request — không bao giờ tin token blindly.
+
+> [!TIP]  
+> **Performance:** `Promise.all([...11 queries...])` chạy song song giảm thời gian từ ~550ms xuống ~50ms. Kết hợp với Database Index (`@@index`) đảm bảo query nhanh dù data lớn.
+
+> [!NOTE]
+> **REST Design:** Toàn bộ response theo cùng 1 format `ApiResponse<T>`. Việc chuẩn hóa này giúp frontend code 1 lần xử lý response là dùng được cho mọi endpoint.

@@ -10,30 +10,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enum for User Roles
+// ═══════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════
+
 enum Role {
   CUSTOMER
   ADMIN
   SUPER_ADMIN
 }
 
+// ✅ NEW: State Machine cho đơn hàng
+// PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED → COMPLETED
+// PENDING → CANCELLED (trong 24h)
+// DELIVERED → RETURNED (trong 7 ngày)
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPING
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  RETURNED
+}
+
+// ✅ NEW: Enum cho trạng thái thanh toán
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+// ═══════════════════════════════════════════════
+// MODELS
+// ═══════════════════════════════════════════════
+
 // Users Table
 model User {
-  id        Int     @id @default(autoincrement())
-  username  String  @unique @db.VarChar(50)
-  email     String  @unique @db.VarChar(100)
-  passwordHash String @db.VarChar(255)
-  phone     String? @db.VarChar(20)
-  role      Role    @default(CUSTOMER)
-  address   String? @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @db.VarChar(255)
+  phone        String?  @db.VarChar(20)
+  role         Role     @default(CUSTOMER)
+  address      String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   cart      Cart?
   orders    Order[]
   reviews   Review[]
   favorites Favorite[]
+  auditLogs AuditLog[]
 
   @@index([email])
   @@index([username])
@@ -41,39 +72,40 @@ model User {
 
 // Categories Table
 model Category {
-  id          Int     @id @default(autoincrement())
-  name        String  @unique @db.VarChar(100)
-  slug        String  @unique @db.VarChar(100)
-  description String? @db.Text
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  products    Product[]
+  products Product[]
 
   @@index([slug])
 }
 
 // Products Table
 model Product {
-  id              Int     @id @default(autoincrement())
-  categoryId      Int
-  name            String  @db.VarChar(255)
-  slug            String?  @unique @db.VarChar(255)
-  price           Float
-  stockQuantity   Int     @default(0)
-  description     String? @db.Text
-  imageUrl        String? @db.VarChar(255)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  categoryId    Int
+  name          String   @db.VarChar(255)
+  slug          String?  @unique @db.VarChar(255)
+  // ✅ FIX: Dùng Decimal thay Float để tránh lỗi làm tròn tiền tệ
+  price         Decimal  @db.Decimal(10, 2)
+  stockQuantity Int      @default(0)
+  description   String?  @db.Text
+  imageUrl      String?  @db.VarChar(255)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  images          ProductImage[]
-  cartItems       CartItem[]
-  orderDetails    OrderDetail[]
-  reviews         Review[]
-  favorites       Favorite[]
+  category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  images       ProductImage[]
+  cartItems    CartItem[]
+  orderDetails OrderDetail[]
+  reviews      Review[]
+  favorites    Favorite[]
 
   @@index([categoryId])
   @@index([slug])
@@ -84,46 +116,46 @@ model Product {
 
 // ProductImages Table
 model ProductImage {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   productId Int
-  url       String  @db.VarChar(255)
-  isPrimary Boolean @default(false)
+  url       String   @db.VarChar(255)
+  isPrimary Boolean  @default(false)
   createdAt DateTime @default(now())
 
   // Relations
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
 }
 
 // Carts Table
 model Cart {
-  id        Int     @id @default(autoincrement())
-  userId    Int     @unique
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
 
   @@index([userId])
 }
 
 // CartItems Table
 model CartItem {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   cartId    Int
   productId Int
-  size      String  @db.VarChar(50)
-  color     String  @db.VarChar(50)
-  quantity  Int     @default(1)
+  size      String   @db.VarChar(50)
+  color     String   @db.VarChar(50)
+  quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  cart      Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, productId, size, color])
   @@index([productId])
@@ -131,22 +163,27 @@ model CartItem {
 
 // Orders Table
 model Order {
-  id               Int     @id @default(autoincrement())
-  userId           Int
-  totalAmount      Float
-  status           String  @default("PENDING") @db.VarChar(50)
-  shippingAddress  String  @db.Text
-  shippingPhone    String  @db.VarChar(20)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  // ✅ FIX: Dùng Decimal cho tiền tệ
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  // ✅ FIX: Dùng Enum thay String cho status
+  status          OrderStatus @default(PENDING)
+  shippingAddress String      @db.Text
+  shippingPhone   String      @db.VarChar(20)
+  // ✅ NEW: Thêm note để hỗ trợ cancel/return reason
+  note            String?     @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   // Relations
-  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  details          OrderDetail[]
-  payment          Payment?
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details OrderDetail[]
+  payment Payment?
 
   @@index([userId])
   @@index([status])
+  @@index([createdAt]) // ✅ NEW: Index cho cron job query PENDING orders by time
 }
 
 // OrderDetails Table
@@ -157,11 +194,12 @@ model OrderDetail {
   size            String  @db.VarChar(50)
   color           String  @db.VarChar(50)
   quantity        Int
-  priceAtPurchase Float
+  // ✅ FIX: Dùng Decimal cho tiền tệ
+  priceAtPurchase Decimal @db.Decimal(10, 2)
 
   // Relations
-  order           Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([productId])
@@ -170,17 +208,19 @@ model OrderDetail {
 
 // Payments Table
 model Payment {
-  id              Int     @id @default(autoincrement())
-  orderId         Int     @unique
-  paymentMethod   String  @db.VarChar(50)
-  paymentStatus   String  @default("PENDING") @db.VarChar(50)
-  transactionId   String? @unique @db.VarChar(255)
-  amount          Float
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            Int           @id @default(autoincrement())
+  orderId       Int           @unique
+  paymentMethod String        @db.VarChar(50)
+  // ✅ FIX: Dùng Enum thay String cho paymentStatus
+  paymentStatus PaymentStatus @default(PENDING)
+  transactionId String?       @unique @db.VarChar(255)
+  // ✅ FIX: Dùng Decimal cho tiền tệ
+  amount        Decimal       @db.Decimal(10, 2)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relations
-  order           Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([paymentStatus])
@@ -188,17 +228,17 @@ model Payment {
 
 // Reviews Table
 model Review {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   userId    Int
   productId Int
-  rating    Int     @db.Int
-  comment   String? @db.Text
+  rating    Int      @db.Int
+  comment   String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([productId])
@@ -207,16 +247,36 @@ model Review {
 
 // Favorites Table
 model Favorite {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   userId    Int
   productId Int
   createdAt DateTime @default(now())
 
   // Relations
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([productId])
   @@index([userId])
+}
+
+// ✅ NEW: AuditLog — Ghi lại mọi thay đổi quan trọng
+// Trigger khi: thay đổi giá/kho Product, hủy/update Order
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String   @db.VarChar(50)  // CREATE | UPDATE | DELETE | CANCEL | REFUND
+  entity    String   @db.VarChar(50)  // Product | Order | Payment
+  entityId  Int
+  oldValue  Json?                      // Giá trị trước khi thay đổi
+  newValue  Json?                      // Giá trị sau khi thay đổi
+  userId    Int                        // Người thực hiện
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
 }

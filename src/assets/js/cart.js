@@ -190,7 +190,7 @@ function injectCartOffcanvas() {
           <div class="d-flex gap-2 w-100 mt-3 p-3 pt-0">
             <!-- No URL for checkout yet -->
             <a href="cart.html" class="btn btn-outline-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em; font-size: 0.85rem;">XEM GIỎ HÀNG</a>
-            <a href="#" class="btn btn-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em; font-size: 0.85rem;">THANH TOÁN</a>
+            <a href="checkout.html" class="btn btn-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em; font-size: 0.85rem;">THANH TOÁN</a>
           </div>
         </div>
       </div>
@@ -235,8 +235,11 @@ async function fetchCart() {
     let totalItems = 0;
     let totalPrice = 0;
     cart.forEach((item) => {
+      // API items: { priceAtCheckout, product: { price } }
+      // Guest localStorage items: { price }
+      const unitPrice = Number(item.priceAtCheckout ?? item.price ?? item.product?.price ?? 0);
       totalItems += item.quantity;
-      totalPrice += item.price * item.quantity;
+      totalPrice += unitPrice * item.quantity;
     });
 
     if (badgeEl) badgeEl.textContent = totalItems.toString();
@@ -252,7 +255,7 @@ async function fetchCart() {
               <div class="oc-variant">${item.size} / ${item.color || "Default"}</div>
               <div class="oc-price-row">
                 <span class="oc-qty">${item.quantity}</span>
-                <span class="oc-price">${formatVND(item.price || item.product?.price)}đ</span>
+                <span class="oc-price">${formatVND(Number(item.priceAtCheckout ?? item.price ?? item.product?.price ?? 0))}đ</span>
               </div>
             </div>
             <button class="oc-remove" onclick="removeCartItemOc(${item.id})">×</button>

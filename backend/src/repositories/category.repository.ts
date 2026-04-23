@@ -1,17 +1,22 @@
 import { prisma } from "../config/database";
 
+const SELECT_WITH_COUNT = {
+  id: true, name: true, slug: true, description: true,
+  _count: { select: { products: true } },
+} as const;
+
 export class CategoryRepository {
   static async findAll() {
     return prisma.category.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, slug: true, description: true },
+      select: SELECT_WITH_COUNT,
     });
   }
 
   static async findById(id: number) {
     return prisma.category.findUnique({
       where: { id },
-      select: { id: true, name: true, slug: true, description: true },
+      select: SELECT_WITH_COUNT,
     });
   }
 
@@ -29,7 +34,7 @@ export class CategoryRepository {
   }) {
     return prisma.category.create({
       data,
-      select: { id: true, name: true, slug: true, description: true },
+      select: SELECT_WITH_COUNT,
     });
   }
 
@@ -44,14 +49,14 @@ export class CategoryRepository {
     return prisma.category.update({
       where: { id },
       data,
-      select: { id: true, name: true, slug: true, description: true },
+      select: SELECT_WITH_COUNT,
     });
   }
 
   static async delete(id: number) {
     return prisma.category.delete({
       where: { id },
-      select: { id: true, name: true, slug: true, description: true },
+      select: { id: true, name: true, slug: true },
     });
   }
 
