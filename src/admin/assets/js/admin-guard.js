@@ -55,6 +55,7 @@ export function formatDate(dateStr) {
  * Status map for orders
  */
 export const ORDER_STATUS = {
+  PENDING_PAYMENT: { label: "Chờ thanh toán", color: "#a855f7", bg: "#faf5ff" },
   PENDING:    { label: "Chờ xác nhận", color: "#f59e0b", bg: "#fffbeb" },
   CONFIRMED:  { label: "Đã xác nhận",  color: "#3b82f6", bg: "#eff6ff" },
   PROCESSING: { label: "Đang xử lý",   color: "#6366f1", bg: "#eef2ff" },

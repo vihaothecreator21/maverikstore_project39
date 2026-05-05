@@ -1,4 +1,4 @@
-import { OrderRepository } from "../repositories/order.repository";
+import { orderRepository } from "../container";
 import { OrderStatus } from "@prisma/client";
 import { writeAuditLog } from "../utils/auditLog.helper";
 
@@ -12,7 +12,7 @@ export const runOrderTimeoutJob = async (): Promise<void> => {
   let errors = 0;
 
   try {
-    const expiredOrders = await OrderRepository.findTimedOutOrders();
+    const expiredOrders = await orderRepository.findTimedOutOrders();
 
     if (expiredOrders.length === 0) return;
 
@@ -20,7 +20,7 @@ export const runOrderTimeoutJob = async (): Promise<void> => {
 
     for (const order of expiredOrders) {
       try {
-        await OrderRepository.updateStatusWithRollback(
+        await orderRepository.updateStatusWithRollback(
           order.id,
           OrderStatus.CANCELLED,
           true, // hoàn kho
@@ -31,7 +31,7 @@ export const runOrderTimeoutJob = async (): Promise<void> => {
           action: "TIMEOUT",
           entity: "Order",
           entityId: order.id,
-          oldValue: { status: OrderStatus.PENDING },
+          oldValue: { status: order.status },
           newValue: { status: OrderStatus.CANCELLED, reason: "Auto-cancelled after 15 minutes" },
           userId: order.userId,
         });

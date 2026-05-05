@@ -47,6 +47,7 @@
       <!-- Status Filter Tabs -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;">
         <button class="btn btn-primary btn-sm active-tab" data-status="" id="tab-all">Tất cả</button>
+        <button class="btn btn-outline btn-sm" data-status="PENDING_PAYMENT">💳 Chờ thanh toán</button>
         <button class="btn btn-outline btn-sm" data-status="PENDING">⏳ Chờ xác nhận</button>
         <button class="btn btn-outline btn-sm" data-status="CONFIRMED">✅ Đã xác nhận</button>
         <button class="btn btn-outline btn-sm" data-status="PROCESSING">🔄 Đang xử lý</button>
@@ -56,9 +57,17 @@
         <button class="btn btn-outline btn-sm" data-status="CANCELLED">❌ Đã hủy</button>
       </div>
 
-      <!-- Search -->
-      <div class="filter-bar">
-        <input class="search-input" type="text" id="search-orders" placeholder="Tìm #ID hoặc tên khách hàng..." />
+      <!-- Date Filter + Search -->
+      <div class="filter-bar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input class="search-input" type="text" id="search-orders" placeholder="Tìm #ID hoặc tên khách hàng..." style="flex:1;min-width:200px;" />
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label style="font-size:.78rem;color:#8b91a7;font-weight:600;">Từ:</label>
+          <input type="date" class="filter-select" id="filter-start-date" style="padding:6px 10px;border-radius:8px;border:1px solid #e5e7eb;font-size:.82rem;" />
+          <label style="font-size:.78rem;color:#8b91a7;font-weight:600;">Đến:</label>
+          <input type="date" class="filter-select" id="filter-end-date" style="padding:6px 10px;border-radius:8px;border:1px solid #e5e7eb;font-size:.82rem;" />
+          <button class="btn btn-outline btn-sm" id="btn-apply-date">Lọc</button>
+          <button class="btn btn-outline btn-sm" id="btn-clear-date" style="color:#ef4444;">✕</button>
+        </div>
       </div>
 
       <!-- Orders Table -->

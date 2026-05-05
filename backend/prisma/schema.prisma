@@ -21,10 +21,12 @@ enum Role {
 }
 
 // ✅ NEW: State Machine cho đơn hàng
-// PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED → COMPLETED
-// PENDING → CANCELLED (trong 24h)
+// PENDING_PAYMENT → (VNPay success) → PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED → COMPLETED
+// PENDING_PAYMENT → (timeout 15min) → CANCELLED
+// PENDING → CONFIRMED → CANCELLED (trong 24h)
 // DELIVERED → RETURNED (trong 7 ngày)
 enum OrderStatus {
+  PENDING_PAYMENT // Chờ thanh toán VNPay — auto-cancel sau 15 phút
   PENDING
   CONFIRMED
   PROCESSING

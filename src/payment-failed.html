@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thanh toán thất bại - Maverik Store</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; background: #f8f8f6; font-family: "Inter", sans-serif; color: #1a1a1a; min-height: 100vh; display: flex; flex-direction: column; }
+      .navbar { background: #fff; border-bottom: 1px solid #ebebeb; padding: 14px 24px; display: flex; align-items: center; }
+      .brand { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; color: #1a1a1a; }
+      .page-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+      .card { background: #fff; border: 1px solid #e8e8e8; max-width: 540px; width: 100%; padding: 56px 48px; text-align: center; }
+      .icon { font-size: 64px; margin-bottom: 24px; display: block; color: #c43228; }
+      .title { font-size: 1.5rem; font-weight: 300; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 12px; }
+      .subtitle { font-size: 0.9rem; color: #666; margin-bottom: 32px; line-height: 1.6; }
+      .info-table { background: #f9f9f7; border: 1px solid #f0f0ee; padding: 20px 24px; margin-bottom: 32px; text-align: left; }
+      .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.86rem; border-bottom: 1px solid #f0f0ee; }
+      .info-row:last-child { border-bottom: none; }
+      .label { color: #888; }
+      .value { font-weight: 600; }
+      .value.fail { color: #c43228; }
+      .hint { font-size: 0.83rem; color: #666; margin-bottom: 24px; }
+      .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+      .btn { padding: 14px 28px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+      .btn-primary { background: #1a1a1a; color: #fff; }
+      .btn-primary:hover { background: #333; }
+      .btn-outline { background: #fff; color: #1a1a1a; border: 1.5px solid #1a1a1a; }
+      .btn-outline:hover { background: #f5f5f5; }
+      .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #888; margin-top: 24px; }
+      @media (max-width: 600px) { .card { padding: 36px 24px; } .btn { width: 100%; justify-content: center; } .btn-group { flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a href="index.html" class="brand"><div>Maverik</div><div>Store</div></a>
+    </nav>
+    <div class="page-wrap">
+      <div class="card" id="card">
+        <i class="bi bi-hourglass-split icon"></i>
+        <div class="title">Đang tải...</div>
+      </div>
+    </div>
+    <script>
+      /**
+       * ✅ SECURITY: Tất cả render dùng DOM API (textContent / createElement)
+       * KHÔNG dùng innerHTML với dữ liệu từ URL params → tránh XSS.
+       */
+
+      function createEl(tag, cls, text) {
+        const el = document.createElement(tag);
+        if (cls) el.className = cls;
+        if (text !== undefined) el.textContent = String(text);
+        return el;
+      }
+
+      const formatVND = (n) =>
+        new Intl.NumberFormat("vi-VN").format(Number(n) || 0) + "đ";
+
+      // ── Đọc params (UNTRUSTED — chỉ dùng textContent) ────────────
+      const p          = new URLSearchParams(window.location.search);
+      const orderId    = p.get("orderId") || "—";
+      const amount     = Number(p.get("amount") || 0);
+      const respCode   = p.get("responseCode") || "99";
+      const message    = p.get("message") || "Giao dịch thất bại";
+
+      // ── Render bằng DOM API an toàn ──────────────────────────────
+      function render() {
+        const card = document.getElementById("card");
+        card.innerHTML = "";
+
+        // Icon
+        const icon = createEl("i", "bi bi-x-circle-fill icon");
+        card.appendChild(icon);
+
+        // Title
+        card.appendChild(createEl("div", "title", "Thanh toán thất bại"));
+
+        // Subtitle — nội dung từ URL param, phải dùng textContent
+        const sub = createEl("div", "subtitle");
+        sub.textContent = message;
+        card.appendChild(sub);
+
+        // Info table
+        const table = createEl("div", "info-table");
+        const rows = [
+          ["Mã đơn hàng", "#" + orderId, false],
+          ["Số tiền",      amount > 0 ? formatVND(amount) : "—", false],
+          ["Mã lỗi",      respCode, false],
+          ["Trạng thái",  "✗ Thất bại", true],
+        ];
+
+        rows.forEach(([label, value, isFail]) => {
+          const row = createEl("div", "info-row");
+          row.appendChild(createEl("span", "label", label));
+          row.appendChild(createEl("span", isFail ? "value fail" : "value", value));
+          table.appendChild(row);
+        });
+        card.appendChild(table);
+
+        // Hint
+        card.appendChild(createEl("p", "hint",
+          "Đơn hàng vẫn được giữ nguyên. Bạn có thể thử thanh toán lại hoặc chọn phương thức khác."
+        ));
+
+        // Buttons
+        const btnGroup = createEl("div", "btn-group");
+        const retryBtn = createEl("a", "btn btn-primary", "Thử lại");
+        retryBtn.href = "profile.html#orders";
+        const homeBtn = createEl("a", "btn btn-outline", "Về trang chủ");
+        homeBtn.href = "index.html";
+        btnGroup.appendChild(retryBtn);
+        btnGroup.appendChild(homeBtn);
+        card.appendChild(btnGroup);
+
+        // Badge
+        const badge = createEl("div", "badge");
+        const badgeIcon = createEl("i", "bi bi-shield-exclamation");
+        badge.appendChild(badgeIcon);
+        badge.appendChild(document.createTextNode(" Phiên thanh toán VNPay đã kết thúc"));
+        card.appendChild(badge);
+      }
+
+      render();
+    </script>
+  </body>
+</html>

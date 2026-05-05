@@ -220,6 +220,7 @@ body {
   display: inline-block; padding: 3px 10px; border-radius: 100px;
   font-size: 0.7rem; font-weight: 600; letter-spacing: .03em;
 }
+.badge-pending_payment { background: #faf5ff; color: #a855f7; }
 .badge-pending    { background: #fffbeb; color: #b45309; }
 .badge-confirmed  { background: #eff6ff; color: #1d4ed8; }
 .badge-processing { background: #eef2ff; color: #4338ca; }

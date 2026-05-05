@@ -44,11 +44,25 @@ const envSchema = z.object({
     .default(10),
 
   // CORS Configuration
+  // Production: set CORS_ORIGINS=https://yourdomain.com (comma-separated, NO wildcard)
+  // Development fallback only — will warn in production
   CORS_ORIGINS: z
     .string()
-    .default("http://localhost:3000,http://localhost:5173")
-    .transform((val) => val.split(",").map((url) => url.trim()))
-    .refine((urls) => urls.length > 0, "At least one CORS origin must be defined"),
+    .transform((val) => val.split(",").map((url) => url.trim()).filter(Boolean))
+    .refine(
+      (urls) => urls.length > 0,
+      "CORS_ORIGINS must contain at least one origin",
+    )
+    .refine(
+      (urls) => {
+        // Block wildcard in production
+        if (process.env.NODE_ENV === "production") {
+          return !urls.includes("*");
+        }
+        return true;
+      },
+      "Wildcard '*' is NOT allowed in production CORS_ORIGINS",
+    ),
 
   // Logging Configuration
   LOG_LEVEL: z
@@ -56,11 +70,25 @@ const envSchema = z.object({
     .default("debug"),
 
   // VNPay Configuration
-  VNPAY_TMN_CODE:       z.string().min(1).default("MF33CGUI"),
-  VNPAY_HASH_SECRET:    z.string().min(1).default("LN6Q8B39MD9DC7368TP3CXM300VZVLIK"),
-  VNPAY_RETURN_URL:     z.string().url().default("http://localhost:5000/api/v1/payments/vnpay/return"),
-  VNPAY_FRONTEND_RETURN: z.string().url().default("http://localhost:3000/vnpay-return.html"),
-  VNPAY_IPN_URL:        z.string().default("http://localhost:5000/api/v1/payments/vnpay/ipn"),
+  // ⚠️ SECURITY: NEVER hardcode real secrets here. Always set via .env file.
+  // These will throw at startup if missing — INTENTIONAL fail-fast behavior.
+  VNPAY_TMN_CODE: z
+    .string()
+    .min(1, "VNPAY_TMN_CODE is required — set it in your .env file"),
+  VNPAY_HASH_SECRET: z
+    .string()
+    .min(16, "VNPAY_HASH_SECRET must be at least 16 chars — set it in your .env file"),
+  VNPAY_RETURN_URL: z
+    .string()
+    .url()
+    .default("http://localhost:5000/api/v1/payments/vnpay/return"),
+  VNPAY_FRONTEND_RETURN: z
+    .string()
+    .url()
+    .default("http://localhost:3000/vnpay-return.html"),
+  VNPAY_IPN_URL: z
+    .string()
+    .default("http://localhost:5000/api/v1/payments/vnpay/ipn"),
 });
 
 /**

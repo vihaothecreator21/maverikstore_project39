@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AdminService } from "../services/admin.service";
+import { dashboardService, adminReportService } from "../container";
 import { sendSuccess, HTTP_STATUS, APIError } from "../utils/apiResponse";
 
 /**
@@ -12,7 +12,7 @@ export class AdminController {
    * Dashboard overview: revenue, orders, products, customers
    */
   static async getDashboardStats(_req: Request, res: Response) {
-    const stats = await AdminService.getDashboardStats();
+    const stats = await dashboardService.getDashboardStats();
     return sendSuccess(res, stats, "Dashboard statistics retrieved", HTTP_STATUS.OK);
   }
 
@@ -28,7 +28,7 @@ export class AdminController {
     }
 
     const { startDate, endDate } = AdminController._parseDateRange(req);
-    const data = await AdminService.getRevenueByPeriod(
+    const data = await adminReportService.getRevenueByPeriod(
       period as "day" | "week" | "month" | "year",
       startDate,
       endDate,
@@ -38,12 +38,12 @@ export class AdminController {
 
   /**
    * GET /api/v1/admin/revenue/payment
-   * Revenue breakdown by payment method (COD, BANK_TRANSFER, MOMO...)
+   * Revenue breakdown by payment method
    * Query: ?start=YYYY-MM-DD&end=YYYY-MM-DD
    */
   static async getRevenueByPayment(req: Request, res: Response) {
     const { startDate, endDate } = AdminController._parseDateRange(req);
-    const data = await AdminService.getRevenueByPaymentMethod(startDate, endDate);
+    const data = await adminReportService.getRevenueByPaymentMethod(startDate, endDate);
     return sendSuccess(res, data, "Revenue by payment method retrieved", HTTP_STATUS.OK);
   }
 
@@ -52,13 +52,13 @@ export class AdminController {
    * Best sellers, low stock products, revenue by category
    */
   static async getProductStats(req: Request, res: Response) {
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit     = parseInt(req.query.limit as string) || 10;
     const threshold = parseInt(req.query.threshold as string) || 10;
 
     const [bestSellers, lowStock, byCategory] = await Promise.all([
-      AdminService.getBestSellers(limit),
-      AdminService.getLowStockProducts(threshold),
-      AdminService.getRevenueByCategory(),
+      adminReportService.getBestSellers(limit),
+      adminReportService.getLowStockProducts(threshold),
+      adminReportService.getRevenueByCategory(),
     ]);
 
     return sendSuccess(
@@ -74,7 +74,7 @@ export class AdminController {
    * Total customers, new this month, top spenders
    */
   static async getCustomerStats(_req: Request, res: Response) {
-    const stats = await AdminService.getCustomerStats();
+    const stats = await adminReportService.getCustomerStats();
     return sendSuccess(res, stats, "Customer statistics retrieved", HTTP_STATUS.OK);
   }
 
@@ -85,7 +85,7 @@ export class AdminController {
    */
   static async exportOrders(req: Request, res: Response) {
     const { startDate, endDate } = AdminController._parseDateRange(req);
-    const data = await AdminService.getOrdersForExport(startDate, endDate);
+    const data = await adminReportService.getOrdersForExport(startDate, endDate);
     return sendSuccess(res, data, `${data.length} orders ready for export`, HTTP_STATUS.OK);
   }
 
@@ -98,15 +98,12 @@ export class AdminController {
   private static _parseDateRange(req: Request): { startDate: Date; endDate: Date } {
     const now = new Date();
 
-    // Default: last 30 days
     const defaultStart = new Date(now);
     defaultStart.setDate(defaultStart.getDate() - 30);
 
     const startStr = req.query.start as string;
     const endStr   = req.query.end   as string;
 
-    // Dùng offset +07:00 (Việt Nam) thay vì UTC (Z)
-    // để "2026-04-17" → 2026-04-17T00:00:00+07:00 (đúng ngày VN)
     const startDate = startStr ? new Date(startStr + "T00:00:00+07:00") : defaultStart;
     const endDate   = endStr   ? new Date(endStr   + "T23:59:59+07:00") : now;
 

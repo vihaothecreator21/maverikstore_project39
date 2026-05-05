@@ -54,12 +54,8 @@
             <input type="hidden" id="cat-id" />
             <div class="form-field">
               <label class="form-label">Tên danh mục *</label>
-              <input type="text" class="form-input" id="cat-name" placeholder="Sofa, Bàn ăn, Tủ..." required />
-            </div>
-            <div class="form-field">
-              <label class="form-label">Slug (URL)</label>
-              <input type="text" class="form-input" id="cat-slug" placeholder="sofa, ban-an, tu..." />
-              <div style="font-size:.73rem;color:#aaa;margin-top:4px;">Tự động tạo nếu để trống</div>
+              <input type="text" class="form-input" id="cat-name" placeholder="Sofa, Bàn ăn, Tủ..." required minlength="2" maxlength="100" />
+              <div style="font-size:.73rem;color:#aaa;margin-top:4px;">Slug sẽ được tạo tự động từ tên</div>
             </div>
             <div class="form-field">
               <label class="form-label">Mô tả</label>

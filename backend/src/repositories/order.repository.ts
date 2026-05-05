@@ -2,8 +2,9 @@ import { prisma } from "../config/database";
 import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
 import { writeAuditLog } from "../utils/auditLog.helper";
 
-// ── State Machine: transition hợp lệ ──────────────────────────────
+// ── State Machine ──────────────────────────────────────────────────
 export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING_PAYMENT: [OrderStatus.PENDING, OrderStatus.CANCELLED],  // VNPay IPN success → PENDING
   PENDING:    [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
   CONFIRMED:  [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
   PROCESSING: [OrderStatus.SHIPPING],
@@ -14,7 +15,7 @@ export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   RETURNED:   [],
 };
 
-// ── Include preset để tái sử dụng ─────────────────────────────────
+// ── Include preset ─────────────────────────────────────────────────
 const orderWithDetails = {
   details: {
     include: {
@@ -37,19 +38,14 @@ const orderWithDetails = {
   },
 } satisfies Prisma.OrderInclude;
 
-// ── Raw query result types ─────────────────────────────────────────
 interface StockLockRow {
   id: number;
   name: string;
   stockQuantity: number;
 }
 
-// ── Queries ────────────────────────────────────────────────────────
-
-export const OrderRepository = {
-  /**
-   * Lấy giỏ hàng + sản phẩm để chuẩn bị đặt hàng
-   */
+// ── Class-based Repository ─────────────────────────────────────────
+export class OrderRepository {
   async findCartForOrder(userId: number) {
     return prisma.cart.findUnique({
       where: { userId },
@@ -57,24 +53,14 @@ export const OrderRepository = {
         items: {
           include: {
             product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-                stockQuantity: true,
-              },
+              select: { id: true, name: true, price: true, stockQuantity: true },
             },
           },
         },
       },
     });
-  },
+  }
 
-  /**
-   * Tạo đơn hàng trong 1 atomic transaction.
-   * Fix #1: SELECT FOR UPDATE lấy cả name → không cần query thứ 2
-   * Fix #3: Dùng PaymentStatus.PENDING enum thay vì string
-   */
   async createOrderAtomic(
     userId: number,
     input: {
@@ -89,39 +75,39 @@ export const OrderRepository = {
       size: string;
       color: string;
       price: Prisma.Decimal;
-      productName: string; // Fix #1: truyền name từ ngoài vào, không query thêm
+      productName: string;
     }>,
     cartId: number,
   ) {
     return prisma.$transaction(async (tx) => {
-      // 1. Lock từng product row (SELECT FOR UPDATE) + lấy tồn kho hiện tại
+      // 1. Lock rows + check stock
       for (const item of cartItems) {
-        // Fix #1: Select cả id, name, stockQuantity trong 1 query duy nhất
         const locked = await tx.$queryRaw<StockLockRow[]>`
           SELECT id, name, stockQuantity FROM Product WHERE id = ${item.productId} FOR UPDATE
         `;
-
         if (!locked[0] || locked[0].stockQuantity < item.quantity) {
           const availableQty = locked[0]?.stockQuantity ?? 0;
-          throw new Error(
-            `INSUFFICIENT_STOCK::${item.productName}::${availableQty}`,
-          );
+          throw new Error(`INSUFFICIENT_STOCK::${item.productName}::${availableQty}`);
         }
       }
 
-      // 2. Tính tổng tiền trong server (không tin giá từ client)
+      // 2. Calculate total server-side
       const totalAmount = cartItems.reduce(
-        (sum, item) =>
-          sum.add(new Prisma.Decimal(item.price).mul(item.quantity)),
+        (sum, item) => sum.add(new Prisma.Decimal(item.price).mul(item.quantity)),
         new Prisma.Decimal(0),
       );
 
-      // 3. Tạo Order + OrderDetails + Payment
+      // 3. Create Order + Details + Payment
+      // VNPay orders start as PENDING_PAYMENT — chỉ chuyển PENDING sau khi IPN xác nhận
+      const initialStatus = input.paymentMethod === "VNPAY"
+        ? OrderStatus.PENDING_PAYMENT
+        : OrderStatus.PENDING;
+
       const order = await tx.order.create({
         data: {
           userId,
           totalAmount,
-          status: OrderStatus.PENDING,
+          status: initialStatus,
           shippingAddress: input.shippingAddress,
           shippingPhone: input.shippingPhone,
           note: input.note,
@@ -131,13 +117,12 @@ export const OrderRepository = {
               quantity: item.quantity,
               size: item.size,
               color: item.color,
-              priceAtPurchase: item.price, // Giá tại thời điểm mua — từ DB
+              priceAtPurchase: item.price,
             })),
           },
           payment: {
             create: {
               paymentMethod: input.paymentMethod,
-              // Fix #3: Dùng enum PaymentStatus thay vì string "PENDING"
               paymentStatus: PaymentStatus.PENDING,
               amount: totalAmount,
             },
@@ -146,7 +131,7 @@ export const OrderRepository = {
         include: orderWithDetails,
       });
 
-      // 4. Trừ tồn kho
+      // 4. Decrement stock
       for (const item of cartItems) {
         await tx.product.update({
           where: { id: item.productId },
@@ -154,22 +139,14 @@ export const OrderRepository = {
         });
       }
 
-      // 5. Xóa giỏ hàng
+      // 5. Clear cart
       await tx.cartItem.deleteMany({ where: { cartId } });
 
       return order;
     });
-  },
+  }
 
-  /**
-   * Lấy danh sách đơn của user (phân trang)
-   */
-  async findByUserId(
-    userId: number,
-    page: number,
-    limit: number,
-    status?: OrderStatus,
-  ) {
+  async findByUserId(userId: number, page: number, limit: number, status?: OrderStatus) {
     const where: Prisma.OrderWhereInput = { userId, ...(status && { status }) };
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
@@ -178,16 +155,13 @@ export const OrderRepository = {
         skip: (page - 1) * limit,
         take: limit,
         include: {
-          // Fix #7: Include details để _formatOrder có thể map đúng
           details: {
             select: {
               quantity: true,
               priceAtPurchase: true,
               size: true,
               color: true,
-              product: {
-                select: { name: true, imageUrl: true },
-              },
+              product: { select: { name: true, imageUrl: true } },
             },
           },
           payment: {
@@ -198,23 +172,34 @@ export const OrderRepository = {
       prisma.order.count({ where }),
     ]);
     return { orders, total };
-  },
+  }
 
-  /**
-   * Tìm 1 đơn hàng theo id
-   */
   async findById(id: number) {
     return prisma.order.findUnique({
       where: { id },
       include: orderWithDetails,
     });
-  },
+  }
 
-  /**
-   * Admin: lấy tất cả đơn có filter
-   */
-  async findAll(page: number, limit: number, status?: OrderStatus) {
-    const where: Prisma.OrderWhereInput = status ? { status } : {};
+  async findAll(
+    page: number,
+    limit: number,
+    status?: OrderStatus,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const where: Prisma.OrderWhereInput = {
+      ...(status && { status }),
+      ...(startDate || endDate
+        ? {
+            createdAt: {
+              ...(startDate && { gte: startDate }),
+              ...(endDate && { lte: endDate }),
+            },
+          }
+        : {}),
+    };
+
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where,
@@ -226,17 +211,8 @@ export const OrderRepository = {
       prisma.order.count({ where }),
     ]);
     return { orders, total };
-  },
+  }
 
-  /**
-   * Cập nhật status đơn hàng + hoàn kho + ghi AuditLog — tất cả trong 1 transaction.
-   * Fix #2: AuditLog được ghi BÊN TRONG transaction → đảm bảo atomicity
-   *
-   * @param orderId           ID đơn hàng
-   * @param newStatus         Trạng thái mới
-   * @param shouldRestoreStock Có hoàn kho không (true khi CANCEL/TIMEOUT)
-   * @param auditData         Dữ liệu audit (nếu không truyền thì không ghi log)
-   */
   async updateStatusWithRollback(
     orderId: number,
     newStatus: OrderStatus,
@@ -256,8 +232,6 @@ export const OrderRepository = {
 
       if (!order) throw new Error(`Order ${orderId} not found`);
 
-      // Hoàn kho nếu cần (cancel / timeout)
-      // Note #6: Đây là intentional — hoàn đúng số lượng đã trừ khi đặt hàng
       if (shouldRestoreStock) {
         for (const detail of order.details) {
           await tx.product.update({
@@ -273,7 +247,6 @@ export const OrderRepository = {
         include: orderWithDetails,
       });
 
-      // Fix #2: Ghi AuditLog BÊN TRONG transaction — nếu fail thì rollback cả order
       if (auditData) {
         await writeAuditLog(
           {
@@ -281,31 +254,26 @@ export const OrderRepository = {
             entity: "Order",
             entityId: orderId,
             oldValue: { status: auditData.oldStatus },
-            newValue: {
-              status: newStatus,
-              ...(auditData.note && { note: auditData.note }),
-            },
+            newValue: { status: newStatus, ...(auditData.note && { note: auditData.note }) },
             userId: auditData.userId,
           },
-          tx, // Truyền transaction client vào
+          tx,
         );
       }
 
       return updated;
     });
-  },
+  }
 
-  /**
-   * Cron job: tìm đơn PENDING quá 15 phút
-   */
   async findTimedOutOrders() {
     const cutoff = new Date(Date.now() - 15 * 60 * 1000);
     return prisma.order.findMany({
       where: {
-        status: OrderStatus.PENDING,
+        // Tìm cả PENDING_PAYMENT (VNPay chưa thanh toán) và PENDING (COD) quá 15 phút
+        status: { in: [OrderStatus.PENDING_PAYMENT, OrderStatus.PENDING] },
         createdAt: { lt: cutoff },
       },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, status: true },
     });
-  },
-};
+  }
+}

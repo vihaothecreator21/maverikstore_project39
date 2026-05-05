@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { CategoryService } from "../services/category.service";
+import { categoryService } from "../container";
 import { catchAsync } from "../utils/catchAsync";
 import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse";
 import {
@@ -14,7 +14,7 @@ export const categoryRoutes = Router();
 categoryRoutes.get(
   "/",
   catchAsync(async (_req: Request, res: Response) => {
-    const categories = await CategoryService.getAll();
+    const categories = await categoryService.getAll();
     return sendSuccess(
       res,
       categories,
@@ -29,7 +29,7 @@ categoryRoutes.get(
   "/:id",
   catchAsync(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
-    const category = await CategoryService.getById(id);
+    const category = await categoryService.getById(id);
     return sendSuccess(
       res,
       category,
@@ -47,7 +47,7 @@ categoryRoutes.post(
   requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const data = CreateCategorySchema.parse(req.body);
-    const category = await CategoryService.create(data);
+    const category = await categoryService.create(data);
     return sendSuccess(
       res,
       category,
@@ -66,7 +66,7 @@ categoryRoutes.put(
   catchAsync(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const data = UpdateCategorySchema.parse(req.body);
-    const category = await CategoryService.update(id, data);
+    const category = await categoryService.update(id, data);
     return sendSuccess(
       res,
       category,
@@ -84,7 +84,7 @@ categoryRoutes.delete(
   requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
-    const category = await CategoryService.delete(id);
+    const category = await categoryService.delete(id);
     return sendSuccess(
       res,
       category,

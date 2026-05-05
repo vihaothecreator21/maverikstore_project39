@@ -6,46 +6,42 @@ const SELECT_WITH_COUNT = {
 } as const;
 
 export class CategoryRepository {
-  static async findAll() {
+  async findAll() {
     return prisma.category.findMany({
       orderBy: { name: "asc" },
       select: SELECT_WITH_COUNT,
     });
   }
 
-  static async findById(id: number) {
+  async findById(id: number) {
     return prisma.category.findUnique({
       where: { id },
       select: SELECT_WITH_COUNT,
     });
   }
 
-  static async findBySlug(slug: string) {
+  async findBySlug(slug: string) {
     return prisma.category.findUnique({
       where: { slug },
       select: { id: true, name: true, slug: true, description: true },
     });
   }
 
-  static async create(data: {
-    name: string;
-    slug: string;
-    description?: string;
-  }) {
+  async findByName(name: string) {
+    return prisma.category.findUnique({
+      where: { name },
+      select: { id: true, name: true, slug: true, description: true },
+    });
+  }
+
+  async create(data: { name: string; slug: string; description?: string }) {
     return prisma.category.create({
       data,
       select: SELECT_WITH_COUNT,
     });
   }
 
-  static async update(
-    id: number,
-    data: {
-      name?: string;
-      slug?: string;
-      description?: string;
-    },
-  ) {
+  async update(id: number, data: { name?: string; slug?: string; description?: string }) {
     return prisma.category.update({
       where: { id },
       data,
@@ -53,16 +49,14 @@ export class CategoryRepository {
     });
   }
 
-  static async delete(id: number) {
+  async delete(id: number) {
     return prisma.category.delete({
       where: { id },
       select: { id: true, name: true, slug: true },
     });
   }
 
-  static async countProducts(categoryId: number) {
-    return prisma.product.count({
-      where: { categoryId },
-    });
+  async countProducts(categoryId: number) {
+    return prisma.product.count({ where: { categoryId } });
   }
 }

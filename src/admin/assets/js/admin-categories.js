@@ -46,24 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("cat-delete-confirm").addEventListener("click", confirmDelete);
 
-  // Auto-generate slug from name
-  const nameEl = document.getElementById("cat-name");
-  const slugEl = document.getElementById("cat-slug");
-  nameEl.addEventListener("input", function () {
-    if (!slugEl.dataset.manual) {
-      slugEl.value = this.value
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/[^a-z0-9\s-]/g, "")
-        .trim()
-        .replace(/\s+/g, "-");
-    }
-  });
-  slugEl.addEventListener("input", function () {
-    this.dataset.manual = "1";
-  });
+  // ✅ REMOVED: No more client-side slug generation — backend handles it
 
   // Close modal on backdrop click
   document.getElementById("cat-delete-modal").addEventListener("click", (e) => {
@@ -130,12 +113,12 @@ async function handleSave(e) {
 
   const name = document.getElementById("cat-name").value.trim();
   const desc = document.getElementById("cat-desc").value.trim();
-  let   slug = document.getElementById("cat-slug").value.trim();
 
   if (!name) { showToast("⚠️ Nhập tên danh mục", "warning"); return; }
+  if (name.length < 2) { showToast("⚠️ Tên danh mục phải ít nhất 2 ký tự", "warning"); return; }
 
-  // If slug empty, backend will auto-generate via slugify
-  const body = { name, ...(slug && { slug }), ...(desc && { description: desc }) };
+  // ✅ FIX: Only send name + description — backend generates slug
+  const body = { name, ...(desc && { description: desc }) };
 
   const btn = document.getElementById("cat-submit");
   btn.disabled = true;
@@ -171,9 +154,7 @@ window.editCategory = (id) => {
   editingId = id;
   document.getElementById("cat-id").value   = c.id;
   document.getElementById("cat-name").value = c.name;
-  document.getElementById("cat-slug").value = c.slug || "";
   document.getElementById("cat-desc").value = c.description || "";
-  document.getElementById("cat-slug").dataset.manual = "1";
 
   document.getElementById("cat-form-title").textContent = `Chỉnh sửa: ${c.name}`;
   document.getElementById("cat-submit").textContent = "Lưu thay đổi";
@@ -187,7 +168,6 @@ function resetForm() {
   editingId = null;
   document.getElementById("cat-form").reset();
   document.getElementById("cat-id").value = "";
-  delete document.getElementById("cat-slug").dataset.manual;
   document.getElementById("cat-form-title").textContent = "Thêm danh mục mới";
   document.getElementById("cat-submit").textContent = "Thêm danh mục";
   document.getElementById("cat-reset").style.display = "none";

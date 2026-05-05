@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions, type JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { getEnv } from "../config/env.config";
 import { UserRepository } from "../repositories/user.repository";
@@ -9,42 +9,40 @@ import type { RegisterInput, LoginInput } from "../schemas/auth.schema";
  * Auth Service - Business Logic Layer
  * Handles user authentication, registration, and JWT operations
  */
-
 export class AuthService {
+  private userRepository: UserRepository;
+
+  constructor(userRepository: UserRepository) {
+    this.userRepository = userRepository;
+  }
+
   /**
    * Generate JWT Token
    */
-  static generateToken(userId: number, email: string, role: string): string {
+  generateToken(userId: number, email: string, role: string): string {
     const env = getEnv();
-
-    const token = jwt.sign(
-      {
-        userId,
-        email,
-        role,
-      },
+    return jwt.sign(
+      { userId, email, role },
       env.JWT_SECRET,
-      {
-        expiresIn: env.JWT_EXPIRE,
-      } as any,
+      { expiresIn: env.JWT_EXPIRE } as SignOptions,
     );
-
-    return token;
   }
 
   /**
    * Verify JWT Token
    */
-  static verifyToken(
-    token: string,
-  ): { userId: number; email: string; role: string } | null {
+  verifyToken(token: string): { userId: number; email: string; role: string } | null {
     try {
       const env = getEnv();
-      const decoded = jwt.verify(token, env.JWT_SECRET) as any;
+      const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload & {
+        userId: number;
+        email: string;
+        role: string;
+      };
       return {
         userId: decoded.userId,
-        email: decoded.email,
-        role: decoded.role,
+        email:  decoded.email,
+        role:   decoded.role,
       };
     } catch {
       return null;
@@ -54,9 +52,8 @@ export class AuthService {
   /**
    * Register new user
    */
-  static async register(input: RegisterInput) {
-    // Check if email already exists
-    const emailExists = await UserRepository.emailExists(input.email);
+  async register(input: RegisterInput) {
+    const emailExists = await this.userRepository.emailExists(input.email);
     if (emailExists) {
       throw new APIError(
         409,
@@ -66,29 +63,26 @@ export class AuthService {
       );
     }
 
-    // Hash password
     const env = getEnv();
     const passwordHash = await bcrypt.hash(input.password, env.BCRYPT_ROUNDS);
 
-    // Create user
-    const user = await UserRepository.create({
-      username: input.fullName.toLowerCase().replace(/\s+/g, "_"),
-      email: input.email,
+    const user = await this.userRepository.create({
+      username:     input.fullName.toLowerCase().replace(/\s+/g, "_"),
+      email:        input.email,
       passwordHash,
-      phone: input.phone,
+      phone:        input.phone,
     });
 
-    // Generate token
     const token = this.generateToken(user.id, user.email, user.role);
 
     return {
       token,
       user: {
-        id: user.id,
+        id:       user.id,
         username: user.username,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
+        email:    user.email,
+        phone:    user.phone,
+        role:     user.role,
       },
     };
   }
@@ -96,43 +90,27 @@ export class AuthService {
   /**
    * Login user
    */
-  static async login(input: LoginInput) {
-    // Find user by email
-    const user = await UserRepository.findByEmail(input.email);
+  async login(input: LoginInput) {
+    const user = await this.userRepository.findByEmail(input.email);
     if (!user) {
-      throw new APIError(
-        401,
-        "Invalid email or password",
-        {},
-        "INVALID_CREDENTIALS",
-      );
+      throw new APIError(401, "Invalid email or password", {}, "INVALID_CREDENTIALS");
     }
 
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(
-      input.password,
-      user.passwordHash,
-    );
+    const isPasswordValid = await bcrypt.compare(input.password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new APIError(
-        401,
-        "Invalid email or password",
-        {},
-        "INVALID_CREDENTIALS",
-      );
+      throw new APIError(401, "Invalid email or password", {}, "INVALID_CREDENTIALS");
     }
 
-    // Generate token
     const token = this.generateToken(user.id, user.email, user.role);
 
     return {
       token,
       user: {
-        id: user.id,
+        id:       user.id,
         username: user.username,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
+        email:    user.email,
+        phone:    user.phone,
+        role:     user.role,
       },
     };
   }
@@ -140,8 +118,8 @@ export class AuthService {
   /**
    * Get user profile
    */
-  static async getProfile(userId: number) {
-    const user = await UserRepository.findById(userId);
+  async getProfile(userId: number) {
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new APIError(404, "User not found", {}, "USER_NOT_FOUND");
     }

@@ -1,0 +1,283 @@
+# 🔍 Code Review — Maverik Store (5 Chức năng)
+
+> Reviewed via Grapuco + source analysis | 2026-05-01
+
+---
+
+## 1. 💜 MoMo Payment
+
+### Trạng thái: ⚠️ THIẾU BACKEND — CHỈ CÓ UI
+
+**Flow hiện tại:**
+
+```
+checkout.html → chọn "Ví MoMo" → handlePlaceOrder()
+    → POST /api/v1/orders  (tạo đơn thành công)
+    → if (paymentMethod === "VNPAY") → redirect VNPay  ✅
+    → else (COD / MOMO / BANK_TRANSFER) → showSuccess() thẳng  ❌
+```
+
+**Vấn đề:**
+- **MoMo không có gateway thực.** Khi user chọn MoMo, hệ thống chỉ tạo đơn và hiển thị thành công ngay (giống COD), **không redirect sang cổng thanh toán MoMo**.
+- Trong `checkout.js` line 290: comment ghi rõ `// COD / MOMO / BANK_TRANSFER: hiển thị success thẳng` — đây là giải pháp tạm thời.
+- Trong `admin-revenue.js` line 205: constant `COLORS` có `MOMO: "#ec4899"` — chứng tỏ MoMo được thiết kế nhưng chưa được implement gateway.
+- Backend `payment.service.ts` không có `createMoMoUrl()` — chỉ có VNPay.
+
+**Tác động:**
+- Người dùng chọn MoMo → đơn hàng được tạo với `paymentMethod: "MOMO"` nhưng chưa thanh toán thật.
+- Không có IPN / callback để cập nhật `paymentStatus` → đơn sẽ ở trạng thái `PENDING` mãi.
+
+**Fix cần làm:**
+1. Implement MoMo API gateway (tương tự VNPay): `PaymentService.createMoMoUrl()`
+2. Thêm endpoint `/api/v1/payments/momo/create` + `/api/v1/payments/momo/return`
+3. Trong `checkout.js`, thêm block `if (paymentMethod === "MOMO") → redirect MoMo`
+4. Hoặc tạm thời: **ẩn lựa chọn MoMo** cho đến khi có gateway thật.
+
+---
+
+## 2. 💳 Thẻ Thanh toán Quốc tế (VNPay)
+
+### Trạng thái: ✅ HOẠT ĐỘNG — một số vấn đề nhỏ
+
+**Flow đầy đủ:**
+```
+checkout.html → chọn VNPay → POST /api/v1/orders
+    → GET /api/v1/payments/vnpay/create?orderId=X
+    → PaymentService.createVNPayUrl(orderId, userId, ip)
+        → sortObject() + HMAC-SHA512 + qs.stringify(encode:false)
+        → return paymentUrl (sandbox.vnpayment.vn)
+    → window.location.href = paymentUrl
+    → [VNPay sandbox xử lý]
+    → GET /api/v1/payments/vnpay/return  ← redirect về
+        → verifyReturn() → redirect frontend /vnpay-return.html
+    → GET /api/v1/payments/vnpay/ipn  ← server-to-server
+        → handleIPN() → { RspCode, Message }
+```
+
+**Vấn đề phát hiện:**
+
+| # | Vị trí | Vấn đề | Mức độ |
+|---|--------|---------|--------|
+| 1 | `payment.service.ts` L69 | `vnp_Amount: Math.round(100000 * 100)` — **hardcode 100.000đ**, không dùng `totalAmount` từ đơn hàng | 🔴 CRITICAL |
+| 2 | `payment.service.ts` L59 | `createVNPayUrl(orderId, userId, clientIp)` — `userId` được nhận nhưng **không dùng** trong params | 🟡 MINOR |
+| 3 | `handleIPN()` L230 | IPN không update DB (không gọi `OrderRepository.updateStatus`) — chỉ verify + return JSON | 🔴 HIGH |
+| 4 | `PaymentController` L22 | `const paymentUrl = await PaymentService.createVNPayUrl(...)` — method là sync nhưng dùng `await` | 🟢 LOW |
+| 5 | `checkout.js` L276 | VNPay `paymentUrl` được gọi **sau khi** đã tạo đơn hàng — nếu lỗi VNPay, đơn vẫn tồn tại trong DB không có payment | 🟡 MEDIUM |
+
+**Fix quan trọng nhất — Bug #1 (Hardcode amount):**
+```typescript
+// ❌ Hiện tại (payment.service.ts line 69)
+vnp_Amount: Math.round(100000 * 100),
+
+// ✅ Cần sửa — lấy amount từ DB order
+static async createVNPayUrl(orderId: number, userId: number, clientIp: string) {
+  // Cần query order từ DB trước
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new Error("Order not found");
+  const amount = Number(order.totalAmount);
+  // ...
+  vnp_Amount: Math.round(amount * 100),
+}
+```
+
+**Fix Bug #3 (IPN không update DB):**
+```typescript
+// Trong handleIPN(), sau khi verify thành công:
+if (result.isSuccess) {
+  await prisma.payment.updateMany({
+    where: { orderId: result.orderId },
+    data: { paymentStatus: "SUCCESS" }
+  });
+  await prisma.order.update({
+    where: { id: result.orderId },
+    data: { status: "CONFIRMED" }
+  });
+  return { RspCode: "00", Message: "Confirm Success" };
+}
+```
+
+---
+
+## 3. 📁 Sửa Category (Admin)
+
+### Trạng thái: ✅ HOẠT ĐỘNG TỐT — logic đúng
+
+**Flow đầy đủ:**
+```
+admin-categories.js → editCategory(id) → fill form → handleSave()
+    → PUT /api/v1/categories/:id
+    → CategoryController.update()
+    → CategoryService.update(id, data)
+        → getById(id) — verify exists
+        → if name changed → generateUniqueSlug(name, id) — check collision
+        → CategoryRepository.update(id, {name, slug, description})
+```
+
+**Điểm tốt:**
+- `generateUniqueSlug()` xử lý đúng: check slug collision, tự thêm `-1`, `-2`... nếu trùng.
+- `excludeId` trong slug check đảm bảo category đang edit không tự conflict với chính mình.
+- Frontend có auto-slug từ tên (normalize NFD + xử lý "đ" → "d").
+- Backend đã fix bug `Unique constraint` từ conversation trước (b3f0f17d).
+
+**Vấn đề nhỏ còn lại:**
+
+| # | Vấn đề | Fix |
+|---|--------|-----|
+| 1 | `admin-categories.js` L163: `btn.textContent = editingId ? "Lưu thay đổi" : "Thêm danh mục"` — nếu submit fail, `editingId` đã bị reset không? | Kiểm tra logic trong `finally` — `editingId` không được reset trong finally, chỉ reset trong `resetForm()` → **OK** |
+| 2 | Frontend slug normalize thiếu xử lý một số ký tự tiếng Việt (ă, ơ, ư...). Backend dùng `slugify` với `locale: "vi"` đúng hơn | Bỏ client-side normalize, để backend xử lý hoàn toàn |
+| 3 | Không có validation max-length cho `name` và `description` ở frontend | Thêm `maxlength` attribute hoặc validate JS |
+
+**Kết luận:** Chức năng sửa category hoạt động đúng. Chỉ cần polish nhỏ.
+
+---
+
+## 4. 📅 Filter Đơn Hàng Theo Ngày
+
+### Trạng thái: ⚠️ THIẾU FILTER NGÀY trong trang Đơn hàng Admin
+
+**Phân tích:**
+
+Trang `admin/orders.html` + `admin-orders.js` hiện có:
+- ✅ Filter theo **Status** (tab buttons)  
+- ✅ Search theo **ID / tên khách hàng**  
+- ✅ Pagination server-side  
+- ❌ **KHÔNG CÓ filter theo ngày**  
+
+Trang `admin/revenue.html` + `admin-revenue.js` có filter ngày (7d/30d/90d/custom) nhưng đây là trang báo cáo doanh thu, không phải quản lý đơn hàng.
+
+**Backend `adminGetOrders()` trong `order.service.ts`:**
+```typescript
+static async adminGetOrders(query: OrderQueryInput) {
+  const { page, limit, status } = query;  // ← không có startDate/endDate
+  const { orders, total } = await OrderRepository.findAll(page, limit, status);
+}
+```
+
+`OrderRepository.findAll()` cũng không nhận date range.
+
+**Fix cần làm:**
+
+**Backend — `order.repository.ts`:**
+```typescript
+static async findAll(page, limit, status?, startDate?, endDate?) {
+  const where: Prisma.OrderWhereInput = {};
+  if (status) where.status = status as OrderStatus;
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) where.createdAt.gte = startDate;
+    if (endDate)   where.createdAt.lte = endDate;
+  }
+  // ...
+}
+```
+
+**Backend — `order.schema.ts` (thêm fields):**
+```typescript
+export const OrderQuerySchema = z.object({
+  page:      z.coerce.number().default(1),
+  limit:     z.coerce.number().default(20),
+  status:    z.string().optional(),
+  startDate: z.string().optional(), // YYYY-MM-DD
+  endDate:   z.string().optional(),
+});
+```
+
+**Frontend — `admin-orders.js` (thêm date filter UI):**
+```javascript
+// Thêm vào loadOrders():
+const startDate = document.getElementById("filter-start")?.value;
+const endDate   = document.getElementById("filter-end")?.value;
+if (startDate) params.set("startDate", startDate);
+if (endDate)   params.set("endDate",   endDate);
+```
+
+**Frontend — `admin/orders.html` (thêm date picker):**
+```html
+<div class="filter-bar">
+  <input type="date" id="filter-start" class="filter-select" />
+  <span>→</span>
+  <input type="date" id="filter-end"   class="filter-select" />
+  <button class="btn btn-outline btn-sm" id="btn-apply-date">Lọc</button>
+  <input class="search-input" type="text" id="search-orders" ... />
+</div>
+```
+
+---
+
+## 5. 📤 Sửa File Export (CSV/PDF)
+
+### Trạng thái: 🟡 HOẠT ĐỘNG — vài vấn đề encoding và nội dung
+
+**Flow:**
+```
+admin-revenue.js → loadExportData()
+    → GET /api/v1/admin/export/orders?start=X&end=Y
+    → AdminController.exportOrders()
+    → AdminService.getOrdersForExport(startDate, endDate)
+    → flatten orders → return array
+    → exportCSV() / exportPDF()
+```
+
+**Vấn đề phát hiện:**
+
+| # | Vị trí | Vấn đề | Mức độ |
+|---|--------|---------|--------|
+| 1 | `admin-revenue.js` L316 | CSV có UTF-8 BOM (`\uFEFF`) — Excel đọc được tiếng Việt ✅ | OK |
+| 2 | `admin-revenue.js` L342 | PDF dùng `jsPDF` — **không hỗ trợ font tiếng Việt** → chữ bị mất dấu trong PDF | 🔴 HIGH |
+| 3 | `admin-revenue.js` L345 | PDF header: `"BAO CAO DOANH THU"` (không dấu) — intentional vì jsPDF không có font VN | 🟡 UX |
+| 4 | `admin-revenue.js` L355 | PDF summary: `"Doanh thu (COMPLETED + DELIVERED)"` — chữ `d` cuối thay vì `đ` (lỗi encoding) | 🟡 MINOR |
+| 5 | `AdminService.getOrdersForExport()` L419 | items join bằng ` \| ` — OK cho CSV nhưng trong PDF cell sẽ bị overflow | 🟡 MEDIUM |
+| 6 | Export chỉ có từ trang `revenue.html` — **không có nút export trong trang `orders.html`** | 🟡 UX |
+
+**Fix Bug #2 — PDF tiếng Việt:**
+
+**Option A (Khuyến nghị): Dùng thư viện SheetJS cho Excel thay PDF**
+```javascript
+// Thay exportPDF bằng exportExcel — dùng SheetJS (xlsx)
+import * as XLSX from 'https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs';
+
+function exportExcel() {
+  const ws = XLSX.utils.json_to_sheet(csvData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Đơn hàng");
+  XLSX.writeFile(wb, `maverik-${fmt(startDate)}-${fmt(endDate)}.xlsx`);
+}
+```
+
+**Option B: Embed font vào jsPDF**
+```javascript
+// Tải font NotoSans-Vietnamese, encode base64, embed vào jsPDF
+doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+doc.setFont('NotoSans');
+```
+
+**Fix Bug #4 — Tiền tệ trong PDF:**
+```javascript
+// ❌ Hiện tại:
+new Intl.NumberFormat("vi-VN").format(totalRevenue) + "d"
+
+// ✅ Sửa:
+new Intl.NumberFormat("vi-VN").format(totalRevenue) + "đ"
+// Hoặc plain: totalRevenue.toLocaleString("vi-VN") + " VND"
+```
+
+---
+
+## 📊 Tổng kết — Mức độ ưu tiên Fix
+
+| # | Chức năng | Bug | Mức độ | Effort |
+|---|-----------|-----|--------|--------|
+| 1 | VNPay | Hardcode amount 100.000đ | 🔴 CRITICAL | ~30 phút |
+| 2 | VNPay IPN | Không update DB | 🔴 HIGH | ~1 giờ |
+| 3 | Filter đơn hàng | Không có date filter | 🟠 HIGH | ~2 giờ |
+| 4 | MoMo | Không có gateway thật | 🟠 HIGH | ~4 giờ (cần MoMo API key) |
+| 5 | Export PDF | Tiếng Việt bị mất dấu | 🟡 MEDIUM | ~1 giờ |
+| 6 | Export | Ký tự "đ" bị lỗi trong PDF | 🟡 LOW | ~5 phút |
+| 7 | Category | Client-side slug normalize thiếu | 🟢 LOW | ~15 phút |
+
+### 🎯 Thứ tự xử lý đề xuất:
+1. **Fix VNPay amount hardcode** (critical, ảnh hưởng trực tiếp doanh thu)
+2. **Fix VNPay IPN update DB** (đơn không được xác nhận tự động)
+3. **Thêm date filter cho trang orders** (tính năng bị thiếu)
+4. **Fix PDF encoding** hoặc chuyển sang Excel export
+5. **Ẩn MoMo** cho đến khi implement gateway thật

@@ -7,9 +7,8 @@
   <script src="./assets/chart.umd.min.js"></script>
   <!-- PapaParse for CSV export -->
   <script src="./assets/papaparse.min.js"></script>
-  <!-- jsPDF + AutoTable for PDF export -->
-  <script src="./assets/jspdf.umd.min.js"></script>
-  <script src="./assets/jspdf.autotable.min.js"></script>
+  <!-- SheetJS for Excel export — replaces jsPDF (Vietnamese support) -->
+  <script src="./assets/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="./assets/admin.css" />
   <style>
     .date-filter { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -119,7 +118,7 @@
         </div>
         <div class="export-btns">
           <button class="btn btn-outline" id="btn-export-csv"><i class="bi bi-filetype-csv"></i>Xuất CSV</button>
-          <button class="btn btn-primary" id="btn-export-pdf"><i class="bi bi-file-pdf"></i>Xuất PDF</button>
+          <button class="btn btn-primary" id="btn-export-xlsx"><i class="bi bi-file-earmark-spreadsheet"></i>Xuất Excel</button>
         </div>
       </div>
 

@@ -1,0 +1,357 @@
+# 🏗️ Architecture & Production-Readiness Audit
+## Maverik Store — Đánh giá toàn diện
+
+> Phạm vi: Toàn bộ project (backend TypeScript + frontend Vanilla JS)
+> Tiêu chí: Clean Architecture + Production Business Standard
+
+---
+
+## 📊 Điểm tổng thể
+
+| Tiêu chí | Điểm | Mức |
+|----------|------|-----|
+| Kiến trúc phân lớp (Layered Architecture) | 7/10 | 🟡 Tốt |
+| Tính nhất quán API | 8/10 | 🟢 Tốt |
+| Bảo mật (Security) | 5/10 | 🟠 Trung bình |
+| Xử lý lỗi (Error Handling) | 8/10 | 🟢 Tốt |
+| Database Design | 8/10 | 🟢 Tốt |
+| Khả năng mở rộng (Scalability) | 4/10 | 🔴 Yếu |
+| Testability (Có thể test) | 3/10 | 🔴 Yếu |
+| Logging & Observability | 4/10 | 🔴 Yếu |
+| Frontend Architecture | 4/10 | 🔴 Yếu |
+| Business Logic Completeness | 6/10 | 🟡 Trung bình |
+
+**Điểm trung bình: 5.7/10 — Đủ cho MVP học tập, CHƯA đủ cho production thực tế**
+
+---
+
+## ✅ ĐIỂM MẠNH — Những gì đã làm đúng
+
+### 1. Phân lớp kiến trúc rõ ràng (Controller → Service → Repository)
+```
+PaymentController  →  PaymentService  →  (prisma trực tiếp)
+OrderController    →  OrderService    →  OrderRepository  →  Prisma
+CategoryController →  CategoryService →  CategoryRepository → Prisma
+AdminController    →  AdminService    →  (prisma trực tiếp)
+```
+- Separation of Concerns được tôn trọng: Controller không có business logic.
+- Service là nơi duy nhất chứa business rules.
+- Repository tách biệt data access khỏi business logic.
+
+### 2. Database Schema — Thiết kế tốt
+- ✅ `Decimal` thay `Float` cho tất cả trường tiền tệ (tránh floating point error).
+- ✅ Enum cho `OrderStatus`, `PaymentStatus`, `Role` — type-safe.
+- ✅ State machine được document rõ: `PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED → COMPLETED`.
+- ✅ `AuditLog` model tách biệt — ghi lại lịch sử thay đổi.
+- ✅ Index hợp lý: `createdAt`, `categoryId`, `slug`, `status`, `userId`.
+- ✅ `priceAtPurchase` trong `OrderDetail` — lưu giá tại thời điểm mua, không phụ thuộc giá hiện tại.
+
+### 3. Atomic Transactions — Chuẩn
+```typescript
+// createOrderAtomic: 5 bước trong 1 transaction
+1. SELECT FOR UPDATE (lock stock)
+2. Tính totalAmount phía server (không tin client)
+3. Tạo Order + OrderDetail + Payment
+4. Trừ tồn kho
+5. Xóa giỏ hàng
+```
+- Race condition được xử lý đúng với `SELECT FOR UPDATE`.
+- Rollback tự động nếu bất kỳ bước nào fail.
+- `updateStatusWithRollback` + AuditLog đều trong cùng transaction.
+
+### 4. Environment Validation tại startup
+```typescript
+// env.config.ts — Zod schema validation
+// Fail fast: server không start nếu thiếu biến môi trường
+const env = initializeEnv(); // throws nếu config sai
+```
+- VNPay secrets, JWT, DATABASE_URL đều được validate kiểu và giá trị.
+
+### 5. Auth Middleware — Đúng hướng
+- JWT verify + **query DB để kiểm tra user tồn tại** (phòng DB reset).
+- Role luôn lấy từ DB, không tin token → tránh privilege escalation.
+- `requireAdmin` middleware tách biệt, compose được.
+
+### 6. Error Handling nhất quán
+- `APIError` + `ValidationError` classes có typed structure.
+- Global error handler bắt tất cả, format chuẩn.
+- `catchAsync` wrapper loại bỏ try/catch lặp lại ở mỗi controller.
+- Response format nhất quán: `{ status, code, message, data, timestamp }`.
+
+### 7. Background Job (Order Timeout)
+- Cron job cancel đơn PENDING > 15 phút + hoàn kho, chạy mỗi phút.
+- Xử lý từng order riêng lẻ, lỗi 1 order không crash toàn job.
+
+---
+
+## ❌ ĐIỂM YẾU — Gap so với Production Standard
+
+### 🔴 CRITICAL — Chặn deploy production
+
+#### GAP-01: Không có unit/integration tests
+```
+src/
+├── controllers/  ← 0 test files
+├── services/     ← 0 test files
+├── repositories/ ← 0 test files
+└── utils/        ← 0 test files
+```
+- **Mọi thay đổi code đều có thể break logic mà không phát hiện được.**
+- Atomic transaction có đúng không? Không ai biết nếu không có test.
+- Production standard tối thiểu: 70% coverage cho service layer.
+
+#### GAP-02: Rate Limit bằng in-memory — Không scale
+```typescript
+// rateLimit.middleware.ts
+const store: RateLimitStore = {}; // Plain JS object
+```
+- **Bị bypass ngay khi deploy nhiều instance** (load balancer → store khác nhau).
+- Memory leak tiềm năng nếu `cleanupRateLimitStore` chậm hơn request tốc độ.
+- Production cần: Redis-backed rate limit (`express-rate-limit` + `rate-limit-redis`).
+
+#### GAP-03: Password hash rounds capped ở 12 — Có thể không đủ
+```typescript
+BCRYPT_ROUNDS: z.coerce.number().min(6).max(12)
+```
+- Năm 2024+: bcrypt 12 rounds đủ cho hầu hết use case.
+- Tuy nhiên: không có comment về lý do chọn 10 default và tại sao max là 12.
+
+#### GAP-04: JWT không có Refresh Token mechanism
+- Token 7 ngày không thể revoke ngay lập tức (chỉ blacklist nếu có Redis).
+- Nếu user bị hack, admin không thể force logout.
+- Production cần: `accessToken` (15 phút) + `refreshToken` (30 ngày) pattern.
+
+#### GAP-05: VNPay Amount hardcode — BUG CRITICAL đã nêu ở review trước
+```typescript
+vnp_Amount: Math.round(100000 * 100), // ❌ hardcode 100k
+```
+
+#### GAP-06: IPN không update database
+- VNPay gọi IPN → verify hash OK → **không update Payment.status / Order.status**.
+- Đơn hàng sẽ mãi ở `paymentStatus: PENDING` dù đã thanh toán thành công.
+
+---
+
+### 🟠 HIGH — Nên fix trước khi production
+
+#### GAP-07: Không có Logging framework — chỉ dùng `console.log`
+```typescript
+// server.ts, jobs, middlewares — tất cả dùng console.log
+console.log(`[OrderTimeout] Cancelled order #${order.id}`);
+console.error("🔴 Error occurred:", {...});
+```
+- Production cần: Winston / Pino với log levels, file rotation, structured JSON logs.
+- Không thể query/filter logs sau khi deploy.
+- Không thể gửi logs sang Datadog / ELK / CloudWatch.
+
+#### GAP-08: Static File Serving — Không có CDN hay asset optimization
+- Frontend HTML files phục vụ trực tiếp bằng Vite dev server hoặc static hosting.
+- Không có cache headers, image optimization, hoặc bundle splitting.
+- Production: Cloudflare CDN, compressed assets, cache-control headers.
+
+#### GAP-09: Không có Input Sanitization chống XSS
+```javascript
+// admin-orders.js line 170: innerHTML trực tiếp từ data DB
+tbody.innerHTML = rows.join("");
+// Nếu tên khách hàng chứa <script>alert(1)</script> → XSS
+```
+- Tất cả frontend render dùng string interpolation vào innerHTML.
+- Production cần: `textContent` hoặc DOM API, hoặc sanitize library (DOMPurify).
+
+#### GAP-10: CORS quá rộng trong development
+```typescript
+// env.config.ts default
+CORS_ORIGINS: z.string().default("http://localhost:3000,http://localhost:5173")
+```
+- Nếu deploy production mà quên set env var → accept request từ mọi localhost.
+- Nên: require CORS_ORIGINS không có default value ở production.
+
+#### GAP-11: Health check thiếu database ping
+```typescript
+// routes/index.ts
+router.get("/health", (_req, res) => {
+  sendSuccess(res, { status: "healthy", ... }); // Không check DB
+});
+```
+- Server trả `healthy` kể cả khi database bị disconnect.
+- Production cần: `await prisma.$queryRaw\`SELECT 1\`` trong health check.
+
+#### GAP-12: Secret keys có hardcode default trong env.config.ts
+```typescript
+VNPAY_TMN_CODE:    z.string().min(1).default("MF33CGUI"),      // Sandbox key!
+VNPAY_HASH_SECRET: z.string().min(1).default("LN6Q8B39MD..."), // Public sandbox!
+JWT_SECRET:        // Không có default — OK
+```
+- VNPay sandbox credentials bị hardcode → nếu quên set prod env, sẽ dùng sandbox key.
+- Nên remove default hoàn toàn, force phải set từ env.
+
+---
+
+### 🟡 MEDIUM — Cải thiện chất lượng code
+
+#### GAP-13: Frontend Architecture — "Flat files" pattern không scale
+```
+src/
+├── admin/
+│   └── assets/js/
+│       ├── admin-dashboard.js  (7KB — monolithic)
+│       ├── admin-orders.js     (11KB — monolithic)
+│       └── admin-revenue.js    (19KB — monolithic)
+```
+- Mỗi file JS là 1 module khổng lồ, không có component decomposition.
+- Duplicate code: `formatVND`, `showToast`, sidebar init lặp lại ở nhiều file.
+- Không có state management → prop drilling bằng global variables.
+- Production frontend cần: Vue/React component model hoặc ít nhất module system.
+
+#### GAP-14: `AdminService` vi phạm Single Responsibility
+```typescript
+// admin.service.ts — 445 lines, làm quá nhiều thứ:
+- getDashboardStats()       // Dashboard aggregation
+- getRevenueByPeriod()      // Chart data
+- getRevenueByPaymentMethod() // Pie chart
+- getBestSellers()          // Product stats
+- getLowStockProducts()     // Inventory
+- getRevenueByCategory()    // Category analytics
+- getCustomerStats()        // CRM
+- getOrdersForExport()      // Export
+- getAOV()                  // Metrics
+```
+- Nên split: `RevenueService`, `ProductAnalyticsService`, `CustomerAnalyticsService`, `ExportService`.
+
+#### GAP-15: `PaymentService` dùng static methods — khó test và inject
+```typescript
+export class PaymentService {
+  static createVNPayUrl(...) { ... }
+  static verifyReturn(...) { ... }
+}
+```
+- Static methods không thể mock trong unit tests.
+- Không thể inject dependency (ví dụ: mock `crypto` module khi test).
+- Production standard: instance methods + dependency injection.
+
+#### GAP-16: Type safety có lỗ hổng
+```typescript
+// order.controller.ts
+const userId = (req as any).userId as number;  // any cast
+
+// order.service.ts  
+private static _formatOrder(order: Record<string, unknown>)  // quá generic
+
+// errorHandler.middleware.ts
+err: Error | APIError | ValidationError | any  // any ở cuối là noop
+```
+- Dùng `as any` nhiều nơi → mất lợi thế TypeScript.
+- Nên augment `express.Request` interface: `declare namespace Express { interface Request { userId: number } }`.
+
+#### GAP-17: Review và Favorite models trong schema nhưng routes bị comment
+```typescript
+// routes/index.ts
+// import reviewRoutes from './review.routes'; // @TODO
+// import favoriteRoutes from './favorite.routes'; // @TODO
+```
+- DB schema có `Review` và `Favorite` models nhưng không có API routes nào.
+- UX: User không thể review sản phẩm → mất social proof.
+
+#### GAP-18: OrderTimeout job dùng `setInterval` thay vì proper cron
+```typescript
+// Khi server restart → job chạy ngay lập tức (runOrderTimeoutJob() tại startup)
+// Nếu deploy nhiều instance → job chạy song song → duplicate cancellation risk
+```
+- Production: Bull queue + Redis lock, hoặc external cron service (Vercel Cron, AWS EventBridge).
+
+#### GAP-19: Không có Pagination trong CategoryService
+```typescript
+static async getAll() {
+  return CategoryRepository.findAll(); // Không có limit
+}
+```
+- Khi có 1000 categories → load tất cả về memory → slow response.
+
+#### GAP-20: Frontend không có offline/error state handling tốt
+- Nếu API down → spinner chạy mãi, không có retry logic.
+- Không có skeleton loading UI.
+- Không có toast timeout reset khi toast liên tiếp.
+
+---
+
+## 🏛️ So sánh với Clean Architecture chuẩn
+
+### Clean Architecture (Uncle Bob) yêu cầu:
+```
+Domain Layer (Entities, Business Rules)    ← Maverik: Một phần ở Service
+Application Layer (Use Cases)              ← Maverik: Service layer ~ Use Cases
+Interface Adapters (Controllers, Repos)    ← Maverik: Controllers + Repos đúng vai
+Infrastructure (DB, External APIs)         ← Maverik: Prisma + VNPay
+```
+
+| Clean Architecture Principle | Maverik Store | Đánh giá |
+|------------------------------|---------------|----------|
+| Dependency Rule (inner layers không biết outer) | Phần lớn đúng | 🟡 |
+| Entities tách biệt | ❌ Không có Domain model riêng (dùng Prisma types trực tiếp) | 🔴 |
+| Use Cases rõ ràng | Service methods = Use Cases (ổn với scale này) | 🟢 |
+| Interface Adapters | Controllers tốt, Routes riêng | 🟢 |
+| No Framework Coupling | Prisma types leak vào Service layer | 🟡 |
+| Testable | Static methods, không DI → khó test | 🔴 |
+
+**Kết luận: Đây là Layered Architecture (3-tier), không phải Clean Architecture thuần.**  
+Đủ tốt cho dự án quy mô này, nhưng cần DI framework và Domain models riêng để đạt chuẩn Clean Architecture.
+
+---
+
+## 🚀 Lộ trình nâng cấp lên Production
+
+### Phase 1 — Chặn bug critical (1-2 tuần)
+1. Fix VNPay amount hardcode
+2. Fix IPN update DB
+3. Thêm date filter cho orders
+4. Ẩn MoMo hoặc implement gateway
+5. Sanitize innerHTML → textContent
+
+### Phase 2 — Production security (2-4 tuần)
+6. Redis rate limiting
+7. JWT refresh token mechanism
+8. Remove hardcode VNPay default secrets
+9. Health check với DB ping
+10. Restrict CORS cho production
+
+### Phase 3 — Observability (1-2 tuần)
+11. Thay console.log bằng Winston/Pino
+12. Structured logging với correlation ID
+13. Error tracking (Sentry)
+14. APM (Application Performance Monitoring)
+
+### Phase 4 — Architecture refactor (4-8 tuần)
+15. Split AdminService thành services nhỏ hơn
+16. TypeScript augmentation (loại bỏ `as any`)
+17. Add test suite (Jest + Supertest)
+18. Frontend refactor sang Vue/React components
+19. Implement Review & Favorite APIs
+20. Redis caching cho product listings
+
+---
+
+## 💡 Đánh giá tổng thể
+
+### Project này ở mức nào?
+
+| Level | Mô tả | Đánh giá |
+|-------|--------|----------|
+| 🎓 **Student Project** | CRUD cơ bản, chạy được | ✅ Vượt qua |
+| 🏁 **MVP / Prototype** | Đủ dùng thực tế nhỏ, không critical | ✅ Vượt qua (với bug fixes) |
+| 🏢 **Production SME** | Hàng trăm user/ngày, có doanh thu thật | ⚠️ Cần thêm 4-6 tuần fix |
+| 🏭 **Enterprise** | Hàng nghìn concurrent users, high availability | ❌ Cần refactor lớn |
+
+**Maverik Store đang ở giữa MVP và Production SME.**
+
+### Điểm nổi bật so với project cùng level:
+- ✅ Atomic transaction với stock locking — HIẾM gặp ở project học tập.
+- ✅ AuditLog, Order state machine — tư duy business đúng hướng.
+- ✅ Env validation fail-fast — professional touch.
+- ✅ Response format nhất quán — dễ tích hợp frontend/mobile sau này.
+- ✅ DB Decimal thay Float — ít người biết điều này.
+
+### Điểm cần cải thiện nhất:
+1. **Không có test** → rủi ro cao nhất khi mở rộng tính năng.
+2. **Frontend là "static page soup"** → không scale khi thêm tính năng.
+3. **Logging bằng console** → mù khi deploy production.
+4. **Static methods** → không testable, không injectable.

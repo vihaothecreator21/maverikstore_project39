@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { HTTP_STATUS, sendError } from "../utils/apiResponse";
 import { getEnv } from "../config/env.config";
-import { prisma } from "../config/database";
+import { userRepository } from "../container";
 
 export const authMiddleware = async (
   req: Request,
@@ -27,12 +27,7 @@ export const authMiddleware = async (
       role: string;
     };
 
-    // ✅ Guard: Kiểm tra user thực sự tồn tại trong DB
-    // Phòng trường hợp DB reset nhưng token cũ vẫn còn trong localStorage
-    const userExists = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, role: true },
-    });
+    const userExists = await userRepository.findById(decoded.userId);
 
     if (!userExists) {
       sendError(
@@ -44,8 +39,8 @@ export const authMiddleware = async (
       return;
     }
 
-    (req as any).userId = userExists.id;
-    (req as any).userRole = userExists.role; // Luôn lấy role từ DB, không tin token
+    req.userId = userExists.id;
+    req.userRole = userExists.role as Request["userRole"];
 
     next();
   } catch (error) {
@@ -62,7 +57,7 @@ export const requireAdmin = (
   res: Response,
   next: NextFunction,
 ): void => {
-  const role = (req as any).userRole;
+  const role = req.userRole;
   if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
     sendError(
       res,

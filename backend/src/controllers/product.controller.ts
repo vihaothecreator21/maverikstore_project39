@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ProductService } from "../services/product.service";
+import { productService } from "../container";
 import {
   CreateProductSchema,
   UpdateProductSchema,
@@ -33,7 +33,7 @@ export class ProductController {
       throw new ValidationError("Invalid query parameters", errors);
     }
 
-    const result = await ProductService.getAll(validation.data);
+    const result = await productService.getAll(validation.data);
 
     return sendSuccess(
       res,
@@ -56,7 +56,7 @@ export class ProductController {
       });
     }
 
-    const product = await ProductService.getById(id);
+    const product = await productService.getById(id);
     return sendSuccess(
       res,
       product,
@@ -71,7 +71,7 @@ export class ProductController {
    */
   static async getBySlug(req: Request, res: Response) {
     const { slug } = req.params;
-    const product = await ProductService.getBySlug(slug);
+    const product = await productService.getBySlug(slug);
     return sendSuccess(
       res,
       product,
@@ -96,7 +96,7 @@ export class ProductController {
       throw new ValidationError("Validation failed", errors);
     }
 
-    const product = await ProductService.create(validation.data);
+    const product = await productService.create(validation.data);
     return sendSuccess(
       res,
       product,
@@ -128,7 +128,7 @@ export class ProductController {
       throw new ValidationError("Validation failed", errors);
     }
 
-    const product = await ProductService.update(id, validation.data);
+    const product = await productService.update(id, validation.data);
     return sendSuccess(
       res,
       product,
@@ -149,7 +149,7 @@ export class ProductController {
       });
     }
 
-    const deleted = await ProductService.delete(id);
+    const deleted = await productService.delete(id);
     return sendSuccess(
       res,
       deleted,
@@ -163,7 +163,7 @@ export class ProductController {
    * Fix products with NULL or empty slugs (Admin/Debug endpoint)
    */
   static async fixNullSlugs(_req: Request, res: Response) {
-    const result = await ProductService.fixNullSlugs();
+    const result = await productService.fixNullSlugs();
     return sendSuccess(
       res,
       result,

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AuthService } from "../services/auth.service";
+import { authService } from "../container";
 import { LoginSchema, RegisterSchema } from "../schemas/auth.schema";
 import {
   ValidationError,
@@ -34,7 +34,7 @@ export class AuthController {
     }
 
     // Register user
-    const result = await AuthService.register(validation.data);
+    const result = await authService.register(validation.data);
 
     return sendSuccess(
       res,
@@ -65,7 +65,7 @@ export class AuthController {
     }
 
     // Login user
-    const result = await AuthService.login(validation.data);
+    const result = await authService.login(validation.data);
 
     return sendSuccess(res, result, "Login successful", HTTP_STATUS.OK);
   }
@@ -76,13 +76,13 @@ export class AuthController {
    */
   static async getProfile(req: Request, res: Response) {
     // Get userId from request (set by auth middleware)
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     if (!userId) {
       throw new Error("Unauthorized");
     }
 
-    const user = await AuthService.getProfile(userId);
+    const user = await authService.getProfile(userId);
 
     return sendSuccess(
       res,

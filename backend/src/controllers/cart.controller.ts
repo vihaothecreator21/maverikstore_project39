@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { CartService } from "../services/cart.service";
+import { cartService } from "../container";
 import {
   AddToCartSchema,
   UpdateCartItemSchema,
@@ -13,7 +13,7 @@ import {
 
 export class CartController {
   static async getCart(req: Request, res: Response) {
-    const cart = await CartService.getCart((req as any).userId);
+    const cart = await cartService.getCart(req.userId!);
     return sendSuccess(
       res,
       cart,
@@ -25,8 +25,8 @@ export class CartController {
   static async addItem(req: Request, res: Response) {
     const validation = AddToCartSchema.safeParse(req.body);
     if (!validation.success) throw new ValidationError("Validation failed", {});
-    const cart = await CartService.addItem(
-      (req as any).userId,
+    const cart = await cartService.addItem(
+      req.userId!,
       validation.data,
     );
     return sendSuccess(res, cart, "Item added", HTTP_STATUS.CREATED);
@@ -36,8 +36,8 @@ export class CartController {
     const cartItemId = parseInt(req.params.id);
     const validation = UpdateCartItemSchema.safeParse(req.body);
     if (!validation.success) throw new ValidationError("Validation failed", {});
-    const cart = await CartService.updateItemQty(
-      (req as any).userId,
+    const cart = await cartService.updateItemQty(
+      req.userId!,
       cartItemId,
       validation.data,
     );
@@ -45,8 +45,8 @@ export class CartController {
   }
 
   static async removeItem(req: Request, res: Response) {
-    const cart = await CartService.removeItem(
-      (req as any).userId,
+    const cart = await cartService.removeItem(
+      req.userId!,
       parseInt(req.params.id),
     );
     return sendSuccess(res, cart, "Item removed", HTTP_STATUS.OK);
@@ -57,10 +57,10 @@ export class CartController {
     const validation = SyncCartSchema.safeParse(req.body);
     if (!validation.success) throw new ValidationError("Validation failed", {});
 
-    const userId = (req as any).userId;
+    const userId = req.userId!;
     const items = validation.data.items || [];
 
-    const cart = await CartService.syncLocalStorageCart(userId, items);
+    const cart = await cartService.syncLocalStorageCart(userId, items);
     return sendSuccess(res, cart, "Cart synced successfully", HTTP_STATUS.OK);
   }
 }

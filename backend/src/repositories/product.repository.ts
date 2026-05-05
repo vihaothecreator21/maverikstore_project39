@@ -14,7 +14,7 @@ export class ProductRepository {
   /**
    * Find all products with optional filtering and pagination
    */
-  static async findAll(options: {
+  async findAll(options: {
     page: number;
     limit: number;
     categoryId?: number;
@@ -65,7 +65,7 @@ export class ProductRepository {
   /**
    * Find a single product by ID
    */
-  static async findById(id: number) {
+  async findById(id: number) {
     return prisma.product.findUnique({
       where: { id },
       select: {
@@ -102,7 +102,7 @@ export class ProductRepository {
   /**
    * Find a product by slug
    */
-  static async findBySlug(slug: string) {
+  async findBySlug(slug: string) {
     return prisma.product.findUnique({
       where: { slug },
       select: {
@@ -127,7 +127,7 @@ export class ProductRepository {
   /**
    * Check if slug already exists (used for unique validation)
    */
-  static async slugExists(slug: string, excludeId?: number): Promise<boolean> {
+  async slugExists(slug: string, excludeId?: number): Promise<boolean> {
     const product = await prisma.product.findUnique({
       where: { slug },
       select: { id: true },
@@ -141,7 +141,7 @@ export class ProductRepository {
    * Create a new product
    * ⚠️ Fixed race condition: Wrapped in transaction with retry logic on P2002 (unique constraint)
    */
-  static async create(data: CreateProductInput & { slug: string }) {
+  async create(data: CreateProductInput & { slug: string }) {
     const maxRetries = 3;
     let attempt = 0;
 
@@ -209,7 +209,7 @@ export class ProductRepository {
    * Update an existing product by ID
    * ⚠️ Wrapped in transaction for atomicity: All fields update as a unit
    */
-  static async update(
+  async update(
     id: number,
     data: UpdateProductInput & { slug?: string },
   ) {
@@ -249,7 +249,7 @@ export class ProductRepository {
    * Check if a product exists by ID (lightweight query)
    * ⚠️ Used to optimize N+1 queries - only checks existence, doesn't fetch data
    */
-  static async productExists(id: number): Promise<boolean> {
+  async productExists(id: number): Promise<boolean> {
     const product = await prisma.product.findUnique({
       where: { id },
       select: { id: true }, // Only fetch ID for lightweight check
@@ -261,7 +261,7 @@ export class ProductRepository {
    * Delete a product by ID, throwing error if not found
    * ⚠️ Eliminates N+1 query pattern: check in separate query
    */
-  static async deleteOrThrow(id: number) {
+  async deleteOrThrow(id: number) {
     try {
       return await prisma.product.delete({
         where: { id },
@@ -280,11 +280,11 @@ export class ProductRepository {
    * Fix products with NULL or empty slugs by generating from product name
    * ⚠️ Fixed memory leak: Uses DB-side filtering instead of loading all products
    */
-  static async fixNullSlugs() {
+  async fixNullSlugs() {
     // DB-side filtering: Find only products with NULL/empty slugs
     const productsWithoutSlug = await prisma.product.findMany({
       where: {
-        OR: [{ slug: { equals: null as any } }, { slug: "" }],
+        OR: [{ slug: null }, { slug: "" }],
       },
       select: { id: true, name: true },
     });
@@ -327,7 +327,7 @@ export class ProductRepository {
   /**
    * Ensure slug is unique by appending a number if needed
    */
-  static async ensureUniqueSlug(
+  async ensureUniqueSlug(
     baseSlug: string,
     excludeId?: number,
   ): Promise<string> {
@@ -342,3 +342,4 @@ export class ProductRepository {
     return slug;
   }
 }
+

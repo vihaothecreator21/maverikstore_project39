@@ -1,5 +1,11 @@
 /**
  * admin-orders.js — Quản lý đơn hàng
+ * ✅ Features:
+ *  - Status filter tabs (includes PENDING_PAYMENT for VNPay orders)
+ *  - Date range filter (startDate / endDate)
+ *  - Client-side search (ID, username, email, phone)
+ *  - Server-side pagination
+ *  - Admin status update actions
  */
 
 import { requireAdminAccess, getApiBase, formatVND, formatDate, ORDER_STATUS, showToast } from "./admin-guard.js";
@@ -22,9 +28,13 @@ let totalPages  = 1;
 let totalCount  = 0;
 const PAGE_SIZE = 20;
 let statusFilter = "";
-let searchDebounce = null;
+let startDateFilter = "";
+let endDateFilter   = "";
+let searchDebounce  = null;
 
+// ✅ Updated: includes PENDING_PAYMENT transitions
 const TRANSITIONS = {
+  PENDING_PAYMENT: [],  // VNPay auto-processes via IPN — no manual action
   PENDING:    ["CONFIRMED", "CANCELLED"],
   CONFIRMED:  ["PROCESSING", "CANCELLED"],
   PROCESSING: ["SHIPPING"],
@@ -66,9 +76,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  // Search
   document.getElementById("search-orders")?.addEventListener("input", () => {
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(() => { currentPage = 1; loadOrders(); }, 400);
+  });
+
+  // ✅ Date filter
+  document.getElementById("btn-apply-date")?.addEventListener("click", () => {
+    startDateFilter = document.getElementById("filter-start-date")?.value || "";
+    endDateFilter   = document.getElementById("filter-end-date")?.value || "";
+    currentPage = 1;
+    loadOrders();
+  });
+
+  document.getElementById("btn-clear-date")?.addEventListener("click", () => {
+    startDateFilter = "";
+    endDateFilter   = "";
+    document.getElementById("filter-start-date").value = "";
+    document.getElementById("filter-end-date").value   = "";
+    currentPage = 1;
+    loadOrders();
   });
 });
 
@@ -79,7 +107,9 @@ async function loadOrders() {
 
   const search = document.getElementById("search-orders")?.value?.trim() || "";
   const params = new URLSearchParams({ page: currentPage, limit: PAGE_SIZE });
-  if (statusFilter) params.set("status", statusFilter);
+  if (statusFilter)   params.set("status", statusFilter);
+  if (startDateFilter) params.set("startDate", startDateFilter);
+  if (endDateFilter)   params.set("endDate",   endDateFilter);
 
   try {
     const res  = await fetch(`${API}/admin/orders?${params}`, {
@@ -99,7 +129,8 @@ async function loadOrders() {
       ? orders.filter((o) =>
           String(o.id).includes(search) ||
           (o.user?.username || "").toLowerCase().includes(search.toLowerCase()) ||
-          (o.user?.email    || "").toLowerCase().includes(search.toLowerCase())
+          (o.user?.email    || "").toLowerCase().includes(search.toLowerCase()) ||
+          (o.user?.phone    || "").toLowerCase().includes(search.toLowerCase())
         )
       : orders;
 
@@ -136,6 +167,11 @@ function renderTable(filtered) {
       return `<button class="btn ${a.cls} btn-sm" onclick="window._updateStatus(${o.id},'${next}')">${a.label}</button>`;
     }).join("");
 
+    // ✅ Show payment hint for PENDING_PAYMENT orders
+    const pendingPaymentNote = o.status === "PENDING_PAYMENT"
+      ? `<div style="font-size:.75rem;color:#a855f7;margin-top:4px;">⏳ Đang chờ xác nhận thanh toán VNPay</div>`
+      : "";
+
     const itemsHtml = (o.details || []).map((d) =>
       `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.82rem;">
          <span>${d.product?.name || "Sản phẩm"} × ${d.quantity}</span>
@@ -152,7 +188,7 @@ function renderTable(filtered) {
         </td>
         <td style="font-weight:700;">${total}</td>
         <td style="font-size:.82rem;">${o.payment?.paymentMethod || "COD"}</td>
-        <td>${badge}</td>
+        <td>${badge}${pendingPaymentNote}</td>
         <td style="font-size:.82rem;color:#8b91a7;">${date}</td>
         <td style="text-align:center;">
           <button class="btn btn-outline btn-sm" onclick="window._toggleDetail(${o.id})" title="Chi tiết">

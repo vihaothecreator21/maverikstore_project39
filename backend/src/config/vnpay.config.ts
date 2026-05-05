@@ -32,3 +32,4 @@ export const getVNPay = (): VNPay => {
 
   return _vnpay;
 };
+  

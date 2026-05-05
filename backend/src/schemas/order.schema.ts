@@ -39,6 +39,17 @@ export const OrderQuerySchema = z.object({
     .transform((v) => (v ? parseInt(v, 10) : 10))
     .pipe(z.number().int().positive().max(50).default(10)),
   status: z.nativeEnum(OrderStatus).optional(),
+  // ✅ NEW: Date filter cho admin
+  startDate: z.string().optional().transform((v) => {
+    if (!v) return undefined;
+    const d = new Date(v + "T00:00:00+07:00");
+    return isNaN(d.getTime()) ? undefined : d;
+  }),
+  endDate: z.string().optional().transform((v) => {
+    if (!v) return undefined;
+    const d = new Date(v + "T23:59:59+07:00");
+    return isNaN(d.getTime()) ? undefined : d;
+  }),
 });
 
 export type PlaceOrderInput = z.infer<typeof PlaceOrderSchema>;

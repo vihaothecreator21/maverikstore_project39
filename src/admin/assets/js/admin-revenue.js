@@ -1,13 +1,10 @@
 /**
- * admin-revenue.js — Báo cáo Doanh thu + Export CSV/PDF
+ * admin-revenue.js — Báo cáo Doanh thu + Export CSV/XLSX
  *
- * Features:
- *  - Period filter (7d/30d/90d/1y + custom date range)
- *  - Bar chart: Revenue over time
- *  - Doughnut: Revenue by payment method
- *  - Horizontal bar: Revenue by category
- *  - Table: Best sellers + Order detail table
- *  - Export CSV (PapaParse) + PDF (jsPDF + autoTable)
+ * ✅ IMPROVED:
+ *  - Replaced PDF export with XLSX (SheetJS) — full Vietnamese support
+ *  - Currency formatted properly (VND)
+ *  - CSV export with UTF-8 BOM (PapaParse)
  */
 
 import { requireAdminAccess, getApiBase, formatVND, formatDate, ORDER_STATUS, showToast } from "./admin-guard.js";
@@ -77,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Export buttons
   document.getElementById("btn-export-csv").addEventListener("click", exportCSV);
-  document.getElementById("btn-export-pdf").addEventListener("click", exportPDF);
+  document.getElementById("btn-export-xlsx").addEventListener("click", exportXLSX);
 
   await loadAll();
 });
@@ -202,7 +199,7 @@ async function loadPaymentChart() {
     const rows = (await res.json()).data || [];
     if (!rows.length) return;
 
-    const COLORS = { COD:"#f59e0b", BANK_TRANSFER:"#6366f1", MOMO:"#ec4899", ZALOPAY:"#22c55e" };
+    const COLORS = { COD:"#f59e0b", BANK_TRANSFER:"#6366f1", MOMO:"#ec4899", ZALOPAY:"#22c55e", VNPAY:"#0066cc" };
     const ctx = document.getElementById("chart-payment")?.getContext("2d");
     if (!ctx) return;
     if (paymentChart) paymentChart.destroy();
@@ -325,75 +322,71 @@ function exportCSV() {
   showToast("✅ Đã xuất file CSV", "success");
 }
 
-// ── PDF Export ────────────────────────────────────────────────
-function exportPDF() {
+// ── XLSX Export (SheetJS) — ✅ REPLACES PDF ───────────────────────
+function exportXLSX() {
   if (!exportData.length) { showToast("⚠️ Không có dữ liệu để xuất", "warning"); return; }
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const wb = XLSX.utils.book_new();
 
-  // Tính summary
-  const totalRevenue = exportData.filter((o) => ["COMPLETED","DELIVERED"].includes(o.status)).reduce((s, o) => s + o.totalAmount, 0);
+  // ── Sheet 1: Summary ──────────────────────────────────────
+  const totalRevenue = exportData
+    .filter((o) => ["COMPLETED", "DELIVERED"].includes(o.status))
+    .reduce((s, o) => s + o.totalAmount, 0);
   const totalOrders  = exportData.length;
   const cancelCount  = exportData.filter((o) => o.status === "CANCELLED").length;
+  const aov = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
-  // Header
-  doc.setFontSize(16); doc.setFont("helvetica", "bold");
-  doc.text("MAVERIK STORE - BAO CAO DOANH THU", 148.5, 16, { align: "center" });
-  doc.setFontSize(10); doc.setFont("helvetica", "normal");
-  doc.setTextColor(130);
-  doc.text(`Tu: ${fmt(startDate)} | Den: ${fmt(endDate)} | Xuat ngay: ${fmt(new Date())}`, 148.5, 23, { align: "center" });
-  doc.setTextColor(0);
+  const summaryData = [
+    ["MAVERIK STORE - BÁO CÁO DOANH THU"],
+    [`Từ: ${fmt(startDate)}`, `Đến: ${fmt(endDate)}`, `Xuất ngày: ${fmt(new Date())}`],
+    [],
+    ["Chỉ số", "Giá trị"],
+    ["Doanh thu (Đã giao + Hoàn thành)", formatVNDPlain(totalRevenue)],
+    ["Tổng số đơn hàng", totalOrders],
+    ["Số đơn hủy", cancelCount],
+    ["AOV (giá trị đơn trung bình)", formatVNDPlain(aov)],
+  ];
 
-  // Summary table
-  doc.setFontSize(11); doc.setFont("helvetica", "bold");
-  doc.text("Tong ket:", 14, 32);
-  doc.autoTable({
-    startY: 35,
-    head: [["Chi so", "Gia tri"]],
-    body: [
-      ["Doanh thu (COMPLETED + DELIVERED)", new Intl.NumberFormat("vi-VN").format(totalRevenue) + "d"],
-      ["Tong so don hang",                  String(totalOrders)],
-      ["So don huy",                        String(cancelCount)],
-      ["AOV (gia tri don trung binh)",      new Intl.NumberFormat("vi-VN").format(totalOrders > 0 ? Math.round(totalRevenue/totalOrders) : 0) + "d"],
-    ],
-    theme: "grid",
-    headStyles: { fillColor: [99, 102, 241] },
-    styles: { fontSize: 9 },
-    tableWidth: 100,
-  });
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
 
-  // Orders detail table
-  doc.setFont("helvetica", "bold");
-  doc.text("Chi tiet don hang:", 14, doc.lastAutoTable.finalY + 10);
-  doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 13,
-    head: [["Ma don", "Ngay", "Khach hang", "Dien thoai", "PT TT", "Tong tien", "Trang thai"]],
-    body: exportData.map((o) => [
-      `#${o.orderId}`,
-      o.date,
-      o.customerName,
-      o.shippingPhone,
-      o.paymentMethod,
-      new Intl.NumberFormat("vi-VN").format(o.totalAmount) + "d",
-      ORDER_STATUS[o.status]?.label || o.status,
-    ]),
-    theme: "striped",
-    headStyles: { fillColor: [30, 33, 48] },
-    styles: { fontSize: 8 },
-    columnStyles: { 5: { halign: "right" } },
-  });
+  // Merge header row
+  wsSummary["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
 
-  // Footer
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8); doc.setTextColor(160);
-    doc.text(`Trang ${i}/${pageCount} - Maverik Admin Dashboard`, 148.5, doc.internal.pageSize.height - 6, { align: "center" });
-  }
+  // Column widths
+  wsSummary["!cols"] = [{ wch: 38 }, { wch: 25 }, { wch: 25 }];
 
-  doc.save(`maverik-revenue-${fmt(startDate)}-${fmt(endDate)}.pdf`);
-  showToast("✅ Đã xuất file PDF", "success");
+  XLSX.utils.book_append_sheet(wb, wsSummary, "Tổng kết");
+
+  // ── Sheet 2: Order Details ────────────────────────────────
+  const ordersRows = exportData.map((o) => ({
+    "Mã đơn":         `#${o.orderId}`,
+    "Ngày đặt":       o.date,
+    "Khách hàng":     o.customerName,
+    "Email":          o.customerEmail,
+    "Điện thoại":     o.shippingPhone,
+    "Địa chỉ":        o.shippingAddress,
+    "Sản phẩm":       o.items,
+    "PT Thanh toán":  o.paymentMethod,
+    "TT Thanh toán":  o.paymentStatus,
+    "Tổng tiền (VND)": o.totalAmount,
+    "Trạng thái":     ORDER_STATUS[o.status]?.label || o.status,
+    "Ghi chú":        o.note || "",
+  }));
+
+  const wsOrders = XLSX.utils.json_to_sheet(ordersRows);
+
+  // Column widths for readability
+  wsOrders["!cols"] = [
+    { wch: 10 }, { wch: 12 }, { wch: 18 }, { wch: 24 },
+    { wch: 14 }, { wch: 35 }, { wch: 40 }, { wch: 14 },
+    { wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 20 },
+  ];
+
+  XLSX.utils.book_append_sheet(wb, wsOrders, "Chi tiết đơn hàng");
+
+  // ── Save ──────────────────────────────────────────────────
+  XLSX.writeFile(wb, `maverik-revenue-${fmt(startDate)}-${fmt(endDate)}.xlsx`);
+  showToast("✅ Đã xuất file Excel", "success");
 }
 
 // ── Build chart data với fill missing periods ─────────────────────────
@@ -448,3 +441,6 @@ function buildChartData(rows, period, start, end) {
 function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
 function fmt(d) { return new Date(d).toISOString().slice(0, 10); }
 const setEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+function formatVNDPlain(amount) {
+  return new Intl.NumberFormat("vi-VN").format(Math.round(amount)) + " VND";
+}
