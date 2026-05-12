@@ -2,10 +2,13 @@
 import Swiper from "swiper/bundle";
 import "swiper/css/bundle";
 
-function initializeSwiperCarousels() {
+export function initializeSwiperCarousels() {
   const swiperContainers = document.querySelectorAll(".swiper-container");
 
   swiperContainers.forEach((swiperContainer) => {
+    // Skip if already initialized to avoid duplicates
+    if (swiperContainer.classList.contains('swiper-initialized')) return;
+
     const speed = swiperContainer.getAttribute("data-speed") || 400;
     const spaceBetween =
       swiperContainer.getAttribute("data-space-between") || 20;

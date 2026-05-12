@@ -35,23 +35,25 @@ export class DashboardService {
       this.adminRepository.countOrdersByStatus(),
       this.adminRepository.countProducts(),
       this.adminRepository.countCustomers(),
-      // Net revenue (COMPLETED all-time)
-      this.adminRepository.sumOrderAmount({ status: OrderStatus.COMPLETED }),
-      // Gross revenue (tất cả trừ CANCELLED/RETURNED)
+      // Net revenue (DELIVERED or COMPLETED all-time)
       this.adminRepository.sumOrderAmount({
-        status: { notIn: [OrderStatus.CANCELLED, OrderStatus.RETURNED] },
+        status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
+      }),
+      // Gross revenue (Now redefined as realized revenue: DELIVERED or COMPLETED)
+      this.adminRepository.sumOrderAmount({
+        status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
       }),
       this.adminRepository.countLowStockProducts(10),
       this.adminRepository.countOrdersWhere({ where: { status: OrderStatus.PENDING } }),
       // Today net
       this.adminRepository.sumOrderAmount({
-        status: OrderStatus.COMPLETED,
-        createdAt: { gte: todayStart, lte: todayEnd },
+        status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
+        updatedAt: { gte: todayStart, lte: todayEnd },
       }),
-      // Today gross
+      // Today gross (matching user request: only count when DELIVERED)
       this.adminRepository.sumOrderAmount({
-        status: { notIn: [OrderStatus.CANCELLED, OrderStatus.RETURNED] },
-        createdAt: { gte: todayStart, lte: todayEnd },
+        status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
+        updatedAt: { gte: todayStart, lte: todayEnd },
       }),
       this.adminRepository.countOrdersWhere({
         where: { createdAt: { gte: todayStart, lte: todayEnd } },

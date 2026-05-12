@@ -49,10 +49,10 @@ export class AdminRepository {
     return prisma.order.findMany({
       where: {
         status: { in: statuses },
-        createdAt: { gte: startDate, lte: endDate },
+        updatedAt: { gte: startDate, lte: endDate },
       },
-      select: { totalAmount: true, createdAt: true },
-      orderBy: { createdAt: "asc" },
+      select: { totalAmount: true, createdAt: true, updatedAt: true },
+      orderBy: { updatedAt: "asc" },
     });
   }
 

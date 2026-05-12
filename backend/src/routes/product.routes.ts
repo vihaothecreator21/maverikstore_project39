@@ -22,6 +22,7 @@ export const productRoutes = Router();
 
 // ── Public Routes ──────────────────────────────────────────────
 productRoutes.get("/", catchAsync(ProductController.getAll));
+productRoutes.get("/featured/best-sellers", catchAsync(ProductController.getBestSellers));
 productRoutes.get("/slug/:slug", catchAsync(ProductController.getBySlug));
 productRoutes.get("/:id", catchAsync(ProductController.getById));
 

@@ -171,4 +171,13 @@ export class ProductController {
       HTTP_STATUS.OK,
     );
   }
+  /**
+   * GET /api/v1/products/featured/best-sellers
+   * Get best-selling products for home page
+   */
+  static async getBestSellers(req: Request, res: Response) {
+    const limit = parseInt(req.query.limit as string) || 8;
+    const products = await productService.getBestSellers(limit);
+    return sendSuccess(res, products, "Best sellers retrieved successfully", HTTP_STATUS.OK);
+  }
 }

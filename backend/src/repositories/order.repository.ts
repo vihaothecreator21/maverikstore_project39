@@ -247,6 +247,22 @@ export class OrderRepository {
         include: orderWithDetails,
       });
 
+      // ✅ NEW: Nếu hủy đơn, cập nhật trạng thái thanh toán thành FAILED
+      if (newStatus === OrderStatus.CANCELLED) {
+        await tx.payment.updateMany({
+          where: { orderId: orderId },
+          data: { paymentStatus: PaymentStatus.FAILED },
+        });
+      }
+
+      // ✅ NEW: Nếu đơn hàng hoàn thành/đã giao, cập nhật trạng thái thanh toán thành SUCCESS (cho COD)
+      if (newStatus === OrderStatus.DELIVERED || newStatus === OrderStatus.COMPLETED) {
+        await tx.payment.updateMany({
+          where: { orderId: orderId },
+          data: { paymentStatus: PaymentStatus.SUCCESS },
+        });
+      }
+
       if (auditData) {
         await writeAuditLog(
           {

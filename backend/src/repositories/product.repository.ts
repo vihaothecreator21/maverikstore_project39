@@ -341,5 +341,30 @@ export class ProductRepository {
 
     return slug;
   }
+  /**
+   * Find best-selling products based on order quantity
+   */
+  async findBestSellers(limit: number) {
+    const bestSellers = await prisma.orderDetail.groupBy({
+      by: ["productId"],
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: "desc" } },
+      take: limit,
+    });
+
+    const productIds = bestSellers.map((item) => item.productId);
+
+    return prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        price: true,
+        imageUrl: true,
+        category: { select: { name: true } },
+      },
+    });
+  }
 }
 

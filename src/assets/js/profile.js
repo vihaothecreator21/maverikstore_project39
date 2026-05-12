@@ -245,6 +245,7 @@ async function loadOrders() {
     }
 
     const STATUS_MAP = {
+      PENDING_PAYMENT: { label: "Chờ thanh toán", color: "#a855f7" },
       PENDING:    { label: "Chờ xác nhận", color: "#f59e0b" },
       CONFIRMED:  { label: "Đã xác nhận",  color: "#3b82f6" },
       PROCESSING: { label: "Đang xử lý",   color: "#6366f1" },
@@ -296,6 +297,16 @@ async function loadOrders() {
               <i class="bi bi-telephone" style="margin-right:4px;"></i>${o.shippingPhone || "—"}
             </div>
             ${o.note ? `<div style="margin-top:6px;font-size:.78rem;color:#aaa;"><strong>Ghi chú:</strong> ${o.note}</div>` : ""}
+
+            ${["PENDING", "PENDING_PAYMENT", "CONFIRMED"].includes(o.status)
+              ? `<div style="margin-top:16px; padding-top:12px; border-top:1px dashed #eee;">
+                   <button class="btn-cancel-order" onclick="cancelOrder(${o.id})"
+                     style="background:transparent; border:1px solid #ef4444; color:#ef4444; padding:6px 12px; font-size:.75rem; font-weight:600; cursor:pointer; border-radius:4px; transition:all .2s;">
+                     Hủy đơn hàng
+                   </button>
+                 </div>`
+              : ""
+            }
           </div>
         </div>`;
     }).join("");
@@ -313,6 +324,38 @@ window.toggleOrderDetail = function(id) {
   const isOpen = detail.style.display === "block";
   detail.style.display = isOpen ? "none" : "block";
   if (arrow) arrow.textContent = isOpen ? "▼" : "▲";
+};
+
+window.cancelOrder = async function(id) {
+  if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
+
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Đang xử lý...";
+
+  try {
+    const res = await fetch(`${API_BASE}/orders/${id}/cancel`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    const data = await res.json();
+
+    if (res.ok && data.status === "success") {
+      showToast("✅ Đã hủy đơn hàng thành công", "success");
+      // Cập nhật UI ngay lập tức
+      ordersLoaded = false;
+      await loadOrders();
+    } else {
+      showToast(`❌ ${data.message || "Không thể hủy đơn hàng"}`, "error");
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  } catch (err) {
+    showToast("❌ Lỗi kết nối. Vui lòng thử lại.", "error");
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 };
 
 // ── Logout ────────────────────────────────────────────────────────

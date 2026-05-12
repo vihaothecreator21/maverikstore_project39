@@ -145,4 +145,10 @@ export class ProductService {
   async fixNullSlugs() {
     return this.productRepository.fixNullSlugs();
   }
+  /**
+   * Get best-selling products
+   */
+  async getBestSellers(limit: number) {
+    return this.productRepository.findBestSellers(limit);
+  }
 }

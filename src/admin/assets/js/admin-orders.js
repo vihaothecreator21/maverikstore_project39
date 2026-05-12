@@ -34,7 +34,7 @@ let searchDebounce  = null;
 
 // ✅ Updated: includes PENDING_PAYMENT transitions
 const TRANSITIONS = {
-  PENDING_PAYMENT: [],  // VNPay auto-processes via IPN — no manual action
+  PENDING_PAYMENT: ["CANCELLED"],  // VNPay auto-processes via IPN, but allow manual cancel if failed
   PENDING:    ["CONFIRMED", "CANCELLED"],
   CONFIRMED:  ["PROCESSING", "CANCELLED"],
   PROCESSING: ["SHIPPING"],

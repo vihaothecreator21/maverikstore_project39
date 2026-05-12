@@ -29,7 +29,7 @@ export class AdminReportService {
     const TZ_OFFSET_MS = 7 * 60 * 60 * 1000;
 
     orders.forEach((order) => {
-      const localDate = new Date(order.createdAt.getTime() + TZ_OFFSET_MS);
+      const localDate = new Date(order.updatedAt.getTime() + TZ_OFFSET_MS);
       let key: string;
 
       switch (period) {
@@ -65,13 +65,60 @@ export class AdminReportService {
       grouped[key].orderCount += 1;
     });
 
-    return Object.entries(grouped)
-      .map(([p, data]) => ({
-        period: p,
-        revenue: Math.round(data.revenue),
-        orderCount: data.orderCount,
-      }))
-      .sort((a, b) => a.period.localeCompare(b.period));
+    // ── Điền các khoảng trống với giá trị 0 ────────────────────────
+    const result: Array<{ period: string; revenue: number; orderCount: number }> = [];
+    const current = new Date(startDate);
+
+    // Đảm bảo không bị lặp vô tận
+    let safetyCounter = 0;
+    while (current <= endDate && safetyCounter < 1000) {
+      safetyCounter++;
+      let key: string;
+      const localDate = new Date(current.getTime() + TZ_OFFSET_MS);
+
+      switch (period) {
+        case "day":
+          key = localDate.toISOString().slice(0, 10);
+          current.setUTCDate(current.getUTCDate() + 1);
+          break;
+        case "month":
+          key = localDate.toISOString().slice(0, 7);
+          current.setUTCMonth(current.getUTCMonth() + 1);
+          break;
+        case "year":
+          key = String(localDate.getUTCFullYear());
+          current.setUTCFullYear(current.getUTCFullYear() + 1);
+          break;
+        case "week": {
+          const d = new Date(localDate);
+          d.setUTCHours(0, 0, 0, 0);
+          d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7));
+          const week1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+          const weekNum = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getUTCDay() + 6) % 7)) / 7);
+          key = `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+          current.setUTCDate(current.getUTCDate() + 7);
+          break;
+        }
+        default:
+          key = "";
+      }
+
+      if (key && !result.find(r => r.period === key)) {
+        const data = grouped[key] || { revenue: 0, orderCount: 0 };
+        result.push({
+          period: key,
+          revenue: Math.round(data.revenue),
+          orderCount: data.orderCount,
+        });
+      }
+
+      // Nếu period không phải day, tránh việc set date bị lệch
+      if (period !== "day") {
+        current.setUTCHours(0, 0, 0, 0);
+      }
+    }
+
+    return result.sort((a, b) => a.period.localeCompare(b.period));
   }
 
   // ── Revenue by Payment Method (pie chart) ───────────────────────
@@ -171,6 +218,25 @@ export class AdminReportService {
   async getOrdersForExport(startDate: Date, endDate: Date) {
     const orders = await this.adminRepository.findOrdersForExport(startDate, endDate);
 
+    const ORDER_STATUS_LABELS: Record<string, string> = {
+      PENDING_PAYMENT: "Chờ thanh toán VNPay",
+      PENDING: "Chờ xác nhận",
+      CONFIRMED: "Đã xác nhận",
+      PROCESSING: "Đang chuẩn bị",
+      SHIPPING: "Đang giao hàng",
+      DELIVERED: "Đã giao",
+      COMPLETED: "Hoàn thành",
+      CANCELLED: "Đã hủy",
+      RETURNED: "Trả hàng",
+    };
+
+    const PAYMENT_STATUS_LABELS: Record<string, string> = {
+      PENDING: "Chờ thanh toán",
+      SUCCESS: "Thành công",
+      FAILED: "Thất bại",
+      REFUNDED: "Đã hoàn tiền",
+    };
+
     return orders.map((order) => ({
       orderId:         order.id,
       date:            order.createdAt.toISOString().slice(0, 10),
@@ -179,9 +245,11 @@ export class AdminReportService {
       shippingPhone:   order.shippingPhone,
       shippingAddress: order.shippingAddress,
       paymentMethod:   order.payment?.paymentMethod ?? "COD",
-      paymentStatus:   order.payment?.paymentStatus ?? "PENDING",
+      paymentStatus: (order.status === "DELIVERED" || order.status === "COMPLETED")
+        ? "Thành công"
+        : (order.status === "CANCELLED" ? "Thất bại" : (PAYMENT_STATUS_LABELS[order.payment?.paymentStatus ?? "PENDING"] || "Chờ thanh toán")),
       totalAmount:     Number(order.totalAmount),
-      status:          order.status,
+      status:          ORDER_STATUS_LABELS[order.status] || order.status,
       note:            order.note ?? "",
       items: order.details
         .map((d) => `${d.product.name} x${d.quantity} (${d.size}/${d.color})`)
