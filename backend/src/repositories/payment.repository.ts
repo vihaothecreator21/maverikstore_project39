@@ -32,7 +32,7 @@ export class PaymentRepository {
   }
 
   /**
-   * Atomic: mark payment SUCCESS + move order PENDING_PAYMENT → PENDING (or PENDING → CONFIRMED)
+   * Atomic: mark payment SUCCESS + move order PENDING_PAYMENT to PENDING.
    */
   async confirmPaymentAndOrder(
     paymentId: number,
@@ -41,25 +41,40 @@ export class PaymentRepository {
     currentOrderStatus: OrderStatus,
   ) {
     return prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: paymentId },
+      const latest = await tx.order.findUnique({
+        where: { id: orderId },
+        select: {
+          status: true,
+          payment: { select: { id: true, paymentStatus: true } },
+        },
+      });
+
+      if (
+        !latest ||
+        !latest.payment ||
+        latest.payment.id !== paymentId ||
+        latest.status !== OrderStatus.PENDING_PAYMENT ||
+        latest.payment.paymentStatus !== PaymentStatus.PENDING ||
+        currentOrderStatus !== OrderStatus.PENDING_PAYMENT
+      ) {
+        return { ignored: true };
+      }
+
+      const orderUpdate = await tx.order.updateMany({
+        where: { id: orderId, status: OrderStatus.PENDING_PAYMENT },
+        data: { status: OrderStatus.PENDING },
+      });
+
+      const paymentUpdate = await tx.payment.updateMany({
+        where: { id: paymentId, orderId, paymentStatus: PaymentStatus.PENDING },
         data: { paymentStatus: PaymentStatus.SUCCESS, transactionId },
       });
 
-      // PENDING_PAYMENT (VNPay mới) → PENDING (đã thanh toán, chờ admin xác nhận)
-      if (currentOrderStatus === OrderStatus.PENDING_PAYMENT) {
-        await tx.order.update({
-          where: { id: orderId },
-          data: { status: OrderStatus.PENDING },
-        });
+      if (orderUpdate.count !== 1 || paymentUpdate.count !== 1) {
+        throw new Error(`PAYMENT_CONFIRM_CONFLICT::${orderId}`);
       }
-      // PENDING (legacy/fallback) → CONFIRMED
-      else if (currentOrderStatus === OrderStatus.PENDING) {
-        await tx.order.update({
-          where: { id: orderId },
-          data: { status: OrderStatus.CONFIRMED },
-        });
-      }
+
+      return { ignored: false };
     });
   }
 }

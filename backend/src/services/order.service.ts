@@ -1,5 +1,10 @@
 import { OrderStatus, Prisma } from "@prisma/client";
-import { OrderRepository, VALID_TRANSITIONS } from "../repositories/order.repository";
+import { OrderRepository } from "../repositories/order.repository";
+import {
+  allowedTransitions,
+  canTransition,
+  shouldRestoreStock,
+} from "../policies/orderStatus.policy";
 import { APIError } from "../utils/apiResponse";
 import type {
   PlaceOrderInput,
@@ -159,7 +164,9 @@ export class OrderService {
       );
     }
 
-    const updated = await this.orderRepository.updateStatusWithRollback(
+    let updated;
+    try {
+      updated = await this.orderRepository.updateStatusWithRollback(
       orderId,
       OrderStatus.CANCELLED,
       true, // hoàn kho
@@ -168,7 +175,18 @@ export class OrderService {
         oldStatus: order.status,
         userId,
       },
-    );
+      );
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.startsWith("ORDER_STATUS_CHANGED::")) {
+        throw new APIError(
+          409,
+          "Trang thai don hang da thay doi. Vui long tai lai.",
+          { orderId },
+          "ORDER_STATUS_CHANGED",
+        );
+      }
+      throw err;
+    }
 
     return this._formatOrder(updated);
   }
@@ -186,8 +204,8 @@ export class OrderService {
     }
 
     // Kiểm tra State Machine
-    const allowed = VALID_TRANSITIONS[order.status];
-    if (!allowed.includes(input.status)) {
+    const allowed = allowedTransitions(order.status);
+    if (!canTransition(order.status, input.status)) {
       throw new APIError(
         400,
         `Không thể chuyển trạng thái từ "${order.status}" sang "${input.status}"`,
@@ -196,19 +214,32 @@ export class OrderService {
       );
     }
 
-    const shouldRestoreStock = input.status === OrderStatus.CANCELLED;
+    const restoreStock = shouldRestoreStock(input.status);
 
-    const updated = await this.orderRepository.updateStatusWithRollback(
+    let updated;
+    try {
+      updated = await this.orderRepository.updateStatusWithRollback(
       orderId,
       input.status,
-      shouldRestoreStock,
+        restoreStock,
       {
         action: "STATUS_CHANGE",
         oldStatus: order.status,
         userId: adminId,
         note: input.note,
       },
-    );
+      );
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.startsWith("ORDER_STATUS_CHANGED::")) {
+        throw new APIError(
+          409,
+          "Trang thai don hang da thay doi. Vui long tai lai.",
+          { orderId },
+          "ORDER_STATUS_CHANGED",
+        );
+      }
+      throw err;
+    }
 
     return this._formatOrder(updated);
   }

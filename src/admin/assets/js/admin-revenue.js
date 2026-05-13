@@ -276,7 +276,8 @@ async function loadExportData() {
     document.getElementById("orders-in-range").textContent = `${exportData.length} đơn hàng`;
 
     tbody.innerHTML = exportData.map((o) => {
-      const s = ORDER_STATUS[o.status] || { label: o.status };
+      const statusCode = o.statusCode || o.status;
+      const statusLabel = o.statusLabel || ORDER_STATUS[statusCode]?.label || o.status;
       return `
         <tr>
           <td style="font-weight:700;color:#6366f1;">#${o.orderId}</td>
@@ -284,7 +285,7 @@ async function loadExportData() {
           <td>${o.customerName}</td>
           <td>${o.paymentMethod}</td>
           <td style="font-weight:700;">${formatVND(o.totalAmount)}</td>
-          <td><span class="badge badge-${o.status.toLowerCase()}">${s.label}</span></td>
+          <td><span class="badge badge-${statusCode.toLowerCase()}">${statusLabel}</span></td>
         </tr>`;
     }).join("") || `<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;">Không có dữ liệu trong kỳ này</td></tr>`;
   } catch { showToast("❌ Lỗi tải dữ liệu export", "error"); }
@@ -305,7 +306,7 @@ function exportCSV() {
     "PT Thanh toán":  o.paymentMethod,
     "TT Thanh toán":  o.paymentStatus,
     "Tổng tiền":      o.totalAmount,
-    "Trạng thái":     ORDER_STATUS[o.status]?.label || o.status,
+    "Trạng thái":     o.statusLabel || ORDER_STATUS[o.statusCode || o.status]?.label || o.status,
     "Ghi chú":        o.note,
   }));
 
@@ -330,10 +331,10 @@ function exportXLSX() {
 
   // ── Sheet 1: Summary ──────────────────────────────────────
   const totalRevenue = exportData
-    .filter((o) => ["COMPLETED", "DELIVERED"].includes(o.status))
+    .filter((o) => ["COMPLETED", "DELIVERED"].includes(o.statusCode || o.status))
     .reduce((s, o) => s + o.totalAmount, 0);
   const totalOrders  = exportData.length;
-  const cancelCount  = exportData.filter((o) => o.status === "CANCELLED").length;
+  const cancelCount  = exportData.filter((o) => (o.statusCode || o.status) === "CANCELLED").length;
   const aov = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
   const summaryData = [
@@ -369,7 +370,7 @@ function exportXLSX() {
     "PT Thanh toán":  o.paymentMethod,
     "TT Thanh toán":  o.paymentStatus,
     "Tổng tiền (VND)": o.totalAmount,
-    "Trạng thái":     ORDER_STATUS[o.status]?.label || o.status,
+    "Trạng thái":     o.statusLabel || ORDER_STATUS[o.statusCode || o.status]?.label || o.status,
     "Ghi chú":        o.note || "",
   }));
 

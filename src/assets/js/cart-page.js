@@ -1,11 +1,5 @@
-const getApiBase = () => {
-  const isDev =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  return isDev
-    ? "http://localhost:5000/api/v1"
-    : `${window.location.origin}/api/v1`;
-};
+import { getApiBase } from "./api-config.js";
+
 const API_BASE = getApiBase();
 document.addEventListener("DOMContentLoaded", () => {
   loadFullCart();

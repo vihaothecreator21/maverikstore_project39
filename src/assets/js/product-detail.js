@@ -3,16 +3,10 @@
  * Fetch product by slug từ URL và render lên product-detail.html
  */
 
-const getApiBase = () => {
-  const isDev =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  return isDev
-    ? "http://localhost:5000/api/v1"
-    : `${window.location.origin}/api/v1`;
-};
-const API_BASE = getApiBase();
+import { getApiBase } from "./api-config.js";
 import * as bootstrap from "bootstrap";
+
+const API_BASE = getApiBase();
 
 // ── Lấy slug từ URL (?slug=...) ──────────────────────────
 const params = new URLSearchParams(window.location.search);

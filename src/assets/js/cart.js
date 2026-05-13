@@ -1,3 +1,5 @@
+import { getApiBase } from "./api-config.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   injectCartOffcanvas();
   fetchCart();
@@ -6,14 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ✅ API Base configuration
-const getApiBase = () => {
-  const isDev =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  return isDev
-    ? "http://localhost:5000/api/v1"
-    : `${window.location.origin}/api/v1`;
-};
 const API_BASE = getApiBase();
 
 function injectCartOffcanvas() {

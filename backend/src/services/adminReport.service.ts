@@ -1,6 +1,23 @@
 import { OrderStatus } from "@prisma/client";
 import { AdminRepository } from "../repositories/admin.repository";
 
+export interface AdminOrderExportDTO {
+  orderId: number;
+  date: string;
+  customerName: string;
+  customerEmail: string;
+  shippingPhone: string;
+  shippingAddress: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  totalAmount: number;
+  status: string;
+  statusCode: OrderStatus;
+  statusLabel: string;
+  note: string;
+  items: string;
+}
+
 /**
  * Admin Report Service — Business logic for charts, product stats, customer stats, export
  * Handles: revenue charts, best sellers, low stock, customer analytics, CSV export
@@ -150,8 +167,8 @@ export class AdminReportService {
     return result.map((r) => ({
       productId: r.productId,
       product: productMap[r.productId] ?? null,
-      totalQuantity: r._sum.quantity ?? 0,
-      totalRevenue: Math.round(Number(r._sum.priceAtPurchase ?? 0)),
+      totalQuantity: Number(r.totalQuantity ?? 0),
+      totalRevenue: Math.round(Number(r.totalRevenue ?? 0)),
     }));
   }
 
@@ -173,7 +190,7 @@ export class AdminReportService {
       if (!categories[catId]) {
         categories[catId] = { name: product.category.name, total: 0 };
       }
-      categories[catId].total += Number(r._sum.priceAtPurchase ?? 0);
+      categories[catId].total += Number(r.totalRevenue ?? 0);
     });
 
     return Object.entries(categories)
@@ -215,7 +232,7 @@ export class AdminReportService {
   }
 
   // ── Export ───────────────────────────────────────────────────────
-  async getOrdersForExport(startDate: Date, endDate: Date) {
+  async getOrdersForExport(startDate: Date, endDate: Date): Promise<AdminOrderExportDTO[]> {
     const orders = await this.adminRepository.findOrdersForExport(startDate, endDate);
 
     const ORDER_STATUS_LABELS: Record<string, string> = {
@@ -250,6 +267,8 @@ export class AdminReportService {
         : (order.status === "CANCELLED" ? "Thất bại" : (PAYMENT_STATUS_LABELS[order.payment?.paymentStatus ?? "PENDING"] || "Chờ thanh toán")),
       totalAmount:     Number(order.totalAmount),
       status:          ORDER_STATUS_LABELS[order.status] || order.status,
+      statusCode:      order.status,
+      statusLabel:     ORDER_STATUS_LABELS[order.status] || order.status,
       note:            order.note ?? "",
       items: order.details
         .map((d) => `${d.product.name} x${d.quantity} (${d.size}/${d.color})`)

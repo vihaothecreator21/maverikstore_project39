@@ -24,3 +24,4 @@ export const API_CONFIG = {
 
 // Export for use in modules
 export const getApiUrl = () => API_CONFIG.BASE_URL;
+export const getApiBase = () => API_CONFIG.BASE_URL;

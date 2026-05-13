@@ -1,6 +1,5 @@
 import { orderRepository } from "../container";
 import { OrderStatus } from "@prisma/client";
-import { writeAuditLog } from "../utils/auditLog.helper";
 
 /**
  * UC-05: Order Timeout Job
@@ -24,17 +23,12 @@ export const runOrderTimeoutJob = async (): Promise<void> => {
           order.id,
           OrderStatus.CANCELLED,
           true, // hoàn kho
+          {
+            action: "TIMEOUT",
+            oldStatus: order.status,
+            userId: order.userId,
+          },
         );
-
-        // Ghi AuditLog — action=TIMEOUT (system thực hiện, userId = userId của order)
-        await writeAuditLog({
-          action: "TIMEOUT",
-          entity: "Order",
-          entityId: order.id,
-          oldValue: { status: order.status },
-          newValue: { status: OrderStatus.CANCELLED, reason: "Auto-cancelled after 15 minutes" },
-          userId: order.userId,
-        });
 
         timedOut++;
         console.log(`[OrderTimeout] Cancelled order #${order.id}`);

@@ -4,6 +4,8 @@
  * Gọi requireAdminAccess() ở đầu mỗi trang admin.
  */
 
+import { getApiBase } from "../../../assets/js/api-config.js";
+
 export function requireAdminAccess() {
   const token = localStorage.getItem("authToken");
   const user  = JSON.parse(localStorage.getItem("user") || "{}");
@@ -17,12 +19,7 @@ export function requireAdminAccess() {
   return { token, user };
 }
 
-export function getApiBase() {
-  const isDev =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  return isDev ? "http://localhost:5000/api/v1" : `${window.location.origin}/api/v1`;
-}
+export { getApiBase };
 
 /**
  * Logout utility

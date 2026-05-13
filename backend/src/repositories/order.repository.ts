@@ -1,19 +1,7 @@
 import { prisma } from "../config/database";
 import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
 import { writeAuditLog } from "../utils/auditLog.helper";
-
-// ── State Machine ──────────────────────────────────────────────────
-export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PENDING_PAYMENT: [OrderStatus.PENDING, OrderStatus.CANCELLED],  // VNPay IPN success → PENDING
-  PENDING:    [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-  CONFIRMED:  [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
-  PROCESSING: [OrderStatus.SHIPPING],
-  SHIPPING:   [OrderStatus.DELIVERED],
-  DELIVERED:  [OrderStatus.COMPLETED, OrderStatus.RETURNED],
-  COMPLETED:  [],
-  CANCELLED:  [],
-  RETURNED:   [],
-};
+import { shouldMarkPaymentSuccess } from "../policies/orderStatus.policy";
 
 // ── Include preset ─────────────────────────────────────────────────
 const orderWithDetails = {
@@ -232,6 +220,17 @@ export class OrderRepository {
 
       if (!order) throw new Error(`Order ${orderId} not found`);
 
+      const expectedStatus = auditData?.oldStatus ?? order.status;
+
+      const transition = await tx.order.updateMany({
+        where: { id: orderId, status: expectedStatus },
+        data: { status: newStatus },
+      });
+
+      if (transition.count !== 1) {
+        throw new Error(`ORDER_STATUS_CHANGED::${orderId}::${expectedStatus}`);
+      }
+
       if (shouldRestoreStock) {
         for (const detail of order.details) {
           await tx.product.update({
@@ -240,12 +239,6 @@ export class OrderRepository {
           });
         }
       }
-
-      const updated = await tx.order.update({
-        where: { id: orderId },
-        data: { status: newStatus },
-        include: orderWithDetails,
-      });
 
       // ✅ NEW: Nếu hủy đơn, cập nhật trạng thái thanh toán thành FAILED
       if (newStatus === OrderStatus.CANCELLED) {
@@ -256,7 +249,7 @@ export class OrderRepository {
       }
 
       // ✅ NEW: Nếu đơn hàng hoàn thành/đã giao, cập nhật trạng thái thanh toán thành SUCCESS (cho COD)
-      if (newStatus === OrderStatus.DELIVERED || newStatus === OrderStatus.COMPLETED) {
+      if (shouldMarkPaymentSuccess(newStatus)) {
         await tx.payment.updateMany({
           where: { orderId: orderId },
           data: { paymentStatus: PaymentStatus.SUCCESS },
@@ -277,6 +270,12 @@ export class OrderRepository {
         );
       }
 
+      const updated = await tx.order.findUnique({
+        where: { id: orderId },
+        include: orderWithDetails,
+      });
+
+      if (!updated) throw new Error(`Order ${orderId} not found after update`);
       return updated;
     });
   }
@@ -285,8 +284,9 @@ export class OrderRepository {
     const cutoff = new Date(Date.now() - 15 * 60 * 1000);
     return prisma.order.findMany({
       where: {
-        // Tìm cả PENDING_PAYMENT (VNPay chưa thanh toán) và PENDING (COD) quá 15 phút
-        status: { in: [OrderStatus.PENDING_PAYMENT, OrderStatus.PENDING] },
+        // Only expire unpaid VNPay orders; COD/BANK/MOMO PENDING orders await admin action.
+        status: OrderStatus.PENDING_PAYMENT,
+        payment: { is: { paymentMethod: "VNPAY" } },
         createdAt: { lt: cutoff },
       },
       select: { id: true, userId: true, status: true },

@@ -5,14 +5,9 @@
  * Thay thế JS inline trong login.html
  */
 
+import { getApiBase } from "./api-config.js";
 import { syncCartAfterLogin } from "./auth-utils.js";
 
-const getApiBase = () => {
-  const isDev =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  return isDev ? "http://localhost:5000/api/v1" : `${window.location.origin}/api/v1`;
-};
 const API_BASE = getApiBase();
 
 // ── Auto-fill email nếu "Nhớ tôi" đã được check trước đó ──

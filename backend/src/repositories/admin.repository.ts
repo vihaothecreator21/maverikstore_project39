@@ -69,12 +69,18 @@ export class AdminRepository {
   // ── Product stats ────────────────────────────────────────────────
 
   async groupOrderDetailsByProduct(limit: number) {
-    return prisma.orderDetail.groupBy({
-      by: ["productId"],
-      _sum: { quantity: true, priceAtPurchase: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: limit,
-    });
+    return prisma.$queryRaw<
+      Array<{ productId: number; totalQuantity: bigint | number; totalRevenue: unknown }>
+    >`
+      SELECT
+        productId,
+        SUM(quantity) AS totalQuantity,
+        SUM(priceAtPurchase * quantity) AS totalRevenue
+      FROM OrderDetail
+      GROUP BY productId
+      ORDER BY totalQuantity DESC
+      LIMIT ${limit}
+    `;
   }
 
   async findProductsByIds(ids: number[]) {
@@ -99,10 +105,15 @@ export class AdminRepository {
   }
 
   async groupOrderDetailsByCategory() {
-    return prisma.orderDetail.groupBy({
-      by: ["productId"],
-      _sum: { priceAtPurchase: true },
-    });
+    return prisma.$queryRaw<
+      Array<{ productId: number; totalRevenue: unknown }>
+    >`
+      SELECT
+        productId,
+        SUM(priceAtPurchase * quantity) AS totalRevenue
+      FROM OrderDetail
+      GROUP BY productId
+    `;
   }
 
   async findProductsWithCategory(ids: number[]) {

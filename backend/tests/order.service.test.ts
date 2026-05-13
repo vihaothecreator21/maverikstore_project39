@@ -306,5 +306,42 @@ describe("OrderService", () => {
         code: "INVALID_STATUS_FOR_CANCEL",
       });
     });
+
+    it("should return ORDER_STATUS_CHANGED when cancel loses a concurrent transition", async () => {
+      mockRepo.findById.mockResolvedValue(MOCK_PENDING_ORDER);
+      mockRepo.updateStatusWithRollback.mockRejectedValue(
+        new Error("ORDER_STATUS_CHANGED::99::PENDING"),
+      );
+
+      await expect(
+        orderService.cancelOrder(99, MOCK_USER_ID),
+      ).rejects.toMatchObject({
+        statusCode: 409,
+        code: "ORDER_STATUS_CHANGED",
+      });
+    });
+  });
+
+  describe("adminUpdateStatus()", () => {
+    it("should return ORDER_STATUS_CHANGED when admin update loses a concurrent transition", async () => {
+      mockRepo.findById.mockResolvedValue({
+        ...MOCK_CREATED_ORDER,
+        status: OrderStatus.PENDING,
+      });
+      mockRepo.updateStatusWithRollback.mockRejectedValue(
+        new Error("ORDER_STATUS_CHANGED::99::PENDING"),
+      );
+
+      await expect(
+        orderService.adminUpdateStatus(
+          99,
+          { status: OrderStatus.CONFIRMED },
+          MOCK_USER_ID,
+        ),
+      ).rejects.toMatchObject({
+        statusCode: 409,
+        code: "ORDER_STATUS_CHANGED",
+      });
+    });
   });
 });
