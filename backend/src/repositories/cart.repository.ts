@@ -13,6 +13,8 @@ export class CartRepository {
                 name: true,
                 slug: true,
                 price: true,
+                discountPercent: true,
+                discountAmount: true,
                 imageUrl: true,
                 stockQuantity: true,
               },

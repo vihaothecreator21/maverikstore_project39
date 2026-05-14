@@ -103,6 +103,18 @@
           <input type="number" class="form-input" id="pf-stock" placeholder="50" min="0" required />
         </div>
       </div>
+      <div class="form-row-2">
+        <div class="form-field">
+          <label class="form-label">Giảm theo phần trăm (%)</label>
+          <input type="number" class="form-input" id="pf-discount-percent" placeholder="10" min="0" max="100" step="0.01" />
+          <small style="color:#8b91a7;font-size:.75rem;">Ví dụ: nhập 10 nghĩa là giảm 10% giá gốc.</small>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Giảm theo số tiền (VND)</label>
+          <input type="number" class="form-input" id="pf-discount-amount" placeholder="200000" min="0" step="1000" />
+          <small style="color:#8b91a7;font-size:.75rem;">Chỉ dùng một trong hai kiểu giảm giá.</small>
+        </div>
+      </div>
       <div class="form-field">
         <label class="form-label">URL Hình ảnh</label>
         <input type="url" class="form-input" id="pf-image" placeholder="https://..." />

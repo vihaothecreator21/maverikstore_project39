@@ -80,3 +80,12 @@ export function clearAuthData() {
     console.error("Error clearing auth data:", err);
   }
 }
+
+export function handleExpiredSession(redirectTo = "login.html") {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("user");
+  localStorage.removeItem("userEmail");
+  sessionStorage.setItem("redirectAfterLogin", window.location.pathname.split("/").pop() || "index.html");
+  window.dispatchEvent(new Event("cartUpdated"));
+  window.location.href = redirectTo;
+}

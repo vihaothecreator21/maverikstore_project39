@@ -1,4 +1,5 @@
 import { getApiBase } from "./api-config.js";
+import { handleExpiredSession } from "./auth-utils.js";
 
 const API_BASE = getApiBase();
 document.addEventListener("DOMContentLoaded", () => {
@@ -26,9 +27,14 @@ function loadFullCart() {
           if (response.ok) {
             return response.json();
           }
+          if (response.status === 401) {
+            handleExpiredSession("login.html");
+            return null;
+          }
           throw new Error("Failed to fetch cart");
         })
         .then((data) => {
+          if (!data) return;
           if (data.status === "success") {
             const cart = data.data.items || [];
             setTimeout(() => {
@@ -78,8 +84,8 @@ function renderCartItems(cartData) {
   let html = "";
   cartData.forEach((item) => {
     totalItems += item.quantity;
-    // Handle both API format (item.product.price) and localStorage format (item.price)
-    const price = item.price || item.product?.price;
+    // Handle both API format (item.product.salePrice) and localStorage format (item.price)
+    const price = item.product?.salePrice || item.price || item.product?.price;
     const name = item.name || item.product?.name;
     const imageUrl = item.imageUrl || item.product?.imageUrl;
 

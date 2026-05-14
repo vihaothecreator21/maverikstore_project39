@@ -1,4 +1,5 @@
 import { getApiBase } from "./api-config.js";
+import { handleExpiredSession } from "./auth-utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   injectCartOffcanvas();
@@ -214,6 +215,10 @@ async function fetchCart() {
           if (data.status === "success") {
             cart = data.data.items || [];
           }
+        } else if (response.status === 401) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
+          cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
         }
       } catch (err) {
         console.error("Error fetching cart from API:", err);
@@ -294,6 +299,8 @@ window.removeCartItemOc = async function (itemId) {
         });
         if (response.ok) {
           fetchCart(); // Refresh
+        } else if (response.status === 401) {
+          handleExpiredSession("login.html");
         } else {
           console.error("Failed to remove item via API");
         }

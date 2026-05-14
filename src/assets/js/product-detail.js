@@ -4,6 +4,7 @@
  */
 
 import { getApiBase } from "./api-config.js";
+import { handleExpiredSession } from "./auth-utils.js";
 import * as bootstrap from "bootstrap";
 
 const API_BASE = getApiBase();
@@ -66,9 +67,7 @@ function renderProduct(product) {
     : `<span class="stock-badge bg-secondary text-white">Hết hàng</span>`;
 
   // Price
-  document.getElementById("detail-price").textContent = formatVND(
-    product.price,
-  );
+  document.getElementById("detail-price").innerHTML = renderPriceHtml(product);
 
   // Description (short preview in right col)
   const shortDesc = document.getElementById("detail-desc-short");
@@ -196,7 +195,7 @@ function buildRelatedCard(product) {
             />
           </div>
           <p class="card-name mt-2">${product.name}</p>
-          <p class="card-price">${formatVND(product.price)}</p>
+          <div class="card-price">${renderPriceHtml(product)}</div>
           ${!inStock ? `<p class="card-status">Hết hàng</p>` : ""}
         </a>
       </div>
@@ -280,6 +279,11 @@ async function handleAddToCart(product) {
         }
         showToast("✅ Đã thêm vào giỏ hàng!");
       } else {
+        if (response.status === 401) {
+          showToast("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+          setTimeout(() => handleExpiredSession("login.html"), 900);
+          return;
+        }
         const errorData = await response.json();
         showToast("❌ " + (errorData.message || "Lỗi thêm giỏ"));
       }
@@ -309,7 +313,7 @@ async function handleAddToCart(product) {
           id: Date.now(), // Unique ID cho item trong giỏ
           productId: product.id,
           name: product.name,
-          price: product.price,
+    price: getDiscountInfo(product).salePrice,
           imageUrl: imgUrl,
           size: selectedSize,
           color: selectedColor,
@@ -383,7 +387,30 @@ function formatVND(price) {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
-  }).format(price);
+}).format(price);
+}
+
+function getDiscountInfo(product) {
+  const price = Number(product.price || 0);
+  const discountPercent = Number(product.discountPercent || 0);
+  const discountAmount = Number(product.discountAmount || 0);
+  const discountValue = discountPercent > 0 ? price * discountPercent / 100 : discountAmount;
+  const salePrice = Math.max(0, Math.round(price - discountValue));
+  return { price, salePrice, hasDiscount: discountValue > 0 && salePrice < price };
+}
+
+function renderPriceHtml(product) {
+  const discount = getDiscountInfo(product);
+  if (!discount.hasDiscount) {
+    return `<span>${formatVND(discount.price)}</span>`;
+  }
+
+  return `
+    <span class="d-inline-flex flex-column gap-1">
+      <span class="text-muted text-decoration-line-through" style="font-size:.82em;">${formatVND(discount.price)}</span>
+      <span class="text-danger fw-bold">${formatVND(discount.salePrice)}</span>
+    </span>
+  `;
 }
 
 function truncate(str, max) {

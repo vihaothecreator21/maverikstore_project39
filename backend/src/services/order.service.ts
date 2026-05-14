@@ -6,6 +6,7 @@ import {
   shouldRestoreStock,
 } from "../policies/orderStatus.policy";
 import { APIError } from "../utils/apiResponse";
+import { calculateSalePrice } from "../utils/pricing.helper";
 import type {
   PlaceOrderInput,
   UpdateOrderStatusInput,
@@ -40,7 +41,7 @@ export class OrderService {
       quantity: item.quantity,
       size: item.size,
       color: item.color,
-      price: item.product.price, // Prisma.Decimal — giá từ DB
+      price: new Prisma.Decimal(calculateSalePrice(item.product)), // Giá sau giảm từ DB, không tin giá frontend
       productName: item.product.name, // Dùng trong error message nếu hết hàng
     }));
 

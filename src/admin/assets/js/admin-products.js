@@ -123,6 +123,7 @@ function renderTable() {
   tbody.innerHTML = rows.map((p) => {
     const cat        = categories.find((c) => c.id === p.categoryId);
     const qty        = Number(p.stockQuantity ?? 0);
+    const priceHtml  = renderPriceCell(p);
     const stockBadge =
       qty === 0 ? `<span class="badge badge-cancelled">Hết hàng</span>` :
       qty <  10 ? `<span class="badge badge-pending">${qty} còn lại</span>` :
@@ -136,7 +137,7 @@ function renderTable() {
       }</td>
       <td style="font-weight:600;font-size:.85rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</td>
       <td><span class="badge" style="background:#f5f5f2;color:#555;">${cat?.name ?? "—"}</span></td>
-      <td style="font-weight:700;">${formatVND(Number(p.price))}</td>
+      <td style="font-weight:700;">${priceHtml}</td>
       <td>${stockBadge}</td>
       <td style="text-align:center;white-space:nowrap;">
         <button class="btn btn-outline btn-sm" style="margin-right:6px;" onclick="window._editProduct(${p.id})"><i class="bi bi-pencil"></i></button>
@@ -144,6 +145,33 @@ function renderTable() {
       </td>
     </tr>`;
   }).join("");
+}
+
+function getDiscountInfo(product) {
+  const price = Number(product.price || 0);
+  const discountPercent = Number(product.discountPercent || 0);
+  const discountAmount = Number(product.discountAmount || 0);
+  const discountValue = discountPercent > 0 ? price * discountPercent / 100 : discountAmount;
+  const salePrice = Math.max(0, Math.round(price - discountValue));
+  return {
+    price,
+    salePrice,
+    hasDiscount: discountValue > 0 && salePrice < price,
+    label: discountPercent > 0 ? `-${discountPercent}%` : `-${formatVND(discountAmount)}`,
+  };
+}
+
+function renderPriceCell(product) {
+  const discount = getDiscountInfo(product);
+  if (!discount.hasDiscount) return formatVND(discount.price);
+
+  return `
+    <div style="line-height:1.3;">
+      <div style="color:#9ca3af;text-decoration:line-through;font-size:.75rem;">${formatVND(discount.price)}</div>
+      <div style="color:#dc2626;font-weight:800;">${formatVND(discount.salePrice)}</div>
+      <span class="badge" style="background:#fee2e2;color:#b91c1c;margin-top:3px;">${discount.label}</span>
+    </div>
+  `;
 }
 
 // ── Pagination ────────────────────────────────────────────────
@@ -171,6 +199,8 @@ function openAddModal() {
   document.getElementById("product-id").value = "";
   // Reset category select to first option
   document.getElementById("pf-category").value = "";
+  document.getElementById("pf-discount-percent").value = "";
+  document.getElementById("pf-discount-amount").value = "";
   document.getElementById("product-modal").classList.add("open");
 }
 
@@ -182,6 +212,8 @@ window._editProduct = (id) => {
   document.getElementById("pf-name").value            = p.name;
   document.getElementById("pf-category").value        = p.categoryId;
   document.getElementById("pf-price").value           = Number(p.price);
+  document.getElementById("pf-discount-percent").value = Number(p.discountPercent || 0) || "";
+  document.getElementById("pf-discount-amount").value  = Number(p.discountAmount || 0) || "";
   document.getElementById("pf-stock").value           = p.stockQuantity;
   document.getElementById("pf-image").value           = p.imageUrl || "";
   document.getElementById("pf-desc").value            = p.description || "";
@@ -200,6 +232,8 @@ async function handleSave(e) {
   const name    = document.getElementById("pf-name").value.trim();
   const catId   = document.getElementById("pf-category").value;
   const price   = document.getElementById("pf-price").value;
+  const discountPercent = document.getElementById("pf-discount-percent").value;
+  const discountAmount  = document.getElementById("pf-discount-amount").value;
   const stock   = document.getElementById("pf-stock").value;
   const imgUrl  = document.getElementById("pf-image").value.trim();
   const desc    = document.getElementById("pf-desc").value.trim();
@@ -207,11 +241,19 @@ async function handleSave(e) {
   if (!name)  return showToast("⚠️ Nhập tên sản phẩm", "warning");
   if (!catId) return showToast("⚠️ Chọn danh mục", "warning");
   if (!price) return showToast("⚠️ Nhập giá bán", "warning");
+  if (Number(discountPercent || 0) > 0 && Number(discountAmount || 0) > 0) {
+    return showToast("⚠️ Chỉ chọn giảm theo % hoặc giảm theo số tiền", "warning");
+  }
+  if (Number(discountAmount || 0) >= Number(price)) {
+    return showToast("⚠️ Số tiền giảm phải nhỏ hơn giá bán", "warning");
+  }
 
   const body = {
     name,
     categoryId:    parseInt(catId),
     price:         parseFloat(price),
+    discountPercent: parseFloat(discountPercent) || 0,
+    discountAmount:  parseFloat(discountAmount) || 0,
     stockQuantity: parseInt(stock) || 0,
     ...(imgUrl && { imageUrl: imgUrl }),
     ...(desc   && { description: desc }),

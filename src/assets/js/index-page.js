@@ -64,8 +64,8 @@ function renderSlider(products) {
                             ${product.description || 'Thiết kế tinh tế, chất liệu cao cấp mang lại vẻ đẹp vĩnh cửu cho không gian sống.'}
                         </p>
 
-                        <div class="fw-bold text-primary mb-5" style="font-size: 2rem;">
-                            ${Number(product.price).toLocaleString()} <span class="fs-5">đ</span>
+                        <div class="mb-5" style="font-size: 2rem;">
+                            ${renderPriceHtml(product)}
                         </div>
 
                         <div class="d-flex gap-3 justify-content-center justify-content-lg-start align-items-center">
@@ -119,10 +119,33 @@ function renderBestSellers(products) {
                         </a>
                     </h3>
                     <div class="d-flex justify-content-center gap-2">
-                        <span class="fw-bold text-primary">${Number(product.price).toLocaleString()} đ</span>
+                        ${renderPriceHtml(product)}
                     </div>
                 </div>
             </div>
         </div>
     `).join('');
+}
+
+function getDiscountInfo(product) {
+    const price = Number(product.price || 0);
+    const discountPercent = Number(product.discountPercent || 0);
+    const discountAmount = Number(product.discountAmount || 0);
+    const discountValue = discountPercent > 0 ? price * discountPercent / 100 : discountAmount;
+    const salePrice = Math.max(0, Math.round(price - discountValue));
+    return { price, salePrice, hasDiscount: discountValue > 0 && salePrice < price };
+}
+
+function renderPriceHtml(product) {
+    const discount = getDiscountInfo(product);
+    if (!discount.hasDiscount) {
+        return `<span class="fw-bold text-primary">${discount.price.toLocaleString()} đ</span>`;
+    }
+
+    return `
+        <span class="d-inline-flex flex-column align-items-center align-items-lg-start">
+            <span class="text-muted text-decoration-line-through" style="font-size:.55em;">${discount.price.toLocaleString()} đ</span>
+            <span class="fw-bold text-danger">${discount.salePrice.toLocaleString()} đ</span>
+        </span>
+    `;
 }

@@ -4,6 +4,7 @@
  */
 
 import { getApiBase } from "./api-config.js";
+import { handleExpiredSession } from "./auth-utils.js";
 
 const API_BASE = getApiBase();
 
@@ -93,6 +94,7 @@ async function loadCart(token) {
       // Token hết hạn hoặc không hợp lệ
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
+      showToast("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", "error");
       showSection("auth-gate");
       return;
     }
@@ -109,7 +111,7 @@ async function loadCart(token) {
 
     // Tính total
     totalAmount = cartItems.reduce((sum, item) => {
-      const price = Number(item.product?.price ?? item.itemTotal / item.quantity ?? 0);
+      const price = Number(item.product?.salePrice ?? item.itemTotal / item.quantity ?? item.product?.price ?? 0);
       return sum + price * item.quantity;
     }, 0);
 
@@ -133,7 +135,7 @@ function renderSummary() {
   let html = "";
 
   cartItems.forEach((item) => {
-    const price = Number(item.product?.price ?? 0);
+    const price = Number(item.product?.salePrice ?? item.product?.price ?? 0);
     const name = item.product?.name ?? "Sản phẩm";
     const imageUrl = item.product?.imageUrl ?? "./assets/images/product-img-1.jpg";
     totalQty += item.quantity;
@@ -248,6 +250,12 @@ async function handlePlaceOrder() {
     });
 
     const data = await res.json();
+
+    if (res.status === 401) {
+      showToast("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", "error");
+      setTimeout(() => handleExpiredSession("login.html"), 900);
+      return;
+    }
 
     if (!res.ok || data.status !== "success") {
       const message = data.message || "Đặt hàng thất bại. Vui lòng thử lại.";

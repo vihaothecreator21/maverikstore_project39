@@ -31,6 +31,19 @@ export const CreateProductSchema = z
       .number({ required_error: "Price is required" })
       .positive("Price must be a positive number")
       .multipleOf(0.01, "Price can have at most 2 decimal places"),
+    discountPercent: z
+      .number()
+      .min(0, "Discount percent cannot be negative")
+      .max(100, "Discount percent cannot exceed 100")
+      .multipleOf(0.01, "Discount percent can have at most 2 decimal places")
+      .optional()
+      .default(0),
+    discountAmount: z
+      .number()
+      .min(0, "Discount amount cannot be negative")
+      .multipleOf(0.01, "Discount amount can have at most 2 decimal places")
+      .optional()
+      .default(0),
     stockQuantity: z
       .number()
       .int("Stock quantity must be an integer")
@@ -49,6 +62,22 @@ export const CreateProductSchema = z
         "Only HTTP/HTTPS URLs allowed", // ← XSS protection
       )
       .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if ((data.discountPercent ?? 0) > 0 && (data.discountAmount ?? 0) > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Only one discount type can be used at a time",
+        path: ["discountPercent"],
+      });
+    }
+    if ((data.discountAmount ?? 0) >= data.price) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Discount amount must be lower than product price",
+        path: ["discountAmount"],
+      });
+    }
   })
   .refine(
     async (data) => await validateCategoryExists(data.categoryId),
@@ -76,6 +105,17 @@ export const UpdateProductSchema = z
       .positive("Price must be a positive number")
       .multipleOf(0.01, "Price can have at most 2 decimal places")
       .optional(),
+    discountPercent: z
+      .number()
+      .min(0, "Discount percent cannot be negative")
+      .max(100, "Discount percent cannot exceed 100")
+      .multipleOf(0.01, "Discount percent can have at most 2 decimal places")
+      .optional(),
+    discountAmount: z
+      .number()
+      .min(0, "Discount amount cannot be negative")
+      .multipleOf(0.01, "Discount amount can have at most 2 decimal places")
+      .optional(),
     stockQuantity: z
       .number()
       .int("Stock quantity must be an integer")
@@ -99,6 +139,25 @@ export const UpdateProductSchema = z
     message: "At least one field must be provided for update",
   })
   .superRefine(async (data, ctx) => {
+    if ((data.discountPercent ?? 0) > 0 && (data.discountAmount ?? 0) > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Only one discount type can be used at a time",
+        path: ["discountPercent"],
+      });
+    }
+    if (
+      data.price !== undefined &&
+      data.discountAmount !== undefined &&
+      data.discountAmount >= data.price
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Discount amount must be lower than product price",
+        path: ["discountAmount"],
+      });
+    }
+
     // Validate categoryId if it's being updated
     if (data.categoryId && !(await validateCategoryExists(data.categoryId))) {
       ctx.addIssue({

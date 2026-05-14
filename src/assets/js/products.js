@@ -128,7 +128,7 @@ function renderProducts(products) {
 function buildProductCard(product) {
   const image = product.imageUrl || getPlaceholderImage(product.name);
   const categoryName = product.category?.name || "Maverik";
-  const priceFormatted = formatVND(product.price);
+  const discount = getDiscountInfo(product);
   const inStock = product.stockQuantity > 0;
   const slug = product.slug;
 
@@ -157,12 +157,12 @@ function buildProductCard(product) {
             ${truncate(product.description || "", 80)}
           </p>
           <div class="mt-auto d-flex align-items-center justify-content-between">
-            <span class="fw-bold text-dark">${priceFormatted}</span>
+            ${renderPriceHtml(product)}
             <button
               class="btn btn-dark btn-sm add-to-cart-btn"
               data-product-id="${product.id}"
               data-product-name="${product.name}"
-              data-product-price="${product.price}"
+              data-product-price="${discount.salePrice}"
               data-product-image="${image}"
               ${!inStock ? "disabled" : ""}
             >
@@ -172,6 +172,29 @@ function buildProductCard(product) {
         </div>
       </div>
     </div>
+  `;
+}
+
+function getDiscountInfo(product) {
+  const price = Number(product.price || 0);
+  const discountPercent = Number(product.discountPercent || 0);
+  const discountAmount = Number(product.discountAmount || 0);
+  const discountValue = discountPercent > 0 ? price * discountPercent / 100 : discountAmount;
+  const salePrice = Math.max(0, Math.round(price - discountValue));
+  return { price, salePrice, hasDiscount: discountValue > 0 && salePrice < price };
+}
+
+function renderPriceHtml(product) {
+  const discount = getDiscountInfo(product);
+  if (!discount.hasDiscount) {
+    return `<span class="fw-bold text-dark">${formatVND(discount.price)}</span>`;
+  }
+
+  return `
+    <span>
+      <span class="d-block text-muted text-decoration-line-through small">${formatVND(discount.price)}</span>
+      <span class="fw-bold text-danger">${formatVND(discount.salePrice)}</span>
+    </span>
   `;
 }
 

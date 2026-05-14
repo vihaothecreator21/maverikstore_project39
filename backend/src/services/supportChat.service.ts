@@ -3,12 +3,15 @@ import { prisma } from "../config/database";
 import { getEnv } from "../config/env.config";
 import type { SupportChatRequestInput } from "../schemas/supportChat.schema";
 import { APIError } from "../utils/apiResponse";
+import { calculateSalePrice, hasDiscount } from "../utils/pricing.helper";
 
 type ChatProduct = {
   id: number;
   name: string;
   slug: string | null;
-  price: unknown;
+  price: any;
+  discountPercent: any;
+  discountAmount: any;
   stockQuantity: number;
   description: string | null;
   category: { name: string } | null;
@@ -70,6 +73,8 @@ export class SupportChatService {
         id: product.id,
         name: product.name,
         price: Number(product.price),
+        salePrice: calculateSalePrice(product),
+        hasDiscount: hasDiscount(product),
         stockQuantity: product.stockQuantity,
         url: product.slug ? `/product-detail.html?slug=${product.slug}` : `/product-detail.html?id=${product.id}`,
       })),
@@ -131,6 +136,8 @@ export class SupportChatService {
       name: true,
       slug: true,
       price: true,
+      discountPercent: true,
+      discountAmount: true,
       stockQuantity: true,
       description: true,
       category: { select: { name: true } },
@@ -201,7 +208,8 @@ export class SupportChatService {
           `- ID: ${product.id}`,
           `Tên: ${product.name}`,
           `Danh mục: ${product.category?.name ?? "Không rõ"}`,
-          `Giá: ${Number(product.price).toLocaleString("vi-VN")}đ`,
+          `Giá gốc: ${Number(product.price).toLocaleString("vi-VN")}đ`,
+          `Giá sau giảm: ${calculateSalePrice(product).toLocaleString("vi-VN")}đ`,
           `Tồn kho: ${product.stockQuantity}`,
           `Link: ${url}`,
           `Mô tả: ${product.description?.slice(0, 260) ?? "Không có mô tả"}`,

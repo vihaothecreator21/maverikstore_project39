@@ -1,6 +1,7 @@
 import { CartRepository } from "../repositories/cart.repository";
 import { ProductRepository } from "../repositories/product.repository";
 import { APIError } from "../utils/apiResponse";
+import { calculateSalePrice, hasDiscount } from "../utils/pricing.helper";
 import type {
   AddToCartInput,
   UpdateCartItemInput,
@@ -31,9 +32,19 @@ export class CartService {
     let totalPrice = 0;
     const items =
       cart?.items.map((item) => {
-        const itemTotal = Number(item.product.price) * item.quantity;
+        const salePrice = calculateSalePrice(item.product);
+        const itemTotal = salePrice * item.quantity;
         totalPrice += itemTotal;
-        return { ...item, itemTotal };
+        return {
+          ...item,
+          product: {
+            ...item.product,
+            originalPrice: Number(item.product.price),
+            salePrice,
+            hasDiscount: hasDiscount(item.product),
+          },
+          itemTotal,
+        };
       }) || [];
 
     return {

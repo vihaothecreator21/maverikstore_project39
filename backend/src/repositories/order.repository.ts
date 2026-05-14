@@ -41,7 +41,14 @@ export class OrderRepository {
         items: {
           include: {
             product: {
-              select: { id: true, name: true, price: true, stockQuantity: true },
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                discountPercent: true,
+                discountAmount: true,
+                stockQuantity: true,
+              },
             },
           },
         },
