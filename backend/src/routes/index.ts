@@ -9,6 +9,7 @@ import { cartRoutes } from "./cart.routes";
 import { orderRoutes, adminOrderRoutes } from "./order.routes";
 import { adminRoutes } from "./admin.routes";
 import { paymentRoutes } from "./payment.routes";
+import { supportChatRoutes } from "./supportChat.routes";
 
 const router = Router();
 
@@ -35,6 +36,7 @@ router.get("/", (_req: Request, res: Response) => {
       cart: `/api/${env.API_VERSION}/cart`,
       orders:   `/api/${env.API_VERSION}/orders`,
       payments: `/api/${env.API_VERSION}/payments`,
+      supportChat: `/api/${env.API_VERSION}/support-chat`,
       reviews:  `/api/${env.API_VERSION}/reviews`,
       favorites: `/api/${env.API_VERSION}/favorites`,
     },
@@ -85,6 +87,9 @@ router.use(`/${V}/users`, userRoutes);
 
 // Payment (VNPay)
 router.use(`/${V}/payments`, paymentRoutes);
+
+// AI Support Chatbot
+router.use(`/${V}/support-chat`, supportChatRoutes);
 
 // ==================== @TODO Routes ====================
 // import reviewRoutes from './review.routes';

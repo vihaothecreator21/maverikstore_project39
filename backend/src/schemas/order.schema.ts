@@ -10,7 +10,7 @@ export const PlaceOrderSchema = z.object({
   shippingPhone: z
     .string({ required_error: "Số điện thoại là bắt buộc" })
     .regex(/^\+?[0-9]{9,15}$/, "Số điện thoại không hợp lệ"),
-  paymentMethod: z.enum(["COD", "BANK_TRANSFER", "MOMO", "VNPAY"], {
+  paymentMethod: z.enum(["COD", "BANK_TRANSFER", "VNPAY"], {
     required_error: "Phương thức thanh toán là bắt buộc",
     invalid_type_error: "Phương thức thanh toán không hợp lệ",
   }),

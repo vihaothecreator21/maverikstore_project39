@@ -37,6 +37,7 @@ import { UserService }        from "./services/user.service";
 import { ProductService }     from "./services/product.service";
 import { CategoryService }    from "./services/category.service";
 import { CartService }        from "./services/cart.service";
+import { SupportChatService } from "./services/supportChat.service";
 
 export const orderService       = new OrderService(orderRepository);
 export const dashboardService   = new DashboardService(adminRepository);
@@ -47,3 +48,4 @@ export const userService        = new UserService(userRepository);
 export const productService     = new ProductService(productRepository);
 export const categoryService    = new CategoryService(categoryRepository);
 export const cartService        = new CartService(cartRepository, productRepository);
+export const supportChatService = new SupportChatService();

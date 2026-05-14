@@ -69,6 +69,12 @@ const envSchema = z.object({
     .enum(["debug", "info", "warn", "error"])
     .default("debug"),
 
+  // Gemini AI Chatbot
+  // Dùng optional để server vẫn chạy được khi bạn chưa bật chatbot ở môi trường khác.
+  // Khi người dùng gọi /support-chat mà thiếu key, service sẽ trả lỗi cấu hình rõ ràng.
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+
   // VNPay Configuration
   // ⚠️ SECURITY: NEVER hardcode real secrets here. Always set via .env file.
   // These will throw at startup if missing — INTENTIONAL fail-fast behavior.
