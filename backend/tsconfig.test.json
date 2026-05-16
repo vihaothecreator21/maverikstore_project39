@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    // Inject Jest globals (describe, it, expect, jest.*) vào TypeScript
+    "types": ["jest", "node"],
+    // Tests dùng CommonJS (ts-jest chạy CJS)
+    "module": "CommonJS",
+    "moduleResolution": "node"
+  },
+  // Bao gồm cả src/ lẫn tests/ để IDE hiểu cross-reference
+  "include": ["src/**/*", "tests/**/*", "prisma/**/*"],
+  // Không exclude test files nữa — đây là config dành riêng cho test
+  "exclude": ["node_modules", "dist"]
+}

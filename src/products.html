@@ -103,7 +103,11 @@
       <section class="py-lg-8 py-5">
   <div class="container ">
     <div class="row">
-      <!-- Sidebar Filters -->
+      <!--
+        Sidebar filters.
+        products.js gọi GET /categories rồi render link category vào #category-filter-list.
+        Khi click category, JS thêm categoryId vào query GET /products.
+      -->
       <aside class="col-lg-3 mb-4">
         <h3 class="fw-semibold mb-3 h5 ">Filters</h3>
         <div class="mb-4 bg-light border bg-opacity-50 p-4">
@@ -150,7 +154,11 @@
       <!-- Product Grid -->
       <div class="col-lg-9">
         <div class="row g-4">
-          <!-- Toolbar: search + sort + count -->
+          <!--
+            Toolbar sản phẩm.
+            #product-search-input -> debounce search rồi gọi GET /products?search=...
+            #sort-select hiện là client-side/placeholder tùy backend support.
+          -->
           <div class="col-12">
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
               <div class="d-flex align-items-center gap-2">
@@ -173,11 +181,11 @@
               </div>
             </div>
           </div>
-          <!-- Dynamic product cards rendered by products.js -->
+          <!-- products.js render card sản phẩm vào đây từ GET /products. -->
           <div id="product-grid" class="row g-4 w-100 m-0"></div>
         </div>
 
-        <!-- Pagination (dynamic) -->
+        <!-- products.js render pagination link vào đây; click đổi currentPage rồi gọi lại GET /products. -->
         <nav class="mt-4" id="pagination-nav"></nav>
 
       </div>

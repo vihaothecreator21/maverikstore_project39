@@ -6,6 +6,16 @@
  *  - Client-side search (ID, username, email, phone)
  *  - Server-side pagination
  *  - Admin status update actions
+ *
+ * API chính:
+ * - GET /admin/orders?page=&limit=&status=&startDate=&endDate= để lấy danh sách.
+ * - PUT /admin/orders/:orderId/status để đổi trạng thái.
+ *
+ * Event chính:
+ * - Các nút [data-status] đổi statusFilter rồi loadOrders().
+ * - #search-orders input chỉ filter client-side trên trang hiện tại.
+ * - #btn-apply-date/#btn-clear-date đổi date range rồi gọi lại API.
+ * - Nút hành động trong bảng gọi window._updateStatus(orderId, nextStatus).
  */
 
 import { requireAdminAccess, getApiBase, formatVND, formatDate, ORDER_STATUS, showToast } from "./admin-guard.js";
@@ -58,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Logout
   document.getElementById("btn-admin-logout")?.addEventListener("click", () => {
     localStorage.removeItem("authToken"); localStorage.removeItem("user");
-    window.location.href = "/login.html";
+    window.location.href = "/index.html?login=1";
   });
 
   await loadOrders();

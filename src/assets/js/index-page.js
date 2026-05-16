@@ -1,6 +1,16 @@
 import { API_CONFIG } from './api-config.js';
 import { initializeSwiperCarousels } from './swiper.js';
 
+/**
+ * index-page.js
+ *
+ * Chức năng:
+ * - Trang chủ kéo sản phẩm động từ backend rồi render vào các slider.
+ * - GET /products?limit=5 cho New Arrivals.
+ * - GET /products/featured/best-sellers?limit=8 cho Best Sellers.
+ * - Sau khi thay HTML slider phải gọi initializeSwiperCarousels() để Swiper nhận DOM mới.
+ */
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Initial static render or placeholder if needed
     await Promise.all([

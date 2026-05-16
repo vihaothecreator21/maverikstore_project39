@@ -1,6 +1,13 @@
 /**
  * product-detail.js — Maverik Store
  * Fetch product by slug từ URL và render lên product-detail.html
+ *
+ * Flow chính:
+ * - Đọc ?slug=... từ URL.
+ * - Gọi GET /products/slug/:slug để lấy chi tiết.
+ * - Render ảnh, giá, tồn kho, mô tả, nút thêm giỏ/mua ngay.
+ * - Gọi GET /products?categoryId=&limit=5 để lấy sản phẩm liên quan.
+ * - Add cart: nếu login thì POST /cart/items, nếu guest thì lưu localStorage.maverik_cart.
  */
 
 import { getApiBase } from "./api-config.js";
@@ -281,7 +288,7 @@ async function handleAddToCart(product) {
       } else {
         if (response.status === 401) {
           showToast("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-          setTimeout(() => handleExpiredSession("login.html"), 900);
+          setTimeout(() => handleExpiredSession(), 900);
           return;
         }
         const errorData = await response.json();

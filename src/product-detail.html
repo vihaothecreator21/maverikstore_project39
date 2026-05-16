@@ -287,6 +287,10 @@
         </nav>
 
         <!-- ── Product Detail Section ── -->
+        <!--
+          product-detail.js đọc ?slug=... rồi gọi GET /products/slug/:slug.
+          Khi API trả data, JS ẩn #detail-skeleton và show #detail-content.
+        -->
         <div class="row g-5" id="product-detail-section">
           <!-- Loading skeleton -->
           <div class="col-12" id="detail-skeleton">
@@ -312,7 +316,7 @@
             </div>
           </div>
 
-          <!-- Actual content (hidden until loaded) -->
+          <!-- Nội dung thật: product-detail.js fill ảnh, giá, mô tả, tồn kho, nút add cart/buy now. -->
           <div class="col-12 d-none" id="detail-content">
             <div class="row g-4 g-lg-5">
               <!-- Thumbnails -->

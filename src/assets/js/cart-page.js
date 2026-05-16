@@ -1,9 +1,23 @@
 import { getApiBase } from "./api-config.js";
 import { handleExpiredSession } from "./auth-utils.js";
 
+/**
+ * cart-page.js
+ *
+ * Chức năng:
+ * - Render trang giỏ hàng đầy đủ tại cart.html.
+ * - Nếu đã đăng nhập: kéo dữ liệu từ GET /cart bằng JWT trong localStorage.authToken.
+ * - Nếu chưa đăng nhập: đọc giỏ hàng guest từ localStorage.maverik_cart.
+ * - Các nút tăng/giảm/xóa item cập nhật API hoặc localStorage tùy trạng thái login.
+ * - Nút "THANH TOÁN" lưu ghi chú đơn hàng rồi chuyển sang checkout.html.
+ */
+
 const API_BASE = getApiBase();
 document.addEventListener("DOMContentLoaded", () => {
+  // Khi DOM sẵn sàng: load giỏ hàng lần đầu.
   loadFullCart();
+
+  // Các module khác có thể dispatch event này sau khi thêm/xóa item.
   window.addEventListener("cartUpdatedGlobal", loadFullCart);
 });
 
@@ -19,7 +33,7 @@ function loadFullCart() {
 
   try {
     if (token) {
-      // ✅ If logged in, fetch from API
+      // User đã login -> backend là source of truth cho giỏ hàng.
       fetch(`${API_BASE}/cart`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -28,7 +42,7 @@ function loadFullCart() {
             return response.json();
           }
           if (response.status === 401) {
-            handleExpiredSession("login.html");
+            handleExpiredSession();
             return null;
           }
           throw new Error("Failed to fetch cart");
@@ -51,7 +65,7 @@ function loadFullCart() {
           showEmptyState("Đã xảy ra lỗi khi tải giỏ hàng.");
         });
     } else {
-      // ✅ If guest, use localStorage
+      // Guest user -> chỉ đọc giỏ hàng tạm từ localStorage.
       const cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
 
       // Simulate loading delay for smooth UI

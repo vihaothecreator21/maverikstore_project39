@@ -4,6 +4,12 @@
  *   Tab 1: Thông tin cá nhân (sửa name/email/phone/address)
  *   Tab 2: Đổi mật khẩu
  *   Tab 3: Lịch sử đơn hàng
+ *
+ * API chính:
+ * - GET/PUT /users/profile cho thông tin cá nhân.
+ * - PUT /users/password cho đổi mật khẩu.
+ * - GET /orders?limit=50 cho lịch sử đơn hàng.
+ * - POST /orders/:id/cancel cho hủy đơn.
  */
 
 import { getApiBase } from "./api-config.js";
@@ -21,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Guard — phải đăng nhập
   if (!authToken) {
     sessionStorage.setItem("redirectAfterLogin", "profile.html");
-    window.location.href = "login.html";
+    window.location.href = "index.html?login=1";
     return;
   }
 
@@ -52,7 +58,7 @@ async function loadProfile() {
     if (res.status === 401) {
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
-      window.location.href = "login.html";
+      window.location.href = "index.html?login=1";
       return;
     }
 

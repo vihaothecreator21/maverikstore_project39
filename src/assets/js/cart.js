@@ -300,7 +300,7 @@ window.removeCartItemOc = async function (itemId) {
         if (response.ok) {
           fetchCart(); // Refresh
         } else if (response.status === 401) {
-          handleExpiredSession("login.html");
+          handleExpiredSession();
         } else {
           console.error("Failed to remove item via API");
         }

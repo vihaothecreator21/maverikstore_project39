@@ -1,6 +1,20 @@
 /**
  * admin-products.js — CRUD Sản phẩm
  * Dùng server-side pagination (limit=20) để tránh đơ máy.
+ *
+ * API chính:
+ * - GET /categories để đổ dropdown category.
+ * - GET /products?page=&limit=&search=&categoryId= để render bảng.
+ * - POST /products để thêm sản phẩm.
+ * - PUT /products/:id để sửa sản phẩm.
+ * - DELETE /products/:id để xóa sản phẩm.
+ *
+ * Event chính:
+ * - #btn-add-product click -> mở modal thêm mới.
+ * - #product-form submit -> handleSave().
+ * - #search-products input -> debounce rồi loadProducts().
+ * - #filter-category/#filter-stock change -> reload bảng.
+ * - Nút edit/delete trong bảng dùng window._editProduct/window._deleteProduct.
  */
 
 import { requireAdminAccess, getApiBase, formatVND, showToast } from "./admin-guard.js";
@@ -31,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Logout
   document.getElementById("btn-admin-logout")?.addEventListener("click", () => {
     localStorage.removeItem("authToken"); localStorage.removeItem("user");
-    window.location.href = "/login.html";
+    window.location.href = "/index.html?login=1";
   });
 
   await loadCategories();

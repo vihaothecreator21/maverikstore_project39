@@ -1,6 +1,11 @@
 /**
  * auth-utils.js - Authentication & sync utilities
  * Handle cart sync on login and other auth-related operations
+ *
+ * Dùng chung cho frontend:
+ * - syncCartAfterLogin(token): POST /cart/sync để merge giỏ guest vào DB cart.
+ * - clearAuthData(): xóa localStorage liên quan auth/cart khi logout.
+ * - handleExpiredSession(): xử lý token hết hạn rồi redirect về login.
  */
 
 import { getApiBase } from "./api-config.js";
@@ -81,7 +86,7 @@ export function clearAuthData() {
   }
 }
 
-export function handleExpiredSession(redirectTo = "login.html") {
+export function handleExpiredSession(redirectTo = "index.html?login=1") {
   localStorage.removeItem("authToken");
   localStorage.removeItem("user");
   localStorage.removeItem("userEmail");

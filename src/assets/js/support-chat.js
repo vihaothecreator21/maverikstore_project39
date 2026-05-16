@@ -7,6 +7,11 @@ import { getApiBase } from "./api-config.js";
  * - Không cần sửa nhiều HTML ở từng trang.
  * - Chỉ cần import file này, widget sẽ tự xuất hiện ở góc phải.
  * - API key Gemini KHÔNG nằm ở frontend; frontend chỉ gọi backend /support-chat.
+ *
+ * Event chính:
+ * - Nút toggle mở/đóng panel chat.
+ * - Form submit/chip click gọi sendMessage().
+ * - sendMessage() POST /support-chat kèm message, lịch sử ngắn, context trang hiện tại.
  */
 
 const API_BASE = getApiBase();

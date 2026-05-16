@@ -1,6 +1,14 @@
 /**
  * checkout.js — Maverik Store
  * Xử lý luồng thanh toán: load cart → validate form → POST /api/v1/orders
+ *
+ * Flow chính:
+ * - Bắt buộc có localStorage.authToken, nếu không hiển thị auth gate.
+ * - GET /cart để lấy item checkout.
+ * - GET /users/profile để auto-fill tên/sđt/địa chỉ nếu có.
+ * - User chọn payment radio: COD, BANK_TRANSFER, VNPAY.
+ * - Click #btn-place-order -> validate form -> POST /orders.
+ * - Nếu backend trả paymentUrl cho VNPAY thì redirect sang cổng thanh toán.
  */
 
 import { getApiBase } from "./api-config.js";
@@ -253,7 +261,7 @@ async function handlePlaceOrder() {
 
     if (res.status === 401) {
       showToast("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", "error");
-      setTimeout(() => handleExpiredSession("login.html"), 900);
+      setTimeout(() => handleExpiredSession(), 900);
       return;
     }
 

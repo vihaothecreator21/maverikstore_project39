@@ -42,7 +42,7 @@ const MOCK_USER_ID = 1;
 const MOCK_PLACE_ORDER_INPUT = {
   shippingAddress: "123 Nguyễn Huệ, Q1, TP.HCM",
   shippingPhone: "0901234567",
-  paymentMethod: "VNPAY" as "VNPAY" | "COD" | "BANK_TRANSFER" | "MOMO",
+  paymentMethod: "VNPAY" as "VNPAY" | "COD" | "BANK_TRANSFER",
   note: "Giao giờ hành chính",
 };
 
@@ -65,6 +65,8 @@ const MOCK_CART = {
         id: 1,
         name: "Áo thun Basic",
         price: new Prisma.Decimal(250000),
+        discountPercent: new Prisma.Decimal(0),
+        discountAmount: new Prisma.Decimal(0),
         stockQuantity: 50,
       },
     },
@@ -81,6 +83,8 @@ const MOCK_CART = {
         id: 2,
         name: "Quần jeans Slim",
         price: new Prisma.Decimal(450000),
+        discountPercent: new Prisma.Decimal(0),
+        discountAmount: new Prisma.Decimal(0),
         stockQuantity: 20,
       },
     },

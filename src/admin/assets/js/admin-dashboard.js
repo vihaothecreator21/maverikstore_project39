@@ -1,6 +1,13 @@
 /**
  * admin-dashboard.js — Maverik Admin Dashboard
  * Trang tổng quan: Stats cards + Revenue bar chart + Order distribution pie + Recent orders table
+ *
+ * API chính:
+ * - GET /admin/stats để lấy doanh thu hôm nay, tổng đơn, khách, tồn kho thấp.
+ * - GET /admin/revenue?period=day&start=&end= để vẽ chart 7 ngày.
+ * - GET /admin/orders?limit=5 để render đơn gần đây.
+ *
+ * File này chỉ đọc dữ liệu dashboard, không tạo/sửa/xóa entity.
  */
 
 import { requireAdminAccess, getApiBase, formatVND, formatDate, ORDER_STATUS, showToast } from "./admin-guard.js";

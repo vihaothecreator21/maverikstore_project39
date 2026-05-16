@@ -36,7 +36,13 @@
     </div>
 
     <div class="admin-content">
-      <!-- Filter Bar -->
+      <!--
+        Filter/search sản phẩm.
+        JS liên quan: admin-products.js.
+        - #search-products: debounce rồi gọi GET /products.
+        - #filter-category: thêm categoryId vào query.
+        - #filter-stock: lọc client-side trên data trang hiện tại.
+      -->
       <div class="filter-bar">
         <input class="search-input" type="text" id="search-products" placeholder="Tìm kiếm sản phẩm..." />
         <select class="filter-select" id="filter-category"><option value="">Tất cả danh mục</option></select>
@@ -47,7 +53,11 @@
         </select>
       </div>
 
-      <!-- Products Table -->
+      <!--
+        Bảng sản phẩm.
+        loadProducts() gọi GET /products?page=&limit=&search=&categoryId=,
+        render rows vào #products-tbody và phân trang vào #products-pagination.
+      -->
       <div class="card">
         <div class="card-body" style="padding:0;">
           <table class="data-table">
@@ -75,7 +85,11 @@
   </div>
 </div>
 
-<!-- Modal: Thêm/Sửa sản phẩm -->
+<!--
+  Modal thêm/sửa sản phẩm.
+  #product-form submit -> admin-products.js handleSave().
+  Nếu #product-id có giá trị thì PUT /products/:id, ngược lại POST /products.
+-->
 <div class="modal-backdrop" id="product-modal">
   <div class="modal">
     <div class="modal-title" id="modal-title">Thêm sản phẩm mới</div>
@@ -131,7 +145,10 @@
   </div>
 </div>
 
-<!-- Confirm Delete Modal -->
+<!--
+  Modal xác nhận xóa sản phẩm.
+  #delete-confirm -> DELETE /products/:id.
+-->
 <div class="modal-backdrop" id="delete-modal">
   <div class="modal" style="max-width:380px;">
     <div class="modal-title">⚠️ Xác nhận xóa</div>

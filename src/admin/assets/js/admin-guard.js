@@ -13,7 +13,7 @@ export function requireAdminAccess() {
   if (!token || !user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
     // Lưu trang hiện tại để redirect về sau
     sessionStorage.setItem("redirectAfterLogin", window.location.href);
-    window.location.href = "/login.html";
+    window.location.href = "/index.html?login=1";
     return null;
   }
   return { token, user };
@@ -29,7 +29,7 @@ export function adminLogout() {
   localStorage.removeItem("user");
   localStorage.removeItem("userEmail");
   localStorage.removeItem("maverik_cart");
-  window.location.href = "/login.html";
+  window.location.href = "/index.html?login=1";
 }
 
 /**

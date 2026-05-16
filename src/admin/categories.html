@@ -33,7 +33,11 @@
     </div>
 
     <div class="admin-content" style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
-      <!-- Categories Table -->
+      <!--
+        Bảng category.
+        JS liên quan: admin-categories.js -> loadCategories() gọi GET /categories,
+        sau đó render từng row vào #categories-tbody.
+      -->
       <div class="card">
         <div class="card-header"><span class="card-title">Danh sách danh mục</span></div>
         <div class="card-body" style="padding:0;">
@@ -46,7 +50,11 @@
         </div>
       </div>
 
-      <!-- Add/Edit Form -->
+      <!--
+        Form thêm/sửa category.
+        Submit được bắt bởi #cat-form trong admin-categories.js.
+        Payload gửi backend chỉ gồm name + description; slug do backend tự sinh.
+      -->
       <div class="card">
         <div class="card-header"><span class="card-title" id="cat-form-title">Thêm danh mục mới</span></div>
         <div class="card-body">
@@ -72,7 +80,11 @@
   </div>
 </div>
 
-<!-- Confirm Delete -->
+<!--
+  Modal xác nhận xóa category.
+  #cat-delete-confirm gọi DELETE /categories/:id.
+  Backend có thể từ chối nếu category đang có product liên kết.
+-->
 <div class="modal-backdrop" id="cat-delete-modal">
   <div class="modal" style="max-width:380px;">
     <div class="modal-title">⚠️ Xác nhận xóa danh mục</div>

@@ -330,6 +330,7 @@
 
         <h1 class="cart-title">Giỏ hàng của bạn</h1>
 
+        <!-- cart-page.js điều khiển 3 trạng thái chính: loading, content, empty. -->
         <div id="cart-loading" class="text-center py-5">
           <div class="spinner-border text-dark" role="status"></div>
         </div>
@@ -346,7 +347,7 @@
                 trong giỏ hàng
               </p>
 
-              <!-- Items list renders here -->
+              <!-- cart-page.js render danh sách item vào đây từ GET /cart hoặc localStorage.maverik_cart. -->
               <div id="cart-items-container"></div>
             </div>
 
@@ -387,6 +388,7 @@
                 Bạn có thể nhập mã giảm giá ở trang thanh toán
               </p>
 
+              <!-- Click được bắt trong cart-page.js: lưu #order-note rồi chuyển sang checkout.html. -->
               <button
                 class="btn btn-dark rounded-0 fw-bold py-3 w-100"
                 id="btn-goto-checkout"
@@ -430,8 +432,13 @@
       </div>
     </div>
 
-    <!-- Scripts -->
-<script type="module" src="./assets/js/main.js"></script>
+    <!--
+      Scripts:
+      - main.js: Bootstrap/import chung + navbar/cart offcanvas.
+      - cart-page.js: logic chính của trang giỏ hàng.
+      - support-chat.js: widget chat hỗ trợ.
+    -->
+    <script type="module" src="./assets/js/main.js"></script>
 <script type="module" src="./assets/js/cart-page.js"></script>
 <script type="module" src="./assets/js/support-chat.js"></script>
   </body>

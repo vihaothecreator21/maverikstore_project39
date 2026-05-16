@@ -5,6 +5,19 @@
  *  - Replaced PDF export with XLSX (SheetJS) — full Vietnamese support
  *  - Currency formatted properly (VND)
  *  - CSV export with UTF-8 BOM (PapaParse)
+ *
+ * API chính:
+ * - GET /admin/revenue?period=&start=&end= cho chart doanh thu.
+ * - GET /admin/stats cho cancel rate/tổng quan.
+ * - GET /admin/revenue/payment?start=&end= cho payment chart.
+ * - GET /admin/products/stats?limit=8 cho top sản phẩm.
+ * - GET /admin/export/orders?start=&end= cho bảng/export.
+ *
+ * Event chính:
+ * - [data-days] đổi khoảng thời gian nhanh.
+ * - #btn-apply-custom áp dụng custom date range.
+ * - #group-by đổi cách gom chart theo day/week/month/year.
+ * - #btn-export-csv/#btn-export-xlsx xuất file từ exportData cache.
  */
 
 import { requireAdminAccess, getApiBase, formatVND, formatDate, ORDER_STATUS, showToast } from "./admin-guard.js";

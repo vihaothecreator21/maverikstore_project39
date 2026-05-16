@@ -1,6 +1,13 @@
 /**
  * products.js — Maverik Store
  * Fetch danh sách sản phẩm từ Backend API và render lên giao diện
+ *
+ * Flow chính:
+ * - DOMContentLoaded -> loadCategories() + loadProducts().
+ * - Sidebar category gọi GET /categories rồi gắn click listener cho từng category.
+ * - Danh sách sản phẩm gọi GET /products?page=&limit=&categoryId=&search=.
+ * - Search input dùng debounce để giảm số lần gọi API.
+ * - Nút add-to-cart được bắt bằng event delegation ở cuối file.
  */
 
 import { getApiBase } from "./api-config.js";

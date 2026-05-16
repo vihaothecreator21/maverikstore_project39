@@ -44,7 +44,10 @@
     </div>
 
     <div class="admin-content">
-      <!-- Status Filter Tabs -->
+      <!--
+        Status filter tabs.
+        admin-orders.js bắt click các nút [data-status], gán statusFilter rồi gọi GET /admin/orders.
+      -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;">
         <button class="btn btn-primary btn-sm active-tab" data-status="" id="tab-all">Tất cả</button>
         <button class="btn btn-outline btn-sm" data-status="PENDING_PAYMENT">💳 Chờ thanh toán</button>
@@ -57,7 +60,12 @@
         <button class="btn btn-outline btn-sm" data-status="CANCELLED">❌ Đã hủy</button>
       </div>
 
-      <!-- Date Filter + Search -->
+      <!--
+        Search + date range.
+        - #search-orders: lọc client-side trên danh sách đang load.
+        - #btn-apply-date: gửi startDate/endDate lên API.
+        - #btn-clear-date: xóa date filter rồi reload.
+      -->
       <div class="filter-bar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <input class="search-input" type="text" id="search-orders" placeholder="Tìm #ID hoặc tên khách hàng..." style="flex:1;min-width:200px;" />
         <div style="display:flex;gap:8px;align-items:center;">
@@ -70,7 +78,11 @@
         </div>
       </div>
 
-      <!-- Orders Table -->
+      <!--
+        Bảng đơn hàng.
+        admin-orders.js render rows vào #orders-tbody, phân trang vào #orders-pagination.
+        Các nút đổi trạng thái gọi PUT /admin/orders/:id/status.
+      -->
       <div class="card">
         <div class="card-body" style="padding:0;">
           <table class="data-table">

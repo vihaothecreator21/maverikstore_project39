@@ -56,7 +56,10 @@
     <!-- Content -->
     <div class="admin-content">
 
-      <!-- Stats Cards -->
+      <!--
+        Stats cards.
+        admin-dashboard.js gọi GET /admin/stats rồi fill các id stat-* bên dưới.
+      -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon green"><i class="bi bi-currency-dollar"></i></div>
@@ -104,7 +107,7 @@
         </div>
       </div>
 
-      <!-- Recent Orders -->
+      <!-- Recent orders: admin-dashboard.js gọi GET /admin/orders?limit=5 và render vào #recent-orders-body. -->
       <div class="card">
         <div class="card-header">
           <span class="card-title">🕐 Đơn hàng gần đây</span>

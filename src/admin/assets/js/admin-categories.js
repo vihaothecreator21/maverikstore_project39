@@ -8,6 +8,13 @@
  *   DELETE              → { status, data: Category }
  *
  * Backend delete guard: nếu danh mục có sản phẩm → 400 CATEGORY_HAS_PRODUCTS
+ *
+ * Event chính:
+ * - #cat-form submit -> handleSave(): tạo/sửa category.
+ * - #cat-reset click -> resetForm(): thoát chế độ sửa.
+ * - Nút Sửa trong bảng -> window.editCategory(id).
+ * - Nút Xóa trong bảng -> window.deleteCategory(id, name) -> mở modal confirm.
+ * - #cat-delete-confirm click -> confirmDelete(): gọi DELETE /categories/:id.
  */
 
 import { requireAdminAccess, getApiBase, showToast } from "./admin-guard.js";
@@ -32,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Logout
   document.getElementById("btn-admin-logout")?.addEventListener("click", () => {
     localStorage.removeItem("authToken"); localStorage.removeItem("user");
-    window.location.href = "/login.html";
+    window.location.href = "/index.html?login=1";
   });
 
   await loadCategories();

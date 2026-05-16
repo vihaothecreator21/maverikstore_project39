@@ -1,7 +1,7 @@
 // Swiper Custom Styling
 @at-root {
     :root {
-        --swiper-theme-color: #{$primary};
+        --swiper-theme-color: #{$secondary};
     }
 }
 
@@ -10,13 +10,13 @@
     width: 12px;
     height: 12px;
     background: transparent;
-    border: 2px solid $primary;
+    border: 1px solid $secondary;
     opacity: 0.4;
     transition: all 0.3s ease; // Thêm transition cho mượt
 
     &-active {
         opacity: 1;
-        background: $primary;
+        background: $secondary;
         width: 30px; // Hiệu ứng thanh dài cho slide đang chọn (tùy chọn)
         border-radius: 6px;
     }
@@ -30,7 +30,7 @@
     background: rgba($white, 0.8); // Nền trắng mờ sang trọng
     border-radius: 50%;
     backdrop-filter: blur(4px); // Hiệu ứng mờ kính (Glassmorphism)
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 28px rgba($gray-950,.12);
     transition: all 0.3s ease;
 
     // Ẩn icon mặc định của Swiper
@@ -44,7 +44,7 @@
     &:hover {
         background: $primary;
         &:after { color: $white; }
-        transform: scale(1.1);
+        transform: translateY(-1px);
     }
 
     @media (max-width: 768px) {
@@ -80,7 +80,7 @@
         }
 
         &-thumb-active {
-            border-color: $primary;
+            border-color: $secondary;
             img { opacity: 1; }
         }
     }

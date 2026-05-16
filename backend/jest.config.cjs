@@ -23,7 +23,7 @@ module.exports = {
     "^.+\\.ts$": [
       "ts-jest",
       {
-        tsconfig: "tsconfig.json",
+        tsconfig: "tsconfig.test.json",
         // Disable ESM in test environment — simpler for Jest
         useESM: false,
       },

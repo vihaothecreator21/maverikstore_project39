@@ -1,13 +1,158 @@
+import { Modal } from "bootstrap";
+import { getApiBase } from "./api-config.js";
+import { syncCartAfterLogin } from "./auth-utils.js";
+
+const API_BASE = getApiBase();
+
 /**
  * navbar.js - Navbar state management
  * Handle user login/logout UI updates across all pages
+ *
+ * Flow chính:
+ * - DOMContentLoaded -> chuẩn hóa label navbar, mở modal nếu URL có ?login=1/?register=1.
+ * - Login modal submit -> POST /auth/login, lưu authToken + user vào localStorage.
+ * - Sau login gọi syncCartAfterLogin() để đẩy giỏ guest lên backend.
+ * - Register modal submit -> POST /auth/register.
+ * - updateNavbarState() đổi nút Sign in thành dropdown user/logout.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  updateActiveNavLink();
+  refineNavbarLabels();
+  setupTemplateAuthModal();
+  openRequestedAuthModal();
   updateNavbarState();
   window.addEventListener("loginSuccess", updateNavbarState);
   window.addEventListener("logoutSuccess", updateNavbarState);
 });
+
+function updateActiveNavLink() {
+  const currentPage = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const normalizedPage = currentPage === "" ? "index.html" : currentPage;
+
+  document.querySelectorAll(".navbar-custom .nav-link").forEach((link) => {
+    const href = (link.getAttribute("href") || "").split("#")[0].split("?")[0].toLowerCase();
+    const linkPage = href === "" ? "index.html" : href;
+    const isActive = linkPage === normalizedPage;
+
+    link.classList.toggle("active", isActive);
+    if (isActive) {
+      link.setAttribute("aria-current", "page");
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+}
+
+function refineNavbarLabels() {
+  const loginBtn = document.querySelector('[data-bs-target="#loginModal"]');
+  if (loginBtn) {
+    loginBtn.innerHTML = '<i class="bi bi-person"></i><span>Sign in</span>';
+  }
+
+  const userMenuBtn = document.getElementById("userMenuBtn");
+  const userNameDisplay = document.getElementById("userNameDisplay");
+  if (userMenuBtn && userNameDisplay) {
+    userMenuBtn.innerHTML = "";
+    userMenuBtn.appendChild(userNameDisplay);
+  }
+}
+
+function openRequestedAuthModal() {
+  const params = new URLSearchParams(window.location.search);
+  const wantsLogin = params.get("login") === "1" || window.location.hash === "#login";
+  const wantsRegister = params.get("register") === "1" || window.location.hash === "#register";
+  const targetId = wantsRegister ? "registerModal" : wantsLogin ? "loginModal" : "";
+  const target = targetId ? document.getElementById(targetId) : null;
+
+  if (target) {
+    Modal.getOrCreateInstance(target).show();
+  }
+}
+
+function setupTemplateAuthModal() {
+  document.getElementById("loginFormModal")?.addEventListener("submit", handleModalLogin, true);
+  document.getElementById("registerFormModal")?.addEventListener("submit", handleModalRegister, true);
+}
+
+async function handleModalLogin(event) {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const form = event.currentTarget;
+  if (!form.checkValidity()) {
+    form.classList.add("was-validated");
+    return;
+  }
+
+  const email = document.getElementById("loginEmailModal")?.value.trim();
+  const password = document.getElementById("loginPasswordModal")?.value;
+  const rememberMe = document.getElementById("rememberMeModal")?.checked;
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+
+    if (response.ok && data.status === "success") {
+      localStorage.setItem("authToken", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
+      if (rememberMe) localStorage.setItem("userEmail", email);
+      else localStorage.removeItem("userEmail");
+      await syncCartAfterLogin(data.data.token);
+
+      const nextPage = sessionStorage.getItem("redirectAfterLogin") || window.location.pathname.split("/").pop() || "index.html";
+      sessionStorage.removeItem("redirectAfterLogin");
+      window.location.href = nextPage;
+      return;
+    }
+
+    alert(data.message || "Login failed");
+  } catch {
+    alert("Network error");
+  }
+}
+
+async function handleModalRegister(event) {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const form = event.currentTarget;
+  if (!form.checkValidity()) {
+    form.classList.add("was-validated");
+    return;
+  }
+
+  const fullName = document.getElementById("registerNameModal")?.value.trim();
+  const email = document.getElementById("registerEmailModal")?.value.trim();
+  const phone = document.getElementById("registerPhoneModal")?.value.trim();
+  const password = document.getElementById("registerPasswordModal")?.value;
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName, email, phone, password }),
+    });
+    const data = await response.json();
+
+    if (response.ok && data.status === "success") {
+      alert("Account created. Please sign in.");
+      const registerModal = document.getElementById("registerModal");
+      const loginModal = document.getElementById("loginModal");
+      if (registerModal) Modal.getOrCreateInstance(registerModal).hide();
+      if (loginModal) Modal.getOrCreateInstance(loginModal).show();
+      return;
+    }
+
+    alert(data.message || "Registration failed");
+  } catch {
+    alert("Network error");
+  }
+}
 
 /**
  * Update navbar based on login state
@@ -82,6 +227,11 @@ function buildUserMenu(container, user) {
     { divider: true },
     { label: "🚪 Đăng xuất", onclick: "handleLogout()" },
   ];
+
+  items[0].label = "Orders";
+  items[1].label = "Account";
+  if (isAdmin) items[2].label = "Admin";
+  items[items.length - 1].label = "Sign out";
 
   const html = items
     .map((item) => {
