@@ -51,3 +51,34 @@ Maverik Store là project ecommerce fullstack cho thời trang/quần áo.
 - Với frontend, ưu tiên kiểm tra file HTML/SCSS/assets trong `src`.
 - Với backend, ưu tiên luồng `routes -> controllers -> services -> repositories`.
 - Với Prisma, schema nằm ở `backend/prisma/schema.prisma`, không phải root `prisma/schema.prisma`.
+
+## Do-not-break-project protocol
+- Áp dụng tinh thần `karpathy-guidelines`: nghĩ trước khi code, sửa tối thiểu, nêu giả định, có tiêu chí verify rõ.
+- Trước khi edit, liệt kê ngắn file sẽ inspect/edit và lý do nếu task có rủi ro hoặc chạm nhiều module.
+- Mỗi dòng sửa phải trace được về yêu cầu của user. Nếu không giải thích được vì sao cần sửa dòng đó, đừng sửa.
+- Không "dọn dẹp", đổi format, đổi tên biến, đổi style, đổi kiến trúc hoặc xóa dead code ngoài phạm vi task.
+- Không thêm abstraction/config/helper mới cho một use case đơn lẻ.
+- Không thay đổi API contract, response shape, localStorage key, env var, route path, Prisma model, enum, order/payment status nếu user không yêu cầu rõ.
+- Không thay đổi auth, payment, order, stock, schema, migration, env validation nếu task không trực tiếp liên quan.
+- Nếu thấy bug hoặc code thừa ngoài phạm vi, báo lại trong summary; không tự sửa.
+- Nếu task mơ hồ, hỏi lại hoặc nêu assumption trước khi làm. Không đoán âm thầm.
+- Với file đang dirty hoặc có thay đổi lạ, đọc kỹ và làm việc cùng thay đổi đó; không revert/reset.
+- Sau khi sửa, chạy verify nhỏ nhất phù hợp: build frontend, test backend liên quan, hoặc ít nhất syntax/import check.
+- Nếu không chạy được verify, phải nói rõ lý do.
+
+## Safe edit checklist
+1. Đọc `AGENTS.md` và `PROJECT_CONTEXT.md`.
+2. Xác định module liên quan.
+3. Inspect file tối thiểu.
+4. Nêu assumption nếu có.
+5. Sửa nhỏ nhất.
+6. Xóa chỉ phần orphan do chính thay đổi vừa tạo.
+7. Verify.
+8. Tóm tắt file đã sửa, lý do, kết quả verify.
+
+## Vietnamese / Encoding rules
+- Ưu tiên viết comment, tài liệu, nội dung UI bằng tiếng Việt có dấu khi user yêu cầu tiếng Việt.
+- Tất cả file text/code/docs phải giữ UTF-8.
+- Không tự chuyển tiếng Việt có dấu sang không dấu, trừ khi user yêu cầu.
+- Nếu terminal PowerShell hiển thị chữ Việt bị lỗi dạng `KhĂ´ng`, coi đó là lỗi hiển thị encoding của terminal trước; kiểm tra file bằng editor/UTF-8 hoặc công cụ đọc phù hợp trước khi kết luận file hỏng.
+- Khi tạo/chỉnh DOCX, Markdown, HTML, JS comment: dùng tiếng Việt có dấu rõ ràng, dễ đọc cho backend engineer.
