@@ -55,12 +55,14 @@ export class ProductService {
    * Get all products with pagination and filtering
    */
   async getAll(query: ProductQueryInput) {
-    const { page, limit, categoryId, search } = query;
+    const { page, limit, categoryId, search, minPrice, maxPrice } = query;
     const { products, total } = await this.productRepository.findAll({
       page,
       limit,
       categoryId,
       search,
+      minPrice,
+      maxPrice,
     });
 
     return {

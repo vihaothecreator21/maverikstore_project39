@@ -19,8 +19,10 @@ export class ProductRepository {
     limit: number;
     categoryId?: number;
     search?: string;
+    minPrice?: number;
+    maxPrice?: number;
   }) {
-    const { page, limit, categoryId, search } = options;
+    const { page, limit, categoryId, search, minPrice, maxPrice } = options;
     const skip = (page - 1) * limit;
 
     // Build dynamic where clause
@@ -30,6 +32,11 @@ export class ProductRepository {
     }
     if (search) {
       where.name = { contains: search };
+    }
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.price = {};
+      if (minPrice !== undefined) where.price.gte = minPrice;
+      if (maxPrice !== undefined) where.price.lte = maxPrice;
     }
 
     const [products, total] = await prisma.$transaction([

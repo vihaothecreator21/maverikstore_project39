@@ -18,6 +18,62 @@
       .category-link.active-cat { color: #000 !important; font-weight: 700; }
       .product-name { transition: color 0.2s; }
       .product-name:hover { color: #555 !important; }
+      .product-toolbar-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .product-toolbar-input,
+      .product-toolbar-select {
+        width: 100%;
+        min-width: 180px;
+        max-width: 230px;
+        height: 38px;
+        border: 1px solid #dedbd3;
+        border-radius: 10px;
+        background-color: #fff;
+        color: #242424;
+        font-size: 0.88rem;
+        box-shadow: none;
+        transition: border-color 0.18s ease, background-color 0.18s ease;
+      }
+      .product-toolbar-input {
+        padding: 0 14px;
+      }
+      .product-toolbar-select {
+        padding: 0 38px 0 14px;
+        cursor: pointer;
+      }
+      .product-toolbar-input::placeholder {
+        color: #8f8a82;
+      }
+      .product-toolbar-input:focus,
+      .product-toolbar-select:focus {
+        border-color: #b9b2a7;
+        background-color: #fffefb;
+        box-shadow: none;
+        outline: none;
+      }
+      .price-filter-panel {
+        background: #fbfaf7;
+        border: 1px solid #e7e1d8;
+      }
+      .price-filter-value {
+        color: #1f1f1f;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .price-range {
+        accent-color: #1f1f1f;
+        cursor: pointer;
+      }
+      .price-range-labels {
+        display: flex;
+        justify-content: space-between;
+        color: #8c857b;
+        font-size: 0.72rem;
+        margin-top: 8px;
+      }
     </style>
   </head>
   <body class="font-sans text-gray-800">
@@ -93,7 +149,7 @@
             <div class="col-lg-6">
         <h1 class="display-5 mb-3">Product List</h1>
         <p class="text-muted  lead">
-         Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quaerat ad sint quae sunt, molestiae consectetur vitae! Impedit nulla ea provident quis est eos dolores enim.
+         Explore curated furniture pieces designed for modern spaces, easy styling, and everyday comfort.
         </p>
         </div>
         </div>
@@ -116,38 +172,30 @@
             <li><span class="text-muted small">Đang tải...</span></li>
           </ul>
         </div>
-        <div class="mb-4 bg-light border bg-opacity-50 p-4">
-          <h6 class="fw-semibold mb-3 text-xs text-uppercase">Price</h6>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="price1">
-            <label class="form-check-label " for="price1">Under $100</label>
+        <div class="mb-4 p-4 price-filter-panel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold mb-0 text-xs text-uppercase">Khoảng giá</h6>
+            <button class="btn btn-link btn-sm p-0 text-muted text-decoration-none" type="button" id="price-filter-reset">
+              Xóa
+            </button>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="price2">
-            <label class="form-check-label" for="price2">$100-$300</label>
+          <div class="price-filter-value mb-2" id="price-filter-label">Tất cả mức giá</div>
+          <input
+            class="form-range price-range"
+            type="range"
+            id="price-filter-range"
+            min="0"
+            max="4"
+            step="1"
+            value="0"
+          />
+          <div class="price-range-labels">
+            <span>Tất cả</span>
+            <span>5tr</span>
+            <span>10tr</span>
+            <span>20tr</span>
+            <span>&gt;20tr</span>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="price3">
-            <label class="form-check-label" for="price3">Above $300</label>
-          </div>
-        </div>
-      <div class="mb-4 bg-light border bg-opacity-50 p-4">
-          <h6 class="fw-semibold mb-3 text-xs text-uppercase">Colour</h6>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="col1">
-            <label class="form-check-label" for="col1">Gray</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="col2">
-            <label class="form-check-label" for="col2">Black</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="col3">
-            <label class="form-check-label" for="col3">Wood</label>
-          </div>
-        </div>
-        <div class="d-grid">
-          <button class="btn btn-primary">Apply Filters</button>
         </div>
       </aside>
 
@@ -164,16 +212,15 @@
               <div class="d-flex align-items-center gap-2">
                 <span class="text-muted small" id="product-total-count">Đang tải...</span>
               </div>
-              <div class="d-flex gap-2 flex-wrap">
+              <div class="product-toolbar-controls">
                 <input
                   type="search"
                   id="product-search-input"
-                  class="form-control form-control-sm"
-                  placeholder="🔍 Tìm sản phẩm..."
-                  style="max-width: 220px;"
+                  class="form-control form-control-sm product-toolbar-input"
+                  placeholder="Tìm sản phẩm"
                 />
-                <select class="form-select form-select-sm" id="sort-select" style="max-width: 180px;">
-                  <option value="">Sắp xếp: Mặc định</option>
+                <select class="form-select form-select-sm product-toolbar-select" id="sort-select">
+                  <option value="">Sắp xếp mặc định</option>
                   <option value="price_asc">Giá: Thấp đến cao</option>
                   <option value="price_desc">Giá: Cao đến thấp</option>
                   <option value="name_asc">Tên: A-Z</option>

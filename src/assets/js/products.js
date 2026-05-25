@@ -19,13 +19,17 @@ let currentPage = 1;
 const LIMIT = 6;
 let currentCategoryId = null;
 let currentSearch = "";
+let currentMinPrice = null;
+let currentMaxPrice = null;
 let searchTimeout = null;
+let priceFilterTimeout = null;
 
 // ── Khởi động ─────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   loadCategories();
   loadProducts();
   setupSearch();
+  setupPriceFilter();
   setupSortSelect();
 });
 
@@ -94,6 +98,8 @@ async function loadProducts() {
     });
     if (currentCategoryId) params.append("categoryId", currentCategoryId);
     if (currentSearch) params.append("search", currentSearch);
+    if (currentMinPrice !== null) params.append("minPrice", String(currentMinPrice));
+    if (currentMaxPrice !== null) params.append("maxPrice", String(currentMaxPrice));
 
     const res = await fetch(`${API_BASE}/products?${params}`);
     const json = await res.json();
@@ -277,7 +283,41 @@ function setupSearch() {
 }
 
 // ════════════════════════════════════════════════════════════
-// 6. SORT
+// 6. PRICE FILTER
+// ════════════════════════════════════════════════════════════
+const PRICE_FILTERS = {
+  0: { label: "Tất cả mức giá", min: null, max: null },
+  1: { label: "Dưới 5.000.000đ", min: null, max: 5_000_000 },
+  2: { label: "Dưới 10.000.000đ", min: null, max: 10_000_000 },
+  3: { label: "Dưới 20.000.000đ", min: null, max: 20_000_000 },
+  4: { label: "Trên 20.000.000đ", min: 20_000_000.01, max: null },
+};
+
+function setupPriceFilter() {
+  const range = document.getElementById("price-filter-range");
+  const label = document.getElementById("price-filter-label");
+  const reset = document.getElementById("price-filter-reset");
+  if (!range || !label) return;
+
+  const applyPriceFilter = () => {
+    const filter = PRICE_FILTERS[range.value] || PRICE_FILTERS[0];
+    label.textContent = filter.label;
+    currentMinPrice = filter.min;
+    currentMaxPrice = filter.max;
+    currentPage = 1;
+    clearTimeout(priceFilterTimeout);
+    priceFilterTimeout = setTimeout(loadProducts, 250);
+  };
+
+  range.addEventListener("input", applyPriceFilter);
+  reset?.addEventListener("click", () => {
+    range.value = "0";
+    applyPriceFilter();
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// 7. SORT
 // ════════════════════════════════════════════════════════════
 function setupSortSelect() {
   const select = document.getElementById("sort-select");
@@ -290,7 +330,7 @@ function setupSortSelect() {
 }
 
 // ════════════════════════════════════════════════════════════
-// 7. SKELETON LOADING
+// 8. SKELETON LOADING
 // ════════════════════════════════════════════════════════════
 function showSkeleton() {
   const grid = document.getElementById("product-grid");
@@ -329,7 +369,7 @@ function showError(msg) {
 }
 
 // ════════════════════════════════════════════════════════════
-// 8. HELPERS
+// 9. HELPERS
 // ════════════════════════════════════════════════════════════
 function updateProductCount(total) {
   const el = document.getElementById("product-total-count");
@@ -354,7 +394,7 @@ function getPlaceholderImage(name) {
 }
 
 // ════════════════════════════════════════════════════════════
-// 9. ADD TO CART - Now supports guests with localStorage
+// 10. ADD TO CART - Now supports guests with localStorage
 // ════════════════════════════════════════════════════════════
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".add-to-cart-btn");
@@ -402,11 +442,11 @@ document.addEventListener("click", (e) => {
     // ✅ Cập nhật navbar cart badge
     window.dispatchEvent(new Event("cartUpdated"));
 
-    // ✅ Hiển thị thông báo
-    showToast(`✅ Đã thêm "${productName}" vào giỏ hàng!`);
+    // Hiển thị thông báo gọn nhẹ sau khi thêm vào giỏ hàng.
+    showToast(`Đã thêm "${productName}" vào giỏ hàng.`);
   } catch (err) {
     console.error("Error adding to cart:", err);
-    showToast("❌ Lỗi khi thêm vào giỏ hàng");
+    showToast("Không thể thêm vào giỏ hàng. Vui lòng thử lại.");
   }
 });
 
@@ -417,18 +457,22 @@ function showToast(message) {
     toast.id = "cart-toast";
     toast.style.cssText = `
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      background: #212529; color: white; padding: 12px 20px;
-      border-radius: 8px; font-size: 14px; font-weight: 500;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
+      max-width: min(360px, calc(100vw - 32px));
+      background: #fff; color: #242424; padding: 13px 18px;
+      border: 1px solid #ebe6dc; border-radius: 10px;
+      font-size: 14px; font-weight: 500; line-height: 1.45;
+      box-shadow: 0 14px 36px rgba(28, 24, 20, 0.14);
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
     `;
     document.body.appendChild(toast);
   }
   toast.textContent = message;
+  clearTimeout(toast.hideTimer);
   toast.style.opacity = "1";
   toast.style.transform = "translateY(0)";
-  setTimeout(() => {
+  toast.hideTimer = setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateY(10px)";
-  }, 3000);
+  }, 2600);
 }

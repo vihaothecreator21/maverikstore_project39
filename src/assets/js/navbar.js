@@ -12,7 +12,7 @@ const API_BASE = getApiBase();
  * - DOMContentLoaded -> chuẩn hóa label navbar, mở modal nếu URL có ?login=1/?register=1.
  * - Login modal submit -> POST /auth/login, lưu authToken + user vào localStorage.
  * - Sau login gọi syncCartAfterLogin() để đẩy giỏ guest lên backend.
- * - Register modal submit -> POST /auth/register.
+ * - Register modal submit -> request OTP, then verify OTP to create account.
  * - updateNavbarState() đổi nút Sign in thành dropdown user/logout.
  */
 
@@ -132,7 +132,7 @@ async function handleModalRegister(event) {
   const password = document.getElementById("registerPasswordModal")?.value;
 
   try {
-    const response = await fetch(`${API_BASE}/auth/register`, {
+    const response = await fetch(`${API_BASE}/auth/register/request-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fullName, email, phone, password }),
@@ -140,7 +140,88 @@ async function handleModalRegister(event) {
     const data = await response.json();
 
     if (response.ok && data.status === "success") {
+      const passwordInput = document.getElementById("registerPasswordModal");
+      if (passwordInput) passwordInput.value = "";
+      showRegisterOtpStep(email);
+      return;
+    }
+
+    alert(data.message || "Unable to send verification code");
+  } catch {
+    alert("Network error");
+  }
+}
+
+function showRegisterOtpStep(email) {
+  const registerForm = document.getElementById("registerFormModal");
+  const modalBody = registerForm?.parentElement;
+  if (!registerForm || !modalBody) return;
+
+  registerForm.classList.add("d-none");
+
+  let otpForm = document.getElementById("registerOtpForm");
+  if (!otpForm) {
+    otpForm = document.createElement("form");
+    otpForm.id = "registerOtpForm";
+    otpForm.className = "needs-validation";
+    otpForm.noValidate = true;
+    modalBody.appendChild(otpForm);
+  }
+
+  otpForm.innerHTML = `
+    <div class="text-center mb-4">
+      <h6 class="fw-semibold mb-2">Check your email</h6>
+      <p class="text-muted small mb-0">We sent a 6-digit code to <strong>${email}</strong>.</p>
+    </div>
+    <div class="mb-3">
+      <label for="registerOtpCode" class="form-label fw-semibold">Verification code</label>
+      <input
+        type="text"
+        class="form-control text-center"
+        id="registerOtpCode"
+        inputmode="numeric"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        placeholder="000000"
+        required
+      >
+      <div class="invalid-feedback">Enter the 6-digit code from your email.</div>
+    </div>
+    <button type="submit" class="btn btn-dark w-100 fw-semibold py-2 mb-2">Verify Account</button>
+    <button type="button" class="btn btn-link w-100 text-muted text-decoration-none" id="resendRegisterOtpBtn">
+      Resend code
+    </button>
+  `;
+
+  otpForm.addEventListener("submit", (event) => handleRegisterOtpVerify(event, email), { once: true });
+  setupRegisterOtpResend(email);
+  startRegisterOtpCooldown();
+}
+
+async function handleRegisterOtpVerify(event, email) {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const form = event.currentTarget;
+  if (!form.checkValidity()) {
+    form.classList.add("was-validated");
+    form.addEventListener("submit", (nextEvent) => handleRegisterOtpVerify(nextEvent, email), { once: true });
+    return;
+  }
+
+  const otp = document.getElementById("registerOtpCode")?.value.trim();
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/register/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp }),
+    });
+    const data = await response.json();
+
+    if (response.ok && data.status === "success") {
       alert("Account created. Please sign in.");
+      resetRegisterOtpStep();
       const registerModal = document.getElementById("registerModal");
       const loginModal = document.getElementById("loginModal");
       if (registerModal) Modal.getOrCreateInstance(registerModal).hide();
@@ -148,10 +229,67 @@ async function handleModalRegister(event) {
       return;
     }
 
-    alert(data.message || "Registration failed");
+    alert(data.message || "Invalid verification code");
+    form.addEventListener("submit", (nextEvent) => handleRegisterOtpVerify(nextEvent, email), { once: true });
   } catch {
     alert("Network error");
+    form.addEventListener("submit", (nextEvent) => handleRegisterOtpVerify(nextEvent, email), { once: true });
   }
+}
+
+function setupRegisterOtpResend(email) {
+  const resendButton = document.getElementById("resendRegisterOtpBtn");
+  if (!resendButton) return;
+
+  resendButton.addEventListener("click", async () => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/register/resend-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+
+      if (response.ok && data.status === "success") {
+        alert("A new verification code has been sent.");
+        startRegisterOtpCooldown();
+        return;
+      }
+
+      alert(data.message || "Unable to resend verification code");
+    } catch {
+      alert("Network error");
+    }
+  });
+}
+
+function startRegisterOtpCooldown() {
+  const resendButton = document.getElementById("resendRegisterOtpBtn");
+  if (!resendButton) return;
+
+  let seconds = 60;
+  resendButton.disabled = true;
+  resendButton.textContent = `Resend code in ${seconds}s`;
+
+  const timer = setInterval(() => {
+    seconds -= 1;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      resendButton.disabled = false;
+      resendButton.textContent = "Resend code";
+      return;
+    }
+    resendButton.textContent = `Resend code in ${seconds}s`;
+  }, 1000);
+}
+
+function resetRegisterOtpStep() {
+  const registerForm = document.getElementById("registerFormModal");
+  const otpForm = document.getElementById("registerOtpForm");
+  registerForm?.classList.remove("d-none");
+  registerForm?.reset();
+  registerForm?.classList.remove("was-validated");
+  otpForm?.remove();
 }
 
 /**

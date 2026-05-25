@@ -15,6 +15,7 @@ import { OrderRepository }   from "./repositories/order.repository";
 import { AdminRepository }   from "./repositories/admin.repository";
 import { PaymentRepository } from "./repositories/payment.repository";
 import { UserRepository }    from "./repositories/user.repository";
+import { PendingRegistrationRepository } from "./repositories/pending-registration.repository";
 import { ProductRepository } from "./repositories/product.repository";
 import { CategoryRepository} from "./repositories/category.repository";
 import { CartRepository }    from "./repositories/cart.repository";
@@ -23,6 +24,7 @@ export const orderRepository   = new OrderRepository();
 export const adminRepository   = new AdminRepository();
 export const paymentRepository = new PaymentRepository();
 export const userRepository    = new UserRepository();
+export const pendingRegistrationRepository = new PendingRegistrationRepository();
 export const productRepository = new ProductRepository();
 export const categoryRepository= new CategoryRepository();
 export const cartRepository    = new CartRepository();
@@ -33,6 +35,8 @@ import { DashboardService }   from "./services/dashboard.service";
 import { AdminReportService } from "./services/adminReport.service";
 import { PaymentService }     from "./services/payment.service";
 import { AuthService }        from "./services/auth.service";
+import { EmailService }       from "./services/email.service";
+import { OtpService }         from "./services/otp.service";
 import { UserService }        from "./services/user.service";
 import { ProductService }     from "./services/product.service";
 import { CategoryService }    from "./services/category.service";
@@ -43,7 +47,14 @@ export const orderService       = new OrderService(orderRepository);
 export const dashboardService   = new DashboardService(adminRepository);
 export const adminReportService = new AdminReportService(adminRepository);
 export const paymentService     = new PaymentService(paymentRepository);
-export const authService        = new AuthService(userRepository);
+export const emailService       = new EmailService();
+export const otpService         = new OtpService();
+export const authService        = new AuthService(
+  userRepository,
+  pendingRegistrationRepository,
+  emailService,
+  otpService,
+);
 export const userService        = new UserService(userRepository);
 export const productService     = new ProductService(productRepository);
 export const categoryService    = new CategoryService(categoryRepository);

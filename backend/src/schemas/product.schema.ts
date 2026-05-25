@@ -185,6 +185,16 @@ export const ProductQuerySchema = z.object({
     .optional()
     .transform((val) => (val ? parseInt(val, 10) : undefined))
     .pipe(z.number().int().positive().optional()),
+  minPrice: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Number(val) : undefined))
+    .pipe(z.number().nonnegative().optional()),
+  maxPrice: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Number(val) : undefined))
+    .pipe(z.number().positive().optional()),
   search: z
     .string()
     .max(50, "Search term must be less than 50 characters")

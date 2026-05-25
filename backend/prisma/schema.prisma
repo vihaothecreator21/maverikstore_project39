@@ -72,6 +72,25 @@ model User {
   @@index([username])
 }
 
+model PendingRegistration {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(50)
+  email        String    @unique @db.VarChar(100)
+  phone        String?   @db.VarChar(20)
+  passwordHash String    @db.VarChar(255)
+  otpHash      String    @db.VarChar(255)
+  attempts     Int       @default(0)
+  resendCount  Int       @default(0)
+  lastSentAt   DateTime?
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
 // Categories Table
 model Category {
   id          Int      @id @default(autoincrement())

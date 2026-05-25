@@ -12,6 +12,10 @@ Maverik Store là project ecommerce fullstack cho thời trang/quần áo.
 - `src`: frontend pages/assets/styles.
 - `src/admin`: admin dashboard pages.
 - `src/assets`: frontend assets.
+- `docs/agents`: AI agent examples, skills, and safe-edit guidance.
+- `docs/context`: longer AI/project context documents.
+- `docs/architecture`: architecture and business-logic summaries.
+- `docs/plans`: feature plans and implementation notes.
 - `backend/src`: backend API source code.
 - `backend/src/controllers`: HTTP controllers.
 - `backend/src/routes`: API routes.
@@ -51,6 +55,13 @@ Maverik Store là project ecommerce fullstack cho thời trang/quần áo.
 - Với frontend, ưu tiên kiểm tra file HTML/SCSS/assets trong `src`.
 - Với backend, ưu tiên luồng `routes -> controllers -> services -> repositories`.
 - Với Prisma, schema nằm ở `backend/prisma/schema.prisma`, không phải root `prisma/schema.prisma`.
+
+## Related docs
+- `docs/README.md`: documentation index.
+- `docs/agents/CODEX_SAFE_EDIT_EXAMPLES.md`: concrete examples for safe Codex edits.
+- `docs/context/AI_ARCHITECTURE_CONTEXT.md`: extended AI context.
+- `docs/architecture/PROJECT_LOGIC_SUMMARY.md`: core architecture and business logic notes.
+- `docs/plans/EMAIL_OTP_REGISTRATION_PLAN.md`: email OTP registration plan.
 
 ## Do-not-break-project protocol
 - Áp dụng tinh thần `karpathy-guidelines`: nghĩ trước khi code, sửa tối thiểu, nêu giả định, có tiêu chí verify rõ.

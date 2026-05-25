@@ -43,6 +43,18 @@ const envSchema = z.object({
     .max(12, "BCRYPT_ROUNDS should not exceed 12 (too slow)")
     .default(10),
 
+  // Email OTP Registration
+  RESEND_API_KEY: z
+    .string()
+    .min(1, "RESEND_API_KEY is required for registration OTP emails"),
+  EMAIL_FROM: z
+    .string()
+    .min(1, "EMAIL_FROM is required for registration OTP emails"),
+  OTP_SECRET: z
+    .string()
+    .min(32, "OTP_SECRET must be at least 32 characters")
+    .describe("Secret key for OTP HMAC hashing"),
+
   // CORS Configuration
   // Production: set CORS_ORIGINS=https://yourdomain.com (comma-separated, NO wildcard)
   // Development fallback only — will warn in production
@@ -134,6 +146,7 @@ export const initializeEnv = (): Environment => {
         BCRYPT_ROUNDS: env.BCRYPT_ROUNDS,
         CORS_ORIGINS: env.CORS_ORIGINS.join(", "),
         LOG_LEVEL: env.LOG_LEVEL,
+        EMAIL_FROM: env.EMAIL_FROM,
       });
     }
 

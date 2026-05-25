@@ -6,7 +6,10 @@ import rateLimit from "../middlewares/rateLimit.middleware.js";
 
 /**
  * Auth Routes
- * POST /api/v1/auth/register - Register new user (rate limited)
+ * POST /api/v1/auth/register - Request register OTP (rate limited)
+ * POST /api/v1/auth/register/request-otp - Request register OTP (rate limited)
+ * POST /api/v1/auth/register/verify-otp - Verify OTP and create user
+ * POST /api/v1/auth/register/resend-otp - Resend register OTP (rate limited)
  * POST /api/v1/auth/login - Login user (rate limited)
  * GET /api/v1/auth/profile - Get user profile (protected)
  * POST /api/v1/auth/logout - Logout user
@@ -25,6 +28,21 @@ authRoutes.post(
   "/register",
   registerRateLimit,
   catchAsync(AuthController.register),
+);
+authRoutes.post(
+  "/register/request-otp",
+  registerRateLimit,
+  catchAsync(AuthController.requestRegisterOtp),
+);
+authRoutes.post(
+  "/register/verify-otp",
+  registerRateLimit,
+  catchAsync(AuthController.verifyRegisterOtp),
+);
+authRoutes.post(
+  "/register/resend-otp",
+  registerRateLimit,
+  catchAsync(AuthController.resendRegisterOtp),
 );
 authRoutes.post("/login", loginRateLimit, catchAsync(AuthController.login));
 authRoutes.post("/logout", catchAsync(AuthController.logout));
