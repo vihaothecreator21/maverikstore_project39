@@ -47,7 +47,7 @@ function updateActiveNavLink() {
 function refineNavbarLabels() {
   const loginBtn = document.querySelector('[data-bs-target="#loginModal"]');
   if (loginBtn) {
-    loginBtn.innerHTML = '<i class="bi bi-person"></i><span>Sign in</span>';
+    loginBtn.innerHTML = '<i class="bi bi-person"></i><span>Đăng nhập</span>';
   }
 
   const userMenuBtn = document.getElementById("userMenuBtn");
@@ -110,9 +110,9 @@ async function handleModalLogin(event) {
       return;
     }
 
-    alert(data.message || "Login failed");
+    alert(data.message || "Đăng nhập thất bại");
   } catch {
-    alert("Network error");
+    alert("Lỗi kết nối");
   }
 }
 
@@ -146,9 +146,9 @@ async function handleModalRegister(event) {
       return;
     }
 
-    alert(data.message || "Unable to send verification code");
+    alert(data.message || "Không thể gửi mã xác minh");
   } catch {
-    alert("Network error");
+    alert("Lỗi kết nối");
   }
 }
 
@@ -170,11 +170,11 @@ function showRegisterOtpStep(email) {
 
   otpForm.innerHTML = `
     <div class="text-center mb-4">
-      <h6 class="fw-semibold mb-2">Check your email</h6>
-      <p class="text-muted small mb-0">We sent a 6-digit code to <strong>${email}</strong>.</p>
+      <h6 class="fw-semibold mb-2">Kiểm tra email của bạn</h6>
+      <p class="text-muted small mb-0">Chúng tôi đã gửi mã 6 chữ số đến <strong>${email}</strong>.</p>
     </div>
     <div class="mb-3">
-      <label for="registerOtpCode" class="form-label fw-semibold">Verification code</label>
+      <label for="registerOtpCode" class="form-label fw-semibold">Mã xác minh</label>
       <input
         type="text"
         class="form-control text-center"
@@ -185,11 +185,11 @@ function showRegisterOtpStep(email) {
         placeholder="000000"
         required
       >
-      <div class="invalid-feedback">Enter the 6-digit code from your email.</div>
+      <div class="invalid-feedback">Nhập mã 6 chữ số trong email của bạn.</div>
     </div>
-    <button type="submit" class="btn btn-dark w-100 fw-semibold py-2 mb-2">Verify Account</button>
+    <button type="submit" class="btn btn-dark w-100 fw-semibold py-2 mb-2">Xác minh tài khoản</button>
     <button type="button" class="btn btn-link w-100 text-muted text-decoration-none" id="resendRegisterOtpBtn">
-      Resend code
+      Gửi lại mã
     </button>
   `;
 
@@ -220,7 +220,7 @@ async function handleRegisterOtpVerify(event, email) {
     const data = await response.json();
 
     if (response.ok && data.status === "success") {
-      alert("Account created. Please sign in.");
+      alert("Tạo tài khoản thành công. Vui lòng đăng nhập.");
       resetRegisterOtpStep();
       const registerModal = document.getElementById("registerModal");
       const loginModal = document.getElementById("loginModal");
@@ -229,10 +229,10 @@ async function handleRegisterOtpVerify(event, email) {
       return;
     }
 
-    alert(data.message || "Invalid verification code");
+    alert(data.message || "Mã xác minh không hợp lệ");
     form.addEventListener("submit", (nextEvent) => handleRegisterOtpVerify(nextEvent, email), { once: true });
   } catch {
-    alert("Network error");
+    alert("Lỗi kết nối");
     form.addEventListener("submit", (nextEvent) => handleRegisterOtpVerify(nextEvent, email), { once: true });
   }
 }
@@ -251,14 +251,14 @@ function setupRegisterOtpResend(email) {
       const data = await response.json();
 
       if (response.ok && data.status === "success") {
-        alert("A new verification code has been sent.");
+        alert("Mã xác minh mới đã được gửi.");
         startRegisterOtpCooldown();
         return;
       }
 
-      alert(data.message || "Unable to resend verification code");
+      alert(data.message || "Không thể gửi lại mã xác minh");
     } catch {
-      alert("Network error");
+      alert("Lỗi kết nối");
     }
   });
 }
@@ -269,17 +269,17 @@ function startRegisterOtpCooldown() {
 
   let seconds = 60;
   resendButton.disabled = true;
-  resendButton.textContent = `Resend code in ${seconds}s`;
+  resendButton.textContent = `Gửi lại mã in ${seconds}s`;
 
   const timer = setInterval(() => {
     seconds -= 1;
     if (seconds <= 0) {
       clearInterval(timer);
       resendButton.disabled = false;
-      resendButton.textContent = "Resend code";
+      resendButton.textContent = "Gửi lại mã";
       return;
     }
-    resendButton.textContent = `Resend code in ${seconds}s`;
+    resendButton.textContent = `Gửi lại mã in ${seconds}s`;
   }, 1000);
 }
 
@@ -330,7 +330,7 @@ export function updateNavbarState() {
         // Lấy tên đầu tiên và viết hoa chữ cái đầu
         const firstName = displayName.split(/[\s_]/)[0];
         const formatted = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-        userNameDisplay.textContent = "Hi " + formatted;
+        userNameDisplay.textContent = "Xin chào " + formatted;
       }
 
       // Build dropdown menu nếu chưa có
@@ -366,10 +366,10 @@ function buildUserMenu(container, user) {
     { label: "🚪 Đăng xuất", onclick: "handleLogout()" },
   ];
 
-  items[0].label = "Orders";
-  items[1].label = "Account";
-  if (isAdmin) items[2].label = "Admin";
-  items[items.length - 1].label = "Sign out";
+  items[0].label = "Đơn hàng";
+  items[1].label = "Tài khoản";
+  if (isAdmin) items[2].label = "Quản trị";
+  items[items.length - 1].label = "Đăng xuất";
 
   const html = items
     .map((item) => {

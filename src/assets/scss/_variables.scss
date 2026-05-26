@@ -20,7 +20,7 @@ $border-color-translucent:   $gray-100 !default;
 $enable-negative-margins: true !default;
 $enable-rounded:              true !default;
 
-$headings-font-weight: 500 !default;
+$headings-font-weight: 600 !default;
 $grid-gutter-width:           2.5rem !default;
 
 // scss-docs-start position-map
@@ -68,7 +68,7 @@ $spacers: (
 ) !default;
 // scss-docs-end spacer-variables-maps
 
-$font-family-base: 'Poppins', sans-serif !default;
+$font-family-base: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif !default;
 $font-size-root:              null !default;
 $font-size-base:              1rem !default; // Assumes the browser default, typically `16px`
 $font-size-sm:                $font-size-base * .85 !default;

@@ -414,8 +414,8 @@ document.addEventListener("click", (e) => {
       name: productName,
       price: productPrice,
       imageUrl: imageUrl,
-      size: "One Size", // Default cho products.html
-      color: "Default", // Default cho products.html
+      size: "Một kích cỡ", // Default cho products.html
+      color: "Mặc định", // Default cho products.html
       quantity: 1,
     };
 
