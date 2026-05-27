@@ -1,6 +1,6 @@
 import { Modal } from "bootstrap";
 import { getApiBase } from "./api-config.js";
-import { syncCartAfterLogin } from "./auth-utils.js";
+import { clearAuthData, syncCartAfterLogin } from "./auth-utils.js";
 
 const API_BASE = getApiBase();
 
@@ -386,7 +386,14 @@ function buildUserMenu(container, user) {
   container.innerHTML = html;
 }
 
+export function handleLogout() {
+  clearAuthData();
+  document.getElementById("userDropdownMenu")?.replaceChildren();
+  window.dispatchEvent(new Event("logoutSuccess"));
+}
+
 /**
  * Export for manual updates
  */
 window.updateNavbarState = updateNavbarState;
+window.handleLogout = handleLogout;

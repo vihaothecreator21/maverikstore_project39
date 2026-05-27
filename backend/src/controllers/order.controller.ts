@@ -13,6 +13,11 @@ export class OrderController {
     const userId = req.userId!;
     const input = PlaceOrderSchema.parse(req.body);
     const order = await orderService.placeOrder(userId, input);
+    console.info("[OrderController.placeOrder]", {
+      requestId: req.requestId,
+      userId,
+      orderId: order.id,
+    });
     return sendSuccess(res, order, "Đặt hàng thành công", HTTP_STATUS.CREATED);
   }
 
@@ -37,6 +42,11 @@ export class OrderController {
     const userId = req.userId!;
     const orderId = parseInt(req.params.id, 10);
     const order = await orderService.cancelOrder(orderId, userId);
+    console.info("[OrderController.cancelOrder]", {
+      requestId: req.requestId,
+      userId,
+      orderId,
+    });
     return sendSuccess(res, order, "Đơn hàng đã được hủy thành công", HTTP_STATUS.OK);
   }
 
@@ -63,6 +73,12 @@ export class OrderController {
     const orderId = parseInt(req.params.id, 10);
     const input = UpdateOrderStatusSchema.parse(req.body);
     const order = await orderService.adminUpdateStatus(orderId, input, adminId);
+    console.info("[OrderController.adminUpdateStatus]", {
+      requestId: req.requestId,
+      adminId,
+      orderId,
+      status: input.status,
+    });
     return sendSuccess(res, order, "Cập nhật trạng thái đơn hàng thành công", HTTP_STATUS.OK);
   }
 }

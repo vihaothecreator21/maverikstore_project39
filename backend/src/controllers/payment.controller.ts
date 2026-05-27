@@ -21,6 +21,11 @@ export class PaymentController {
 
     const { orderId } = CreateVNPayUrlSchema.parse(req.query);
     const paymentUrl  = await paymentService.createVNPayUrl(orderId, userId, ipAddr);
+    console.info("[PaymentController.createVNPayUrl]", {
+      requestId: req.requestId,
+      userId,
+      orderId,
+    });
 
     sendSuccess(res, { paymentUrl }, "Tạo URL thanh toán thành công", HTTP_STATUS.OK);
   }
@@ -40,6 +45,12 @@ export class PaymentController {
   static async vnpayReturn(req: Request, res: Response): Promise<void> {
     const params = req.query as Record<string, string>;
     const result = paymentService.verifyReturn(params);
+    console.info("[PaymentController.vnpayReturn]", {
+      requestId: req.requestId,
+      orderId: result.orderId,
+      responseCode: result.responseCode,
+      isValid: result.isValid,
+    });
 
     const env = getEnv();
 
@@ -80,6 +91,12 @@ export class PaymentController {
   static async vnpayIPN(req: Request, res: Response): Promise<void> {
     const params = req.query as Record<string, string>;
     const result = await paymentService.handleIPN(params);
+    console.info("[PaymentController.vnpayIPN]", {
+      requestId: req.requestId,
+      orderId: params.vnp_TxnRef,
+      responseCode: params.vnp_ResponseCode,
+      result,
+    });
 
     // VNPay yêu cầu response JSON chính xác format này
     res.status(200).json(result);

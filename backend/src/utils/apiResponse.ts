@@ -45,6 +45,7 @@ export class ValidationError extends APIError {
 export interface ApiResponse<T> {
   status: "success" | "error";
   code: number;
+  errorCode?: string;
   message: string;
   data?: T;
   details?: Record<string, any>;
@@ -147,7 +148,7 @@ export const sendError = (
     message,
     ...(details && { details }),
     ...(errors && { errors }),
-    ...(code && { code }),
+    ...(code && { errorCode: code }),
     timestamp: new Date().toISOString(),
     ...(isDevelopment && {
       debug: {

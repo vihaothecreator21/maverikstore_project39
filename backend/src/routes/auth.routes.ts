@@ -18,10 +18,10 @@ import rateLimit from "../middlewares/rateLimit.middleware.js";
 export const authRoutes = Router();
 
 // Rate limiting: 5 attempts per 15 minutes for login
-const loginRateLimit = rateLimit(5, 15 * 60 * 1000);
+const loginRateLimit = rateLimit(5, 15 * 60 * 1000, "auth-login");
 
 // Rate limiting: 3 attempts per hour for registration
-const registerRateLimit = rateLimit(3, 60 * 60 * 1000);
+const registerRateLimit = rateLimit(3, 60 * 60 * 1000, "auth-otp");
 
 // Public Routes
 authRoutes.post(

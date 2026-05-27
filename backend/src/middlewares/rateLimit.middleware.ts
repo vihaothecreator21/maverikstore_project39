@@ -29,14 +29,16 @@ const store: RateLimitStore = {};
 export const rateLimit = (
   maxRequests: number = 5,
   windowMs: number = 15 * 60 * 1000,
+  keyPrefix: string = "global",
 ) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const ip = req.ip || req.socket.remoteAddress || "unknown";
+    const key = `${keyPrefix}:${ip}`;
     const now = Date.now();
 
     // Initialize or get existing rate limit record
-    if (!store[ip]) {
-      store[ip] = {
+    if (!store[key]) {
+      store[key] = {
         count: 1,
         resetTime: now + windowMs,
       };
@@ -44,8 +46,8 @@ export const rateLimit = (
     }
 
     // Check if time window has expired
-    if (now > store[ip].resetTime) {
-      store[ip] = {
+    if (now > store[key].resetTime) {
+      store[key] = {
         count: 1,
         resetTime: now + windowMs,
       };
@@ -53,11 +55,11 @@ export const rateLimit = (
     }
 
     // Increment request count
-    store[ip].count++;
+    store[key].count++;
 
     // Check if limit exceeded
-    if (store[ip].count > maxRequests) {
-      const resetDate = new Date(store[ip].resetTime);
+    if (store[key].count > maxRequests) {
+      const resetDate = new Date(store[key].resetTime);
       throw new APIError(
         429,
         `Too many requests from this IP. Try again after ${resetDate.toLocaleTimeString()}`,
@@ -74,9 +76,9 @@ export const rateLimit = (
     res.set("X-RateLimit-Limit", maxRequests.toString());
     res.set(
       "X-RateLimit-Remaining",
-      (maxRequests - store[ip].count).toString(),
+      (maxRequests - store[key].count).toString(),
     );
-    res.set("X-RateLimit-Reset", new Date(store[ip].resetTime).toISOString());
+    res.set("X-RateLimit-Reset", new Date(store[key].resetTime).toISOString());
 
     return next();
   };
@@ -91,9 +93,9 @@ export const rateLimit = (
  */
 export const cleanupRateLimitStore = () => {
   const now = Date.now();
-  for (const ip in store) {
-    if (now > store[ip].resetTime) {
-      delete store[ip];
+  for (const key in store) {
+    if (now > store[key].resetTime) {
+      delete store[key];
     }
   }
 };

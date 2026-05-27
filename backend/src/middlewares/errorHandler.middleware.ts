@@ -24,6 +24,7 @@ export const errorHandler = (
     timestamp,
     method: req.method,
     path: req.path,
+    requestId: req.requestId,
     statusCode: err.statusCode || 500,
     message: err.message,
     ...(isDevelopment && { stack: err.stack }),
@@ -64,6 +65,7 @@ export const errorHandler = (
     ...(details && { details }),
     ...(errors && { errors }),
     ...(code && { errorCode: code }),
+    ...(req.requestId && { requestId: req.requestId }),
     timestamp,
     ...(isDevelopment && {
       debug: {

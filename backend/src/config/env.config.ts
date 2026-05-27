@@ -84,7 +84,9 @@ const envSchema = z.object({
   // Gemini AI Chatbot
   // Dùng optional để server vẫn chạy được khi bạn chưa bật chatbot ở môi trường khác.
   // Khi người dùng gọi /support-chat mà thiếu key, service sẽ trả lỗi cấu hình rõ ràng.
-  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z
+    .string()
+    .min(1, "GEMINI_API_KEY is required for support chat"),
   GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
 
   // VNPay Configuration

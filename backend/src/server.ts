@@ -9,6 +9,7 @@ import { connectDatabase, disconnectDatabase } from "./config/database";
 // Import Middlewares
 import errorHandler from "./middlewares/errorHandler.middleware";
 import notFoundHandler from "./middlewares/notFound.middleware";
+import requestIdMiddleware from "./middlewares/requestId.middleware";
 import { cleanupRateLimitStore } from "./middlewares/rateLimit.middleware.js";
 import { sanitizeInput } from "./middlewares/sanitize.middleware";
 // Import Routes
@@ -50,6 +51,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(requestIdMiddleware);
 
 // Body Parser Middleware
 app.use(express.json({ limit: "10mb" }));

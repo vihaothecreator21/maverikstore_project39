@@ -18,5 +18,8 @@ declare namespace Express {
 
     /** User role — luôn lấy từ DB (không tin token) */
     userRole?: "CUSTOMER" | "ADMIN" | "SUPER_ADMIN";
+
+    /** Request ID for logs and API error tracing */
+    requestId?: string;
   }
 }
