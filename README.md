@@ -199,7 +199,7 @@ NODE_ENV=development
 PORT=5000
 API_VERSION=v1
 
-DATABASE_URL=mysql://root:password@localhost:3306/maverik_store
+DATABASE_URL=mysql://your_db_user:your_db_password@localhost:3306/maverik_store
 
 JWT_SECRET=change-this-to-a-random-jwt-secret-at-least-32-chars
 JWT_EXPIRE=7d
@@ -213,7 +213,7 @@ EMAIL_FROM="Maverik Store <noreply@yourdomain.com>"
 OTP_SECRET=change-this-to-a-random-secret-at-least-32-characters
 
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 SUPABASE_STORAGE_BUCKET=product-images
 
 GEMINI_API_KEY=your-gemini-api-key
