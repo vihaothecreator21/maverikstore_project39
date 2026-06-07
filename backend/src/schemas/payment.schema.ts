@@ -5,6 +5,7 @@ import { z } from "zod";
  * GET /payments/vnpay/create?orderId=123
  */
 export const CreateVNPayUrlSchema = z.object({
+  bankCode: z.enum(["INTCARD"]).optional(),
   orderId: z.coerce.number().int().positive("orderId phải là số nguyên dương"),
 });
 

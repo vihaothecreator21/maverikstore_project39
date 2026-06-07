@@ -6,7 +6,8 @@ jest.mock("../src/gateways/vnpay.gateway", () => ({
   verifyVNPayReturn: jest.fn(),
 }));
 
-const { verifyVNPayReturn } = jest.requireMock("../src/gateways/vnpay.gateway") as {
+const { buildVNPayPaymentUrl, verifyVNPayReturn } = jest.requireMock("../src/gateways/vnpay.gateway") as {
+  buildVNPayPaymentUrl: jest.Mock;
   verifyVNPayReturn: jest.Mock;
 };
 
@@ -22,6 +23,47 @@ function createRepo() {
 describe("PaymentService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it("passes INTCARD bankCode to gateway when creating VNPay URL", async () => {
+    const repo = createRepo();
+    const service = new PaymentService(repo as any);
+
+    repo.findOrderAmount.mockResolvedValue({
+      id: 7,
+      userId: 10,
+      totalAmount: new Prisma.Decimal(125000),
+    });
+
+    const result = await service.createVNPayUrl(7, 10, "::1", "INTCARD");
+
+    expect(result).toBe("https://vnpay.test/pay");
+    expect(buildVNPayPaymentUrl).toHaveBeenCalledWith({
+      orderId: 7,
+      amount: 125000,
+      clientIp: "127.0.0.1",
+      bankCode: "INTCARD",
+    });
+  });
+
+  it("keeps default VNPay URL creation unchanged without bankCode", async () => {
+    const repo = createRepo();
+    const service = new PaymentService(repo as any);
+
+    repo.findOrderAmount.mockResolvedValue({
+      id: 8,
+      userId: 10,
+      totalAmount: new Prisma.Decimal(500000),
+    });
+
+    const result = await service.createVNPayUrl(8, 10, "203.0.113.10");
+
+    expect(result).toBe("https://vnpay.test/pay");
+    expect(buildVNPayPaymentUrl).toHaveBeenCalledWith({
+      orderId: 8,
+      amount: 500000,
+      clientIp: "203.0.113.10",
+    });
   });
 
   it("confirms payment and order when VNPay IPN is valid and successful", async () => {
@@ -81,9 +123,10 @@ describe("PaymentService", () => {
     verifyVNPayReturn.mockReturnValue({
       isValid: true,
       isSuccess: false,
+      isCancelled: false,
       orderId: 99,
-      responseCode: "24",
-      message: "Cancelled",
+      responseCode: "99",
+      message: "Failed",
     });
     repo.findOrderWithPayment.mockResolvedValue({
       id: 99,
@@ -102,6 +145,39 @@ describe("PaymentService", () => {
 
     expect(result).toEqual({ RspCode: "00", Message: "Confirm Success" });
     expect(repo.markPaymentFailed).toHaveBeenCalledWith(1, "TX124");
+    expect(repo.confirmPaymentAndOrder).not.toHaveBeenCalled();
+  });
+
+  it("keeps payment pending when VNPay reports user cancellation", async () => {
+    const repo = createRepo();
+    const service = new PaymentService(repo as any);
+
+    verifyVNPayReturn.mockReturnValue({
+      isValid: true,
+      isSuccess: false,
+      isCancelled: true,
+      orderId: 99,
+      responseCode: "24",
+      message: "Cancelled",
+    });
+    repo.findOrderWithPayment.mockResolvedValue({
+      id: 99,
+      status: OrderStatus.PENDING_PAYMENT,
+      payment: {
+        id: 1,
+        amount: new Prisma.Decimal(950000),
+        paymentStatus: PaymentStatus.PENDING,
+      },
+    });
+
+    const result = await service.handleIPN({
+      vnp_Amount: "95000000",
+      vnp_TransactionNo: "TX125",
+      vnp_BankCode: "INTCARD",
+    });
+
+    expect(result).toEqual({ RspCode: "00", Message: "Confirm Success" });
+    expect(repo.markPaymentFailed).not.toHaveBeenCalled();
     expect(repo.confirmPaymentAndOrder).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,8 @@ import * as crypto from "crypto";
 import * as qs from "qs";
 import { getEnv } from "../config/env.config";
 
+export type VNPayBankCode = "INTCARD";
+
 export interface VNPayVerificationResult {
   isValid: boolean;
   isSuccess: boolean;
@@ -75,6 +77,7 @@ export function buildVNPayPaymentUrl(input: {
   orderId: number;
   amount: number;
   clientIp: string;
+  bankCode?: VNPayBankCode;
 }): string {
   const env = getEnv();
   const params: Record<string, string | number> = {
@@ -91,6 +94,10 @@ export function buildVNPayPaymentUrl(input: {
     vnp_IpAddr: input.clientIp,
     vnp_CreateDate: getVNPayCreateDate(),
   };
+
+  if (input.bankCode) {
+    params.vnp_BankCode = input.bankCode;
+  }
 
   const sorted = sortObject(params);
   const signData = qs.stringify(sorted, { encode: false });

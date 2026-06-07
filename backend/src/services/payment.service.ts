@@ -1,5 +1,5 @@
 import { PaymentStatus } from "@prisma/client";
-import { buildVNPayPaymentUrl, verifyVNPayReturn, type VNPayVerificationResult } from "../gateways/vnpay.gateway";
+import { buildVNPayPaymentUrl, verifyVNPayReturn, type VNPayBankCode, type VNPayVerificationResult } from "../gateways/vnpay.gateway";
 import { PaymentRepository } from "../repositories/payment.repository";
 import { APIError } from "../utils/apiResponse";
 
@@ -14,6 +14,7 @@ export class PaymentService {
     orderId: number,
     userId: number,
     clientIp: string,
+    bankCode?: VNPayBankCode,
   ): Promise<string> {
     const order = await this.paymentRepository.findOrderAmount(orderId, userId);
 
@@ -29,11 +30,20 @@ export class PaymentService {
         ? "127.0.0.1"
         : clientIp.replace(/^::ffff:/, "") || "127.0.0.1";
 
-    return buildVNPayPaymentUrl({
+    const paymentInput: {
+      orderId: number;
+      amount: number;
+      clientIp: string;
+      bankCode?: VNPayBankCode;
+    } = {
       orderId,
       amount: Number(order.totalAmount),
       clientIp: ip,
-    });
+    };
+
+    if (bankCode) paymentInput.bankCode = bankCode;
+
+    return buildVNPayPaymentUrl(paymentInput);
   }
 
   verifyReturn(query: Record<string, string>): VNPayVerificationResult {
@@ -72,6 +82,10 @@ export class PaymentService {
       }
 
       const transactionId = params.vnp_TransactionNo ?? null;
+
+      if (verified.isCancelled) {
+        return { RspCode: "00", Message: "Confirm Success" };
+      }
 
       if (!verified.isSuccess) {
         await this.paymentRepository.markPaymentFailed(order.payment.id, transactionId);

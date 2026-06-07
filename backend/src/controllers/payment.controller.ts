@@ -19,15 +19,16 @@ export class PaymentController {
       req.socket?.remoteAddress ||
       "127.0.0.1";
 
-    const { orderId } = CreateVNPayUrlSchema.parse(req.query);
-    const paymentUrl  = await paymentService.createVNPayUrl(orderId, userId, ipAddr);
+    const { orderId, bankCode } = CreateVNPayUrlSchema.parse(req.query);
+    const paymentUrl  = await paymentService.createVNPayUrl(orderId, userId, ipAddr, bankCode);
     console.info("[PaymentController.createVNPayUrl]", {
       requestId: req.requestId,
       userId,
       orderId,
+      bankCode,
     });
 
-    sendSuccess(res, { paymentUrl }, "Tạo URL thanh toán thành công", HTTP_STATUS.OK);
+    sendSuccess(res, { paymentUrl, provider: "VNPAY", bankCode: bankCode ?? null }, "Tạo URL thanh toán thành công", HTTP_STATUS.OK);
   }
 
   /**

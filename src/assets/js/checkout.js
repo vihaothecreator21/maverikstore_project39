@@ -189,7 +189,9 @@ async function handlePlaceOrder() {
   const phone = document.getElementById("shipping-phone")?.value.trim();
   const address = document.getElementById("shipping-address")?.value.trim();
   const note = document.getElementById("order-note")?.value.trim();
-  const paymentMethod = document.querySelector("input[name='payment']:checked")?.value ?? "COD";
+  const selectedPayment = document.querySelector("input[name='payment']:checked")?.value ?? "COD";
+  const orderPaymentMethod = selectedPayment === "VNPAY_INTCARD" ? "VNPAY" : selectedPayment;
+  const bankCode = selectedPayment === "VNPAY_INTCARD" ? "INTCARD" : null;
 
   let hasError = false;
 
@@ -236,7 +238,7 @@ async function handlePlaceOrder() {
       : phoneClean.startsWith("84")
       ? "+" + phoneClean
       : phoneClean,
-    paymentMethod,
+    paymentMethod: orderPaymentMethod,
     ...(note && { note }),
   };
 
@@ -276,11 +278,15 @@ async function handlePlaceOrder() {
     const order = data.data;
 
     // ── VNPay: redirect sang cổng thanh toán ───────────────────────
-    if (paymentMethod === "VNPAY") {
+    if (orderPaymentMethod === "VNPAY") {
       btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Đang chuyển đến VNPay...`;
 
+      const createPaymentUrl = bankCode
+        ? `${API_BASE}/payments/vnpay/create?orderId=${order.id}&bankCode=${bankCode}`
+        : `${API_BASE}/payments/vnpay/create?orderId=${order.id}`;
+
       const payRes = await fetch(
-        `${API_BASE}/payments/vnpay/create?orderId=${order.id}`,
+        createPaymentUrl,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const payData = await payRes.json();
