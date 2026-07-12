@@ -138,7 +138,7 @@ async function main() {
         stockQuantity: 12,
         description:
           "Sofa góc chữ L cao cấp phong cách Ý, bọc vải linen cao cấp màu xám nhạt. Khung gỗ sồi tự nhiên chắc chắn, đệm foam density cao 45kg/m³ đàn hồi tốt. Kích thước: 280 x 180 x 85cm. Phù hợp phòng khách từ 25m² trở lên. Bảo hành 2 năm khung và 1 năm đệm.",
-        imageUrl: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&h=600&fit=crop",
+        imageUrl: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600&h=600&fit=crop",
       },
     }),
     prisma.product.create({
@@ -236,7 +236,7 @@ async function main() {
         stockQuantity: 35,
         description:
           "Gương soi toàn thân hình vòm, khung đan mây tự nhiên cao cấp màu be. Kích thước: 50 x 150cm. Có thể treo tường hoặc dựng đứng. Tạo điểm nhấn boho-chic cho phòng ngủ hoặc phòng thay đồ.",
-        imageUrl: "https://images.unsplash.com/photo-1594042160933-e5dd54e36c6d?w=600&h=600&fit=crop",
+        imageUrl: "https://images.unsplash.com/photo-1618220179428-22790b461013?w=600&h=600&fit=crop",
       },
     }),
 
@@ -312,7 +312,7 @@ async function main() {
         stockQuantity: 28,
         description:
           "Kệ sách 6 tầng thiết kế modular có thể kết hợp nhiều kệ với nhau. Gỗ thông tự nhiên phủ dầu, chân thép đen. Kích thước: 80 x 30 x 180cm. Chịu tải mỗi tầng lên 25kg. Phù hợp phòng làm việc và phòng đọc sách.",
-        imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop",
+        imageUrl: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&h=600&fit=crop",
       },
     }),
 
@@ -338,7 +338,7 @@ async function main() {
         stockQuantity: 20,
         description:
           "Thảm trải sàn handmade từ lông cừu tự nhiên 100%, họa tiết Moroccan truyền thống. Kích thước: 160 x 230cm. Mềm mại, ấm áp, chống trơn trượt. Thích hợp phòng khách, phòng ngủ. Mỗi tấm là tác phẩm thủ công độc đáo.",
-        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=600&fit=crop",
+        imageUrl: "https://images.unsplash.com/photo-1600166898405-da9535204843?w=600&h=600&fit=crop",
       },
     }),
     prisma.product.create({
@@ -393,14 +393,22 @@ async function main() {
     prisma.productImage.create({ data: { productId: p6.id, url: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=800&fit=crop", isPrimary: true } }),
     prisma.productImage.create({ data: { productId: p6.id, url: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&h=800&fit=crop", isPrimary: false } }),
     prisma.productImage.create({ data: { productId: p6.id, url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=800&fit=crop", isPrimary: false } }),
+    // Bàn đầu giường - 1 ảnh
+    prisma.productImage.create({ data: { productId: p8.id, url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=800&fit=crop", isPrimary: true } }),
+    // Gương - 1 ảnh
+    prisma.productImage.create({ data: { productId: p9.id, url: "https://images.unsplash.com/photo-1618220179428-22790b461013?w=800&h=800&fit=crop", isPrimary: true } }),
     // Bộ bàn ăn - 2 ảnh
     prisma.productImage.create({ data: { productId: p10.id, url: "https://images.unsplash.com/photo-1615066390971-03e4e1c36ddf?w=800&h=800&fit=crop", isPrimary: true } }),
     prisma.productImage.create({ data: { productId: p10.id, url: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=800&h=800&fit=crop", isPrimary: false } }),
     // Bàn làm việc - 2 ảnh
     prisma.productImage.create({ data: { productId: p13.id, url: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=800&h=800&fit=crop", isPrimary: true } }),
     prisma.productImage.create({ data: { productId: p13.id, url: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&h=800&fit=crop", isPrimary: false } }),
+    // Kệ sách - 1 ảnh
+    prisma.productImage.create({ data: { productId: p15.id, url: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&h=800&fit=crop", isPrimary: true } }),
     // Đèn sàn - 1 ảnh
     prisma.productImage.create({ data: { productId: p16.id, url: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&h=800&fit=crop", isPrimary: true } }),
+    // Thảm - 1 ảnh
+    prisma.productImage.create({ data: { productId: p17.id, url: "https://images.unsplash.com/photo-1600166898405-da9535204843?w=800&h=800&fit=crop", isPrimary: true } }),
   ]);
   console.log("✅ Product images seeded.\n");
 
@@ -532,7 +540,7 @@ async function main() {
   console.log(`   👤 Users      : 4 (1 Admin, 1 SuperAdmin, 2 Customers)`);
   console.log(`   📂 Categories : ${categories.length} (Phòng Khách, Ngủ, Bếp, Làm Việc, Trang Trí)`);
   console.log(`   🛋️  Products   : ${products.length}`);
-  console.log(`   🖼️  Images    : 17`);
+  console.log(`   🖼️  Images    : 21`);
   console.log(`   🛒 Cart items : 3`);
   console.log(`   📦 Orders     : 2`);
   console.log(`   ⭐ Reviews    : 4`);
