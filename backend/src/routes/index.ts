@@ -10,6 +10,7 @@ import { orderRoutes, adminOrderRoutes } from "./order.routes";
 import { adminRoutes } from "./admin.routes";
 import { paymentRoutes } from "./payment.routes";
 import { supportChatRoutes } from "./supportChat.routes";
+import { reviewRoutes } from "./review.routes";
 
 const router = Router();
 
@@ -91,10 +92,10 @@ router.use(`/${V}/payments`, paymentRoutes);
 // AI Support Chatbot
 router.use(`/${V}/support-chat`, supportChatRoutes);
 
-// ==================== @TODO Routes ====================
-// import reviewRoutes from './review.routes';
-// router.use(`/${V}/reviews`, reviewRoutes);
+// Reviews
+router.use(`/${V}/reviews`, reviewRoutes);
 
+// ==================== @TODO Routes ====================
 // import favoriteRoutes from './favorite.routes';
 // router.use(`/${V}/favorites`, favoriteRoutes);
 

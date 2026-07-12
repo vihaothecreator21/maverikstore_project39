@@ -19,6 +19,7 @@ import { PendingRegistrationRepository } from "./repositories/pending-registrati
 import { ProductRepository } from "./repositories/product.repository";
 import { CategoryRepository} from "./repositories/category.repository";
 import { CartRepository }    from "./repositories/cart.repository";
+import { ReviewRepository }  from "./repositories/review.repository";
 
 export const orderRepository   = new OrderRepository();
 export const adminRepository   = new AdminRepository();
@@ -28,6 +29,7 @@ export const pendingRegistrationRepository = new PendingRegistrationRepository()
 export const productRepository = new ProductRepository();
 export const categoryRepository= new CategoryRepository();
 export const cartRepository    = new CartRepository();
+export const reviewRepository  = new ReviewRepository();
 
 // ── Services (inject repositories) ─────────────────────────────────
 import { OrderService }       from "./services/order.service";
@@ -42,6 +44,7 @@ import { ProductService }     from "./services/product.service";
 import { CategoryService }    from "./services/category.service";
 import { CartService }        from "./services/cart.service";
 import { SupportChatService } from "./services/supportChat.service";
+import { ReviewService }      from "./services/review.service";
 
 export const orderService       = new OrderService(orderRepository);
 export const dashboardService   = new DashboardService(adminRepository);
@@ -60,3 +63,4 @@ export const productService     = new ProductService(productRepository);
 export const categoryService    = new CategoryService(categoryRepository);
 export const cartService        = new CartService(cartRepository, productRepository);
 export const supportChatService = new SupportChatService();
+export const reviewService      = new ReviewService(reviewRepository, productRepository);

@@ -87,6 +87,51 @@
         </div>
       </div>
     </section>
+    <section class="pb-5">
+      <div class="container">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-4 col-12">
+            <div class="card">
+              <div class="card-body p-4">
+                <h2 class="fs-4 mb-3">Viết đánh giá</h2>
+                <form id="store-review-form">
+                  <div class="mb-3">
+                    <label for="review-product" class="form-label fw-semibold">Sản phẩm</label>
+                    <select id="review-product" class="form-select" required>
+                      <option value="">Đang tải sản phẩm...</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="review-rating" class="form-label fw-semibold">Số sao</label>
+                    <select id="review-rating" class="form-select" required>
+                      <option value="5">5 sao</option>
+                      <option value="4">4 sao</option>
+                      <option value="3">3 sao</option>
+                      <option value="2">2 sao</option>
+                      <option value="1">1 sao</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="review-comment" class="form-label fw-semibold">Nội dung</label>
+                    <textarea id="review-comment" class="form-control" rows="4" maxlength="1000" placeholder="Chia sẻ trải nghiệm của bạn..." required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-dark w-100 fw-semibold">Gửi đánh giá</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8 col-12">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h2 class="fs-4 mb-0">Đánh giá mới nhất</h2>
+            </div>
+            <div id="latest-review-empty" class="alert alert-light border d-none">
+              Chưa có đánh giá nào. Hãy là người đầu tiên chia sẻ trải nghiệm.
+            </div>
+            <div id="latest-review-list" class="row g-4"></div>
+          </div>
+        </div>
+      </div>
+    </section>
       <section class="pb-8">
   <div class="container ">
     <div class="row g-4">
@@ -483,6 +528,7 @@
 </script>
 
     <script type="module" src="./assets/js/main.js"></script>
+    <script type="module" src="./assets/js/testimonials.js"></script>
     <script type="module" src="./assets/js/support-chat.js"></script>
   </body>
 </html>
