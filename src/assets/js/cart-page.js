@@ -1,5 +1,6 @@
 import { getApiBase } from "./api-config.js";
 import { handleExpiredSession } from "./auth-utils.js";
+import { showConfirm } from "./ui-feedback.js";
 
 /**
  * cart-page.js
@@ -196,7 +197,7 @@ window.updateItemQty = async function (itemId, newQty) {
 };
 
 window.removeCartItem = async function (itemId) {
-  const confirmDelete = confirm("Bạn có chắc muốn xóa sản phẩm này?");
+  const confirmDelete = await showConfirm("Bạn có chắc muốn xóa sản phẩm này?", { title: "Xóa sản phẩm", confirmText: "Xóa", tone: "danger" });
   if (!confirmDelete) return;
 
   const token = localStorage.getItem("authToken");

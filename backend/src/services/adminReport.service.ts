@@ -19,8 +19,8 @@ export interface AdminOrderExportDTO {
 }
 
 /**
- * Admin Report Service — Business logic for charts, product stats, customer stats, export
- * Handles: revenue charts, best sellers, low stock, customer analytics, CSV export
+ * Admin Report Service — Logic nghiệp vụ cho biểu đồ, thống kê sản phẩm, khách hàng, xuất dữ liệu
+ * Xử lý: biểu đồ doanh thu, sản phẩm bán chạy, hàng sắp hết, phân tích khách hàng, xuất CSV
  */
 export class AdminReportService {
   private adminRepository: AdminRepository;
@@ -29,7 +29,7 @@ export class AdminReportService {
     this.adminRepository = adminRepository;
   }
 
-  // ── Revenue by Period (bar chart) ────────────────────────────────
+  // ── Doanh thu theo khoảng thời gian (biểu đồ cột) ───────────────
   async getRevenueByPeriod(
     period: "day" | "week" | "month" | "year",
     startDate: Date,
@@ -138,7 +138,7 @@ export class AdminReportService {
     return result.sort((a, b) => a.period.localeCompare(b.period));
   }
 
-  // ── Revenue by Payment Method (pie chart) ───────────────────────
+  // ── Doanh thu theo phương thức thanh toán (biểu đồ tròn) ────────
   async getRevenueByPaymentMethod(startDate: Date, endDate: Date) {
     const payments = await this.adminRepository.findPaymentsByMethod(startDate, endDate);
 
@@ -156,7 +156,7 @@ export class AdminReportService {
     }));
   }
 
-  // ── Product Stats ─────────────────────────────────────────────────
+  // ── Thống kê sản phẩm ─────────────────────────────────────────────
   async getBestSellers(limit = 10) {
     const result = await this.adminRepository.groupOrderDetailsByProduct(limit);
 
@@ -202,7 +202,7 @@ export class AdminReportService {
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
   }
 
-  // ── Customer Stats ───────────────────────────────────────────────
+  // ── Thống kê khách hàng ──────────────────────────────────────────
   async getCustomerStats() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -231,7 +231,7 @@ export class AdminReportService {
     };
   }
 
-  // ── Export ───────────────────────────────────────────────────────
+  // ── Xuất dữ liệu ─────────────────────────────────────────────────
   async getOrdersForExport(startDate: Date, endDate: Date): Promise<AdminOrderExportDTO[]> {
     const orders = await this.adminRepository.findOrdersForExport(startDate, endDate);
 

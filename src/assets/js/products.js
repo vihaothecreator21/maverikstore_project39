@@ -21,6 +21,7 @@ let currentCategoryId = null;
 let currentSearch = "";
 let currentMinPrice = null;
 let currentMaxPrice = null;
+let currentSort = "";
 let searchTimeout = null;
 let priceFilterTimeout = null;
 
@@ -100,6 +101,7 @@ async function loadProducts() {
     if (currentSearch) params.append("search", currentSearch);
     if (currentMinPrice !== null) params.append("minPrice", String(currentMinPrice));
     if (currentMaxPrice !== null) params.append("maxPrice", String(currentMaxPrice));
+    if (currentSort) params.append("sort", currentSort);
 
     const res = await fetch(`${API_BASE}/products?${params}`);
     const json = await res.json();
@@ -324,6 +326,8 @@ function setupSortSelect() {
   if (!select) return;
 
   select.addEventListener("change", () => {
+    currentSort = select.value;
+    currentPage = 1;
     // TODO: Thêm sort param vào API khi backend hỗ trợ
     loadProducts();
   });

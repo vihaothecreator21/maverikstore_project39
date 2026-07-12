@@ -11,5 +11,5 @@ cartRoutes.post("/items", catchAsync(CartController.addItem));
 cartRoutes.patch("/items/:id", catchAsync(CartController.updateItemQty));
 cartRoutes.delete("/items/:id", catchAsync(CartController.removeItem));
 
-// ✅ NEW: Sync endpoint for guest cart migration
+// ✅ MỚI: Endpoint đồng bộ giỏ hàng từ localStorage (guest → user đăng nhập)
 cartRoutes.post("/sync", catchAsync(CartController.syncCart));

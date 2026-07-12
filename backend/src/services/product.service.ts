@@ -7,8 +7,8 @@ import type {
 } from "../schemas/product.schema";
 
 /**
- * Product Service - Business Logic Layer
- * Handles all product-related business logic
+ * Product Service - Tầng xử lý nghiệp vụ
+ * Xử lý toàn bộ logic liên quan đến sản phẩm
  */
 export class ProductService {
   private productRepository: ProductRepository;
@@ -18,14 +18,14 @@ export class ProductService {
   }
 
   /**
-   * Generate a URL-friendly slug from a product name
-   * e.g. "Áo Thun Maverik 2024" => "ao-thun-maverik-2024"
+   * Tạo slug thân thiện với URL từ tên sản phẩm
+   * Ví dụ: "Áo Thun Maverik 2024" => "ao-thun-maverik-2024"
    */
   private generateSlug(name: string): string {
     return name
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+      .replace(/[\u0300-\u036f]/g, "") // Loại bỏ dấu thanh/dấu phụ
       .replace(/đ/g, "d")
       .replace(/[^a-z0-9\s-]/g, "")
       .trim()
@@ -34,7 +34,7 @@ export class ProductService {
   }
 
   /**
-   * Ensure slug is unique by appending a number if needed
+   * Đảm bảo slug là duy nhất — thêm số đếm vào cuối nếu cần
    */
   private async ensureUniqueSlug(
     baseSlug: string,
@@ -52,10 +52,10 @@ export class ProductService {
   }
 
   /**
-   * Get all products with pagination and filtering
+   * Lấy danh sách tất cả sản phẩm (có phân trang và lọc)
    */
   async getAll(query: ProductQueryInput) {
-    const { page, limit, categoryId, search, minPrice, maxPrice } = query;
+    const { page, limit, categoryId, search, minPrice, maxPrice, sort } = query;
     const { products, total } = await this.productRepository.findAll({
       page,
       limit,
@@ -63,6 +63,7 @@ export class ProductService {
       search,
       minPrice,
       maxPrice,
+      sort,
     });
 
     return {
@@ -77,7 +78,7 @@ export class ProductService {
   }
 
   /**
-   * Get a single product by its ID
+   * Lấy thông tin một sản phẩm theo ID
    */
   async getById(id: number) {
     const product = await this.productRepository.findById(id);
@@ -88,7 +89,7 @@ export class ProductService {
   }
 
   /**
-   * Get a single product by its slug
+   * Lấy thông tin một sản phẩm theo slug
    */
   async getBySlug(slug: string) {
     const product = await this.productRepository.findBySlug(slug);
@@ -99,7 +100,7 @@ export class ProductService {
   }
 
   /**
-   * Create a new product (Admin only)
+   * Tạo sản phẩm mới (chỉ Admin)
    */
   async create(input: CreateProductInput) {
     const baseSlug = this.generateSlug(input.name);
@@ -108,7 +109,7 @@ export class ProductService {
   }
 
   /**
-   * Update an existing product by ID (Admin only)
+   * Cập nhật sản phẩm theo ID (chỉ Admin)
    */
   async update(id: number, input: UpdateProductInput) {
     let slugUpdate: { slug?: string } = {};
@@ -135,20 +136,20 @@ export class ProductService {
   }
 
   /**
-   * Delete a product by ID (Admin only)
+   * Xóa sản phẩm theo ID (chỉ Admin)
    */
   async delete(id: number) {
     return this.productRepository.deleteOrThrow(id);
   }
 
   /**
-   * Fix products with NULL or empty slugs
+   * Sửa các sản phẩm có slug NULL hoặc rỗng
    */
   async fixNullSlugs() {
     return this.productRepository.fixNullSlugs();
   }
   /**
-   * Get best-selling products
+   * Lấy danh sách sản phẩm bán chạy nhất
    */
   async getBestSellers(limit: number) {
     return this.productRepository.findBestSellers(limit);

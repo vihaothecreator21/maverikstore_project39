@@ -12,14 +12,14 @@ import {
 } from "../utils/apiResponse";
 
 /**
- * Product Controller - HTTP Request Handler Layer
- * Only handles req/res — delegates all logic to ProductService
+ * Product Controller - Tầng xử lý HTTP Request
+ * Chỉ xử lý req/res — ủy toàn bộ logic cho ProductService
  */
 
 export class ProductController {
   /**
    * GET /api/v1/products
-   * Get all products with optional filtering and pagination
+   * Lấy danh sách tất cả sản phẩm (có hỗ trợ lọc và phân trang)
    */
   static async getAll(req: Request, res: Response) {
     const validation = ProductQuerySchema.safeParse(req.query);
@@ -30,7 +30,7 @@ export class ProductController {
         if (!errors[path]) errors[path] = [];
         errors[path].push(err.message);
       });
-      throw new ValidationError("Invalid query parameters", errors);
+      throw new ValidationError("Tham số truy vấn không hợp lệ", errors);
     }
 
     const result = await productService.getAll(validation.data);
@@ -46,7 +46,7 @@ export class ProductController {
 
   /**
    * GET /api/v1/products/:id
-   * Get a single product by ID
+   * Lấy thông tin một sản phẩm theo ID
    */
   static async getById(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
@@ -67,7 +67,7 @@ export class ProductController {
 
   /**
    * GET /api/v1/products/slug/:slug
-   * Get a single product by slug
+   * Lấy thông tin một sản phẩm theo slug
    */
   static async getBySlug(req: Request, res: Response) {
     const { slug } = req.params;
@@ -82,7 +82,7 @@ export class ProductController {
 
   /**
    * POST /api/v1/products
-   * Create a new product (Admin only)
+   * Tạo sản phẩm mới (chỉ Admin)
    */
   static async create(req: Request, res: Response) {
     const validation = await CreateProductSchema.safeParseAsync(req.body);
@@ -107,7 +107,7 @@ export class ProductController {
 
   /**
    * PUT /api/v1/products/:id
-   * Update an existing product (Admin only)
+   * Cập nhật sản phẩm theo ID (chỉ Admin)
    */
   static async update(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
@@ -139,7 +139,7 @@ export class ProductController {
 
   /**
    * DELETE /api/v1/products/:id
-   * Delete a product (Admin only)
+   * Xóa sản phẩm theo ID (chỉ Admin)
    */
   static async delete(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
@@ -160,7 +160,7 @@ export class ProductController {
 
   /**
    * POST /api/v1/products/admin/fix-null-slugs
-   * Fix products with NULL or empty slugs (Admin/Debug endpoint)
+   * Sửa các sản phẩm có slug NULL hoặc rỗng (endpoint Admin/Debug)
    */
   static async fixNullSlugs(_req: Request, res: Response) {
     const result = await productService.fixNullSlugs();
@@ -173,7 +173,7 @@ export class ProductController {
   }
   /**
    * GET /api/v1/products/featured/best-sellers
-   * Get best-selling products for home page
+   * Lấy danh sách sản phẩm bán chạy nhất cho trang chủ
    */
   static async getBestSellers(req: Request, res: Response) {
     const limit = parseInt(req.query.limit as string) || 8;

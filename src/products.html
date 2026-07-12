@@ -429,6 +429,7 @@
 
 <script type="module">
   import { syncCartAfterLogin } from "./assets/js/auth-utils.js";
+  import { showConfirm, showToast } from "./assets/js/ui-feedback.js";
 
   // Expose toggle function globally for onclick handlers
   window.togglePasswordVisibility = function(inputId) {
@@ -456,7 +457,7 @@
   
   // Expose logout function globally
   window.handleLogout = async function() {
-    const confirmed = window.confirm('Bạn có chắc muốn đăng xuất?');
+    const confirmed = await showConfirm('Bạn có chắc muốn đăng xuất?', { title: "Đăng xuất", confirmText: "Đăng xuất" });
     if (!confirmed) return;
     try {
       localStorage.removeItem('authToken');
@@ -464,7 +465,7 @@
       localStorage.removeItem('userEmail');
       localStorage.removeItem('maverik_cart');
       window.dispatchEvent(new Event('cartUpdated'));
-      alert('✅ Đã đăng xuất');
+      showToast('✅ Đã đăng xuất');
       window.location.href = './index.html';
     } catch (err) {
       console.error('Logout error:', err);
@@ -516,10 +517,10 @@
         await syncCartAfterLogin(data.data.token);
 
         // ✅ Show success before reload
-        alert('✅ Login & sync successful!');
+        showToast('✅ Login & sync successful!');
         window.location.reload();
       } else {
-        alert('❌ ' + (data.message || 'Đăng nhập thất bại'));
+        showToast('❌ ' + (data.message || 'Đăng nhập thất bại'));
         // Reset button on error
         if (loginBtn) {
           loginBtn.innerHTML = originalBtnText;
@@ -528,7 +529,7 @@
         }
       }
     } catch (error) {
-      alert('❌ Lỗi kết nối');
+      showToast('❌ Lỗi kết nối');
       // Reset button on error
       if (loginBtn) {
         loginBtn.innerHTML = originalBtnText;
@@ -552,14 +553,14 @@
       });
       const data = await response.json();
       if (response.ok && data.status === 'success') {
-        alert('✅ Tạo tài khoản thành công! Vui lòng đăng nhập.');
+        showToast('✅ Tạo tài khoản thành công! Vui lòng đăng nhập.');
         document.getElementById('registerModal').style.display = 'none';
         new bootstrap.Modal(document.getElementById('loginModal')).show();
       } else {
-        alert('❌ ' + (data.message || 'Đăng ký thất bại'));
+        showToast('❌ ' + (data.message || 'Đăng ký thất bại'));
       }
     } catch (error) {
-      alert('❌ Lỗi kết nối');
+      showToast('❌ Lỗi kết nối');
     }
   });
 </script>

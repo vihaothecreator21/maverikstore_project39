@@ -1,33 +1,41 @@
 /**
- * api-config.js — Centralized API configuration
- * Manages API base URL and other endpoint configurations
+ * api-config.js — Cấu hình API tập trung cho toàn bộ frontend
  *
- * Ghi chú cho backend engineer:
- * - Mọi module frontend nên lấy API base qua getApiBase().
- * - Dev mặc định gọi backend Express tại http://localhost:5000/api/v1.
- * - Production fallback dùng cùng origin với frontend: {domain}/api/v1.
+ * Tất cả module frontend nên lấy URL API qua getApiBase() thay vì hardcode.
+ * Điều này giúp dễ dàng đổi URL khi deploy sang môi trường khác.
+ *
+ * Logic xác định BASE_URL:
+ * 1. Nếu có biến môi trường VITE_API_URL → dùng đó (ưu tiên cao nhất)
+ * 2. Nếu là development (npm run dev) → http://localhost:5000/api/v1
+ * 3. Nếu là production (build) → {domain hiện tại}/api/v1
+ *    (giả định frontend và backend cùng domain, nginx proxy /api → backend)
  */
 
+// Vite inject import.meta.env.PROD = true khi build production
 const isDevelopment = !import.meta.env.PROD;
+
+// Biến môi trường tùy chỉnh — định nghĩa trong file .env ở thư mục gốc
+// Vite chỉ đưa vào bundle những biến có prefix VITE_
 const envApiUrl = import.meta.env.VITE_API_URL;
 
 export const API_CONFIG = {
+  // URL gốc của API Backend
   BASE_URL: envApiUrl || (isDevelopment
-    ? "http://localhost:5000/api/v1"
-    : `${window.location.origin}/api/v1`),
+    ? "http://localhost:5000/api/v1"           // Backend Express dev server
+    : `${window.location.origin}/api/v1`),     // Production: cùng domain
 
-  // Endpoint paths
+  // Các đường dẫn endpoint (dùng để build URL đầy đủ)
   ENDPOINTS: {
-    PRODUCTS: "/products",
+    PRODUCTS:   "/products",
     CATEGORIES: "/categories",
-    CART: "/cart",
-    AUTH: "/auth",
+    CART:       "/cart",
+    AUTH:       "/auth",
   },
 
-  // Timeout settings
-  TIMEOUT: 30000,
+  // Timeout tối đa cho mỗi request (ms)
+  TIMEOUT: 30000, // 30 giây
 };
 
-// Export for use in modules
-export const getApiUrl = () => API_CONFIG.BASE_URL;
+/** Lấy URL cơ sở của API — dùng trong tất cả module frontend */
+export const getApiUrl  = () => API_CONFIG.BASE_URL;
 export const getApiBase = () => API_CONFIG.BASE_URL;

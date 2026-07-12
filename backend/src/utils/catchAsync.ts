@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 
 /**
- * Async Error Wrapper
- * Wraps async route handlers to catch unhandled promise rejections
- * Automatically passes errors to Express error handler
+ * Wrapper bắt lỗi Async
+ * Bao bỜ các route handler async để bắt các promise rejection chưa xử lý
+ * Tự động chuyển lỗi sang Express error handler
  * 
  * @usage
  * import { catchAsync } from '@/utils/catchAsync';
@@ -15,19 +15,19 @@ import { NextFunction, Request, Response } from "express";
 export const catchAsync =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
   (req: Request, res: Response, next: NextFunction): void => {
-    // Execute async function and catch any errors
+    // Thực thi hàm async và bắt mọi lỗi phát sinh
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 
 /**
- * Wrapper for async middleware functions
- * Used for global middleware that performs async operations
+ * Wrapper cho các hàm middleware async
+ * Dùng cho global middleware có thao tác async
  * 
  * @usage
  * const authenticateToken = catchAsyncMiddleware(async (req, res, next) => {
  *   const token = req.headers.authorization?.split(' ')[1];
  *   if (!token) throw new APIError(401, 'Token required');
- *   // ... verify token
+ *   // ... xác minh token
  *   next();
  * });
  */

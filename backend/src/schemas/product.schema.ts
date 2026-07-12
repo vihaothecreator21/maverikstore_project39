@@ -203,6 +203,9 @@ export const ProductQuerySchema = z.object({
       message: "Search term cannot be empty whitespace",
     })
     .optional(),
+  sort: z
+    .enum(["price_asc", "price_desc", "name_asc"])
+    .optional(),
 });
 
 export type CreateProductInput = z.infer<typeof CreateProductSchema>;

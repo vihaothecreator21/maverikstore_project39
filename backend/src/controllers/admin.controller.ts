@@ -3,13 +3,13 @@ import { dashboardService, adminReportService } from "../container";
 import { sendSuccess, HTTP_STATUS, APIError } from "../utils/apiResponse";
 
 /**
- * Admin Controller — Dashboard, Reports, Export
- * All handlers require ADMIN/SUPER_ADMIN (enforced by requireAdmin middleware)
+ * Admin Controller — Dashboard, Báo cáo, Xuất dữ liệu
+ * Tất cả handler yêu cầu quyền ADMIN/SUPER_ADMIN (áp dụng bởi requireAdmin middleware)
  */
 export class AdminController {
   /**
    * GET /api/v1/admin/stats
-   * Dashboard overview: revenue, orders, products, customers
+   * Tổng quan dashboard: doanh thu, đơn hàng, sản phẩm, khách hàng
    */
   static async getDashboardStats(_req: Request, res: Response) {
     const stats = await dashboardService.getDashboardStats();
@@ -18,7 +18,7 @@ export class AdminController {
 
   /**
    * GET /api/v1/admin/revenue
-   * Revenue by period for bar chart
+   * Doanh thu theo khoảng thời gian (dữ liệu cho biểu đồ cột)
    * Query: ?period=day|week|month|year&start=YYYY-MM-DD&end=YYYY-MM-DD
    */
   static async getRevenue(req: Request, res: Response) {
@@ -38,7 +38,7 @@ export class AdminController {
 
   /**
    * GET /api/v1/admin/revenue/payment
-   * Revenue breakdown by payment method
+   * Doanh thu theo phương thức thanh toán (dữ liệu cho biểu đồ tròn)
    * Query: ?start=YYYY-MM-DD&end=YYYY-MM-DD
    */
   static async getRevenueByPayment(req: Request, res: Response) {
@@ -46,10 +46,10 @@ export class AdminController {
     const data = await adminReportService.getRevenueByPaymentMethod(startDate, endDate);
     return sendSuccess(res, data, "Revenue by payment method retrieved", HTTP_STATUS.OK);
   }
-
+  
   /**
    * GET /api/v1/admin/products/stats
-   * Best sellers, low stock products, revenue by category
+   * Sản phẩm bán chạy, sản phẩm sắp hết hàng, doanh thu theo danh mục
    */
   static async getProductStats(req: Request, res: Response) {
     const limit     = parseInt(req.query.limit as string) || 10;
@@ -71,7 +71,7 @@ export class AdminController {
 
   /**
    * GET /api/v1/admin/customers/stats
-   * Total customers, new this month, top spenders
+   * Tổng số khách hàng, khách mới trong tháng, khách chi tiêu nhiều nhất
    */
   static async getCustomerStats(_req: Request, res: Response) {
     const stats = await adminReportService.getCustomerStats();
@@ -80,7 +80,7 @@ export class AdminController {
 
   /**
    * GET /api/v1/admin/export/orders
-   * Raw order data for CSV/PDF export
+   * Dữ liệu thô đơn hàng để xuất CSV/PDF
    * Query: ?start=YYYY-MM-DD&end=YYYY-MM-DD
    */
   static async exportOrders(req: Request, res: Response) {
@@ -89,11 +89,11 @@ export class AdminController {
     return sendSuccess(res, data, `${data.length} orders ready for export`, HTTP_STATUS.OK);
   }
 
-  // ── Private Helpers ──────────────────────────────────────────────
+  // ── Hàm nội bộ ──────────────────────────────────────────────
 
   /**
-   * Parse start/end date from query params
-   * Defaults: last 30 days
+   * Phân tích ngày bắt đầu/kết thúc từ query params
+   * Mặc định: 30 ngày gần nhất
    */
   private static _parseDateRange(req: Request): { startDate: Date; endDate: Date } {
     const now = new Date();

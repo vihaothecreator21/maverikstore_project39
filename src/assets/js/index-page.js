@@ -84,9 +84,6 @@ function renderSlider(products) {
                                style="white-space: nowrap; min-width: 200px;">
                                 VIEW DETAILS
                             </a>
-                            <button class="btn btn-outline-dark btn-lg px-4 py-3 shadow-sm">
-                                <i class="bi bi-cart-plus"></i>
-                            </button>
                         </div>
                     </div>
 

@@ -6,7 +6,7 @@ import {
   UpdateCategoryInput,
 } from "../schemas/category.schema";
 
-// ✅ IMPROVED: Backend fully owns slug generation. Clients only send name + description.
+// ✅ CẢI TIẾN: Backend tự quản lý việc tạo slug. Client chỉ gửi name + description.
 export class CategoryService {
   private categoryRepository: CategoryRepository;
 
@@ -25,7 +25,7 @@ export class CategoryService {
     return cat;
   }
 
-  // ── Private: generate slug, handle collisions ──────────────────────
+  // ── Nội bộ: tạo slug, xử lý trùng lặp ─────────────────────────────
   private async generateUniqueSlug(
     name: string,
     excludeId?: number,
@@ -49,15 +49,15 @@ export class CategoryService {
     }
   }
 
-  // ── Create ─────────────────────────────────────────────────────────
+  // ── Tạo mới ────────────────────────────────────────────────────────
   async create(data: CreateCategoryInput) {
-    // Check name uniqueness first (friendly error before DB constraint)
+    // Kiểm tra tên danh mục chưa trùng trước (báo lỗi thân thiện trước DB)
     const existingName = await this.categoryRepository.findByName(data.name);
     if (existingName) {
       throw new APIError(400, "Tên danh mục đã tồn tại", {}, "CATEGORY_NAME_DUPLICATED");
     }
 
-    // Backend always generates slug — client never sets it
+    // Backend luôn tự tạo slug — client không được truyền slug
     const slug = await this.generateUniqueSlug(data.name);
 
     return this.categoryRepository.create({
@@ -67,11 +67,11 @@ export class CategoryService {
     });
   }
 
-  // ── Update ─────────────────────────────────────────────────────────
+  // ── Cập nhật ────────────────────────────────────────────────────────
   async update(id: number, data: UpdateCategoryInput) {
     const existing = await this.getById(id);
 
-    // Regenerate slug only when name changes
+    // Chỉ tạo lại slug khi tên thay đổi
     let slug = existing.slug;
     if (data.name && data.name !== existing.name) {
       const existingName = await this.categoryRepository.findByName(data.name);
@@ -88,7 +88,7 @@ export class CategoryService {
     });
   }
 
-  // ── Delete ─────────────────────────────────────────────────────────
+  // ── Xóa ─────────────────────────────────────────────────────────────
   async delete(id: number) {
     await this.getById(id);
 

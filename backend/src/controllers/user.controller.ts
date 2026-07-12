@@ -4,12 +4,12 @@ import { sendSuccess, ValidationError, HTTP_STATUS } from "../utils/apiResponse"
 import { UpdateProfileSchema } from "../schemas/auth.schema";
 
 /**
- * User Controller - Handles customer profile management
+ * User Controller - Xử lý quản lý hồ sơ khách hàng
  * GET  /api/v1/users/profile  → getProfile
  * PUT  /api/v1/users/profile  → updateProfile
  * PUT  /api/v1/users/password → changePassword
  *
- * ⚠️ All business logic đã chuyển vào UserService
+ * ⚠️ Tất cả business logic đã chuyển vào UserService
  */
 export class UserController {
   /**

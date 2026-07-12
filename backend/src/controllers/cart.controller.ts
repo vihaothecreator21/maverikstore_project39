@@ -52,7 +52,7 @@ export class CartController {
     return sendSuccess(res, cart, "Item removed", HTTP_STATUS.OK);
   }
 
-  // ✅ NEW: Sync cart endpoint
+  // ✅ MỚI: Endpoint đồng bộ giỏ hàng
   static async syncCart(req: Request, res: Response) {
     const validation = SyncCartSchema.safeParse(req.body);
     if (!validation.success) throw new ValidationError("Validation failed", {});

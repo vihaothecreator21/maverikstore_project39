@@ -13,6 +13,7 @@
  */
 
 import { getApiBase } from "./api-config.js";
+import { showConfirm } from "./ui-feedback.js";
 
 const API_BASE = getApiBase();
 
@@ -302,7 +303,7 @@ async function loadOrders() {
 
             ${["PENDING", "PENDING_PAYMENT", "CONFIRMED"].includes(o.status)
               ? `<div style="margin-top:16px; padding-top:12px; border-top:1px dashed #eee;">
-                   <button class="btn-cancel-order" onclick="cancelOrder(${o.id})"
+                   <button class="btn-cancel-order" onclick="cancelOrder(${o.id}, this)"
                      style="background:transparent; border:1px solid #ef4444; color:#ef4444; padding:6px 12px; font-size:.75rem; font-weight:600; cursor:pointer; border-radius:4px; transition:all .2s;">
                      Hủy đơn hàng
                    </button>
@@ -328,10 +329,9 @@ window.toggleOrderDetail = function(id) {
   if (arrow) arrow.textContent = isOpen ? "▼" : "▲";
 };
 
-window.cancelOrder = async function(id) {
-  if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
-
-  const btn = event.target;
+window.cancelOrder = async function(id, btn) {
+  const confirmed = await showConfirm("Bạn có chắc chắn muốn hủy đơn hàng này không?", { title: "Hủy đơn hàng", confirmText: "Hủy đơn", tone: "danger" });
+  if (!confirmed || !btn) return;
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.textContent = "Đang xử lý...";

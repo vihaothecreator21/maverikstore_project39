@@ -14,7 +14,7 @@ export class EmailService {
       body: JSON.stringify({
         from: env.EMAIL_FROM,
         to: email,
-        subject: "Your Maverik Store verification code",
+        subject: "Mã xác thực tài khoản Maverik Store của bạn",
         html: this.buildRegistrationOtpHtml(otp, expiresInMinutes),
       }),
     });
@@ -31,11 +31,11 @@ export class EmailService {
 
   private buildRegistrationOtpHtml(otp: string, expiresInMinutes: number) {
     return `
-      <p>Hello,</p>
-      <p>Your Maverik Store verification code is:</p>
+      <p>Xin chào,</p>
+      <p>Mã xác thực tài khoản Maverik Store của bạn là:</p>
       <h2 style="letter-spacing: 0.18em;">${otp}</h2>
-      <p>This code will expire in ${expiresInMinutes} minutes.</p>
-      <p>If you did not request this code, you can ignore this email.</p>
+      <p>Mã này sẽ hết hạn sau ${expiresInMinutes} phút.</p>
+      <p>Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.</p>
     `;
   }
 }

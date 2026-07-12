@@ -2,8 +2,8 @@ import { prisma } from "../config/database";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 /**
- * Payment Repository — Raw DB queries for payment operations.
- * PaymentService calls this layer, not Prisma directly.
+ * Payment Repository — Truy vấn DB thô cho các thao tác thanh toán.
+ * PaymentService gọi lấp này, không gọi Prisma trực tiếp.
  */
 export class PaymentRepository {
   async findOrderWithPayment(orderId: number) {
@@ -32,7 +32,7 @@ export class PaymentRepository {
   }
 
   /**
-   * Atomic: mark payment SUCCESS + move order PENDING_PAYMENT to PENDING.
+   * Atomic: cập nhật payment SUCCESS + chuyển order PENDING_PAYMENT sang PENDING.
    */
   async confirmPaymentAndOrder(
     paymentId: number,

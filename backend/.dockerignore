@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.env.*
+npm-debug.log*
+tests
+*.test.ts
+*.spec.ts
+jest.config.cjs
+tsconfig.test.json
+nodemon.json
+.gitignore
+.gitkeep
+scripts

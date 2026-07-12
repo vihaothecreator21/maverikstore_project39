@@ -18,7 +18,7 @@ export const calculateSalePrice = (product: DiscountableProduct): number => {
 
   const rawDiscount =
     discountPercent > 0
-      ? price * (discountPercent / 100)
+      ? price * (discountPercent / 100) 
       : discountAmount;
 
   const salePrice = Math.max(0, price - rawDiscount);

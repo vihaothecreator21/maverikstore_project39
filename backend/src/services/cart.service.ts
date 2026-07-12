@@ -8,6 +8,14 @@ import type {
   SyncCartInput,
 } from "../schemas/cart.schema";
 
+/**
+ * Cart Service — Xử lý nghiệp vụ giỏ hàng
+ *
+ * Kiến trúc giỏ hàng của Maverik Store:
+ * - User đăng nhập → giỏ hàng lưu trong DB (bảng Cart + CartItem)
+ * - User chưa đăng nhập → lưu trong localStorage (key: "maverik_cart")
+ * - Khi đăng nhập → gọi syncLocalStorageCart() để merge localStorage vào DB
+ */
 export class CartService {
   private cartRepository: CartRepository;
   private productRepository: ProductRepository;
@@ -20,10 +28,14 @@ export class CartService {
     this.productRepository = productRepository;
   }
 
+  /**
+   * Lấy giỏ hàng của user (auto-create nếu chưa có)
+   * Tính salePrice và hasDiscount cho mỗi sản phẩm trước khi trả về
+   */
   async getCart(userId: number) {
     let cart = await this.cartRepository.findCartByUserId(userId);
 
-    // Auto-create if not exists
+    // Tự động tạo giỏ hàng trống nếu user chưa có
     if (!cart) {
       await this.cartRepository.createCart(userId);
       cart = await this.cartRepository.findCartByUserId(userId);
@@ -32,6 +44,7 @@ export class CartService {
     let totalPrice = 0;
     const items =
       cart?.items.map((item) => {
+        // Tính giá sau giảm từ DB (áp dụng discountPercent/discountAmount)
         const salePrice = calculateSalePrice(item.product);
         const itemTotal = salePrice * item.quantity;
         totalPrice += itemTotal;
@@ -39,11 +52,11 @@ export class CartService {
           ...item,
           product: {
             ...item.product,
-            originalPrice: Number(item.product.price),
-            salePrice,
-            hasDiscount: hasDiscount(item.product),
+            originalPrice: Number(item.product.price), // Giá gốc (Decimal → number)
+            salePrice,                                  // Giá sau giảm
+            hasDiscount: hasDiscount(item.product),     // Có đang giảm giá không
           },
-          itemTotal,
+          itemTotal, // Tổng tiền của dòng này (salePrice × quantity)
         };
       }) || [];
 
@@ -52,29 +65,34 @@ export class CartService {
       userId:     cart?.userId,
       items,
       totalPrice,
-      totalItems: items.reduce((acc, item) => acc + item.quantity, 0),
+      totalItems: items.reduce((acc, item) => acc + item.quantity, 0), // Tổng số lượng
     };
   }
 
+  /**
+   * Thêm sản phẩm vào giỏ hàng
+   * Kiểm tra tồn kho trước khi thêm để tránh thêm sản phẩm hết hàng
+   */
   async addItem(userId: number, input: AddToCartInput) {
+    // Kiểm tra sản phẩm tồn tại
     const product = await this.productRepository.findById(input.productId);
     if (!product)
       throw new APIError(404, "Product not found", {}, "PRODUCT_NOT_FOUND");
-    if (product.stockQuantity < input.quantity) {
-      throw new APIError(
-        400,
-        `Not enough stock.`,
-        { available: product.stockQuantity },
-        "INSUFFICIENT_STOCK",
-      );
-    }
 
+    // Kiểm tra tồn kho đủ không
+    if (product.stockQuantity < input.quantity) {
+      throw new APIError(400, `Not enough stock.`, { available: product.stockQuantity }, "INSUFFICIENT_STOCK");
+    }
+    
+    // Auto-create giỏ hàng nếu chưa có
     let cart = await this.cartRepository.findCartByUserId(userId);
     if (!cart) {
       await this.cartRepository.createCart(userId);
       cart = await this.cartRepository.findCartByUserId(userId);
     }
 
+    // upsertCartItem: nếu (productId + size + color) đã có → cộng thêm quantity
+    // Nếu chưa có → tạo CartItem mới
     await this.cartRepository.upsertCartItem(
       cart!.id,
       input.productId,
@@ -82,9 +100,13 @@ export class CartService {
       input.color,
       input.quantity,
     );
-    return this.getCart(userId);
+    return this.getCart(userId); // Trả về giỏ hàng cập nhật
   }
 
+  /**
+   * Cập nhật số lượng của một CartItem
+   * Kiểm tra CartItem thuộc về giỏ của user (tránh IDOR)
+   */
   async updateItemQty(
     userId: number,
     cartItemId: number,
@@ -93,10 +115,12 @@ export class CartService {
     const cart = await this.cartRepository.findCartByUserId(userId);
     if (!cart) throw new APIError(404, "Cart not found", {}, "CART_NOT_FOUND");
 
+    // Kiểm tra cartItem thuộc giỏ của user này (tránh user A sửa giỏ user B)
     const itemExists = cart.items.find((item) => item.id === cartItemId);
     if (!itemExists)
       throw new APIError(404, "Item not found", {}, "ITEM_NOT_FOUND");
 
+    // Kiểm tra tồn kho trước khi tăng số lượng
     const product = await this.productRepository.findById(itemExists.productId);
     if (product && product.stockQuantity < input.quantity) {
       throw new APIError(400, "Not enough stock", {}, "INSUFFICIENT_STOCK");
@@ -106,6 +130,9 @@ export class CartService {
     return this.getCart(userId);
   }
 
+  /**
+   * Xóa một CartItem khỏi giỏ hàng
+   */
   async removeItem(userId: number, cartItemId: number) {
     const cart = await this.cartRepository.findCartByUserId(userId);
     if (!cart) throw new APIError(404, "Cart not found", {}, "CART_NOT_FOUND");
@@ -118,7 +145,15 @@ export class CartService {
     return this.getCart(userId);
   }
 
-  // Sync localStorage cart to DB
+  /**
+   * Đồng bộ giỏ hàng từ localStorage vào DB sau khi user đăng nhập
+   *
+   * Logic merge:
+   * - Nếu sản phẩm (productId + size + color) đã có trong DB cart
+   *   → cộng thêm quantity (giới hạn tối đa 999)
+   * - Nếu chưa có → tạo CartItem mới (không vượt tồn kho)
+   * - Sản phẩm không tìm thấy trong DB → bỏ qua (log warning)
+   */
   async syncLocalStorageCart(userId: number, localItems: any[] = []) {
     try {
       let cart = await this.cartRepository.findCartByUserId(userId);
@@ -131,14 +166,17 @@ export class CartService {
         for (const item of localItems) {
           const product = await this.productRepository.findById(item.productId);
           if (!product) {
+            // Sản phẩm đã bị xóa khỏi DB → bỏ qua
             console.warn(`Product ${item.productId} not found, skipping`);
             continue;
           }
 
+          // Giá trị mặc định cho size/color nếu không có
           const itemSize     = item.size || "One Size";
           const itemColor    = item.color || "Default";
-          const requestedQty = Math.min(item.quantity || 1, 999);
+          const requestedQty = Math.min(item.quantity || 1, 999); // Tối đa 999
 
+          // Tìm CartItem trùng (cùng productId + size + color)
           const existingCartItem = cart!.items.find(
             (cartItem) =>
               cartItem.productId === item.productId &&
@@ -147,9 +185,11 @@ export class CartService {
           );
 
           if (existingCartItem) {
+            // Cộng thêm quantity, không vượt 999
             const newQty = Math.min(existingCartItem.quantity + requestedQty, 999);
             await this.cartRepository.updateItemQty(existingCartItem.id, newQty);
           } else {
+            // Tạo mới — số lượng không vượt tồn kho
             const availableQty =
               product.stockQuantity < requestedQty
                 ? Math.min(requestedQty, product.stockQuantity)

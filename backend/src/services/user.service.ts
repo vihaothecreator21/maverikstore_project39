@@ -4,8 +4,8 @@ import { APIError, ValidationError } from "../utils/apiResponse";
 import { getEnv } from "../config/env.config";
 
 /**
- * User Service — Business Logic for user profile management
- * Controller calls this, this calls UserRepository.
+ * User Service — Logic nghiệp vụ quản lý hồ sơ người dùng
+ * Controller gọi Service, Service gọi UserRepository.
  */
 export class UserService {
   private userRepository: UserRepository;

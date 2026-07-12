@@ -2,13 +2,13 @@ import { Request, Response } from "express";
 import { APIError, ApiResponse } from "../utils/apiResponse";
 
 /**
- * 404 Not Found Handler Middleware
- * Handles all requests to undefined routes
- * Must be placed AFTER all route definitions and BEFORE error handler
+ * Middleware Xử lý 404 Not Found
+ * Xử lý tất cả request đến các route chưa được định nghĩa
+ * Phải đặt SAU tất cả route và TRƯỚC error handler
  * 
  * @usage
  * app.use(notFoundHandler);  // 404 handler
- * app.use(errorHandler);     // Error handler (must be after 404)
+ * app.use(errorHandler);     // Error handler (phải sau 404)
  */
 export const notFoundHandler = (req: Request, res: Response<ApiResponse<never>>): void => {
   const availableEndpoints = {

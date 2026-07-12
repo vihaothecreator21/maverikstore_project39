@@ -2,11 +2,11 @@ import { prisma } from "../config/database";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 /**
- * Admin Repository — Raw DB queries for admin analytics & reports
- * Only this layer talks to Prisma. Services call this layer.
+ * Admin Repository — Truy vấn DB thô dành cho phân tích và báo cáo admin
+ * Chỉ lấp này giao tiếp với Prisma. Service gọi lấp này.
  */
 export class AdminRepository {
-  // ── Dashboard counts ─────────────────────────────────────────────
+  // ── Đếm số liệu cho dashboard ────────────────────────────────────
 
   async countOrders() {
     return prisma.order.count();
@@ -39,7 +39,7 @@ export class AdminRepository {
     return prisma.product.count({ where: { stockQuantity: { lt: threshold } } });
   }
 
-  // ── Revenue charts ───────────────────────────────────────────────
+  // ── Biểu đồ doanh thu ─────────────────────────────────────────
 
   async findOrdersForRevenue(
     startDate: Date,
@@ -66,7 +66,7 @@ export class AdminRepository {
     });
   }
 
-  // ── Product stats ────────────────────────────────────────────────
+  // ── Thống kê sản phẩm ───────────────────────────────────────────
 
   async groupOrderDetailsByProduct(limit: number) {
     return prisma.$queryRaw<
@@ -127,7 +127,7 @@ export class AdminRepository {
     });
   }
 
-  // ── Customer stats ───────────────────────────────────────────────
+  // ── Thống kê khách hàng ──────────────────────────────────────────
 
   async countNewCustomers(since: Date) {
     return prisma.user.count({
@@ -153,7 +153,7 @@ export class AdminRepository {
     });
   }
 
-  // ── Export ───────────────────────────────────────────────────────
+  // ── Xuất dữ liệu ─────────────────────────────────────────────────
 
   async findOrdersForExport(startDate: Date, endDate: Date) {
     return prisma.order.findMany({

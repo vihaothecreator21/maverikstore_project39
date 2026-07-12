@@ -8,6 +8,7 @@ const htmlFiles = glob.sync('./src/**/*.html')
 export default defineConfig({
    base: './', 
    root: resolve(__dirname, 'src'),   // ✅ keeps dev server working
+   envDir: resolve(__dirname),        // ✅ load .env from the project root instead of src/
    server: {
     host: true,
     port: 3000,

@@ -1,6 +1,7 @@
-import { Modal } from "bootstrap";
+import { Modal, Dropdown } from "bootstrap";
 import { getApiBase } from "./api-config.js";
 import { clearAuthData, syncCartAfterLogin } from "./auth-utils.js";
+import { showToast } from "./ui-feedback.js";
 
 const API_BASE = getApiBase();
 
@@ -110,9 +111,9 @@ async function handleModalLogin(event) {
       return;
     }
 
-    alert(data.message || "Đăng nhập thất bại");
+    showToast(data.message || "Đăng nhập thất bại");
   } catch {
-    alert("Lỗi kết nối");
+    showToast("Lỗi kết nối");
   }
 }
 
@@ -146,9 +147,9 @@ async function handleModalRegister(event) {
       return;
     }
 
-    alert(data.message || "Không thể gửi mã xác minh");
+    showToast(data.message || "Không thể gửi mã xác minh");
   } catch {
-    alert("Lỗi kết nối");
+    showToast("Lỗi kết nối");
   }
 }
 
@@ -220,7 +221,7 @@ async function handleRegisterOtpVerify(event, email) {
     const data = await response.json();
 
     if (response.ok && data.status === "success") {
-      alert("Tạo tài khoản thành công. Vui lòng đăng nhập.");
+      showToast("Tạo tài khoản thành công. Vui lòng đăng nhập.");
       resetRegisterOtpStep();
       const registerModal = document.getElementById("registerModal");
       const loginModal = document.getElementById("loginModal");
@@ -229,10 +230,10 @@ async function handleRegisterOtpVerify(event, email) {
       return;
     }
 
-    alert(data.message || "Mã xác minh không hợp lệ");
+    showToast(data.message || "Mã xác minh không hợp lệ");
     form.addEventListener("submit", (nextEvent) => handleRegisterOtpVerify(nextEvent, email), { once: true });
   } catch {
-    alert("Lỗi kết nối");
+    showToast("Lỗi kết nối");
     form.addEventListener("submit", (nextEvent) => handleRegisterOtpVerify(nextEvent, email), { once: true });
   }
 }
@@ -251,14 +252,14 @@ function setupRegisterOtpResend(email) {
       const data = await response.json();
 
       if (response.ok && data.status === "success") {
-        alert("Mã xác minh mới đã được gửi.");
+        showToast("Mã xác minh mới đã được gửi.");
         startRegisterOtpCooldown();
         return;
       }
 
-      alert(data.message || "Không thể gửi lại mã xác minh");
+      showToast(data.message || "Không thể gửi lại mã xác minh");
     } catch {
-      alert("Lỗi kết nối");
+      showToast("Lỗi kết nối");
     }
   });
 }
@@ -317,7 +318,9 @@ export function updateNavbarState() {
     }
 
     if (userDropdown) {
+      userDropdown.classList.add("d-lg-flex");
       userDropdown.classList.remove("d-none");
+      userDropdown.style.display = ""; // clear failsafe
 
       // Fix: API trả về "username", không phải "name"
       // Ưu tiên: fullName > username > email prefix
@@ -347,7 +350,9 @@ export function updateNavbarState() {
     }
 
     if (userDropdown) {
+      userDropdown.classList.remove("d-lg-flex");
       userDropdown.classList.add("d-none");
+      userDropdown.style.display = "none"; // failsafe
     }
   }
 }
@@ -387,6 +392,13 @@ function buildUserMenu(container, user) {
 }
 
 export function handleLogout() {
+  // Close dropdown programmatically if open
+  const userMenuBtn = document.getElementById("userMenuBtn");
+  if (userMenuBtn) {
+    const bsDropdown = Dropdown.getInstance(userMenuBtn) || new Dropdown(userMenuBtn);
+    bsDropdown.hide();
+  }
+
   clearAuthData();
   document.getElementById("userDropdownMenu")?.replaceChildren();
   window.dispatchEvent(new Event("logoutSuccess"));

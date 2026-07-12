@@ -94,7 +94,7 @@ const startServer = async (): Promise<void> => {
     await connectDatabase();
 
     // Start Express server (with validated PORT)
-    app.listen(env.PORT, () => {
+    app.listen(env.PORT, "0.0.0.0", () => {
       console.log(`
 ╔════════════════════════════════════════╗
 ║    MAVERIK STORE API - ${env.NODE_ENV.toUpperCase().padEnd(23)} ║

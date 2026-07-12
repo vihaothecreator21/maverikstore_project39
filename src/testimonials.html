@@ -398,9 +398,10 @@
 </div>
 
 <script type="module">
+  import { showConfirm, showToast } from "./assets/js/ui-feedback.js";
   // Expose logout function globally
   window.handleLogout = async function() {
-    const confirmed = window.confirm('Bạn có chắc muốn đăng xuất?');
+    const confirmed = await showConfirm('Bạn có chắc muốn đăng xuất?', { title: "Đăng xuất", confirmText: "Đăng xuất" });
     if (!confirmed) return;
     try {
       localStorage.removeItem('authToken');
@@ -408,7 +409,7 @@
       localStorage.removeItem('userEmail');
       localStorage.removeItem('maverik_cart');
       window.dispatchEvent(new Event('cartUpdated'));
-      alert('✅ Đã đăng xuất');
+      showToast('✅ Đã đăng xuất');
       window.location.href = './index.html';
     } catch (err) {
       console.error('Logout error:', err);
@@ -446,13 +447,13 @@
         localStorage.setItem('authToken', data.data.token);
         if (rememberMe) localStorage.setItem('userEmail', email);
         localStorage.setItem('user', JSON.stringify(data.data.user));
-        alert('✅ Đăng nhập thành công!');
+        showToast('✅ Đăng nhập thành công!');
         window.location.reload();
       } else {
-        alert('❌ ' + (data.message || 'Đăng nhập thất bại'));
+        showToast('❌ ' + (data.message || 'Đăng nhập thất bại'));
       }
     } catch (error) {
-      alert('❌ Lỗi kết nối');
+      showToast('❌ Lỗi kết nối');
     }
   });
   document.getElementById('registerFormModal')?.addEventListener('submit', async function(e) {
@@ -469,14 +470,14 @@
       });
       const data = await response.json();
       if (response.ok && data.status === 'success') {
-        alert('✅ Tạo tài khoản thành công! Vui lòng đăng nhập.');
+        showToast('✅ Tạo tài khoản thành công! Vui lòng đăng nhập.');
         document.getElementById('registerModal').style.display = 'none';
         new bootstrap.Modal(document.getElementById('loginModal')).show();
       } else {
-        alert('❌ ' + (data.message || 'Đăng ký thất bại'));
+        showToast('❌ ' + (data.message || 'Đăng ký thất bại'));
       }
     } catch (error) {
-      alert('❌ Lỗi kết nối');
+      showToast('❌ Lỗi kết nối');
     }
   });
 </script>

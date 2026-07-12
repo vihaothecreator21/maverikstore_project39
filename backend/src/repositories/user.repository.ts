@@ -1,12 +1,12 @@
 import { prisma } from "../config/database";
 
 /**
- * User Repository - Database Access Layer
- * Handles all user-related database operations
+ * User Repository - Tầng truy cập cơ sở dữ liệu
+ * Xử lý toàn bộ thao tác DB liên quan đến người dùng
  */
 export class UserRepository {
   /**
-   * Find user by email
+   * Tìm user theo email
    */
   async findByEmail(email: string) {
     return prisma.user.findUnique({
@@ -25,7 +25,7 @@ export class UserRepository {
   }
 
   /**
-   * Find user by ID
+   * Tìm user theo ID
    */
   async findById(id: number) {
     return prisma.user.findUnique({
@@ -43,7 +43,7 @@ export class UserRepository {
   }
 
   /**
-   * Create new user
+   * Tạo user mới
    */
   async create(data: {
     username: string;
@@ -59,7 +59,7 @@ export class UserRepository {
         passwordHash: data.passwordHash,
         phone:        data.phone,
         address:      data.address || null,
-        role:         "CUSTOMER", // Default role for new users
+        role:         "CUSTOMER", // Role mặc định cho user mới
       },
       select: {
         id: true,
@@ -74,7 +74,7 @@ export class UserRepository {
   }
 
   /**
-   * Check if email exists
+   * Kiểm tra email đã tồn tại chưa
    */
   async emailExists(email: string) {
     const user = await prisma.user.findUnique({
@@ -85,8 +85,8 @@ export class UserRepository {
   }
 
   /**
-   * Check if email is taken by ANOTHER user (excluding self)
-   * Used when updating profile email
+   * Kiểm tra email đã được dùng bởi user KHÁC (trừ chính mình)
+   * Dùng khi cập nhật email trong profile
    */
   async isEmailTaken(email: string, excludeId: number): Promise<boolean> {
     const user = await prisma.user.findUnique({
@@ -98,7 +98,7 @@ export class UserRepository {
   }
 
   /**
-   * Update email separately (requires uniqueness check first)
+   * Cập nhật email riêng (yêu cầu kiểm tra tính duy nhất trước)
    */
   async updateEmail(id: number, email: string) {
     return prisma.user.update({
@@ -109,8 +109,8 @@ export class UserRepository {
   }
 
   /**
-   * Find user by ID with passwordHash (for password verification)
-   * ⚠️ Only use for password change — never expose passwordHash in API responses
+   * Tìm user theo ID kèm passwordHash (dùng để xác minh mật khẩu)
+   * ⚠️ Chỉ dùng khi đổi mật khẩu — không bao giờ lộ passwordHash trong API response
    */
   async findByIdWithHash(id: number) {
     return prisma.user.findUnique({
@@ -120,7 +120,7 @@ export class UserRepository {
   }
 
   /**
-   * Update user profile
+   * Cập nhật hồ sơ người dùng
    */
   async updateProfile(id: number, data: Record<string, string | null | undefined>) {
     return prisma.user.update({
@@ -139,7 +139,7 @@ export class UserRepository {
   }
 
   /**
-   * Change password
+   * Đổi mật khẩu
    */
   async changePassword(id: number, passwordHash: string) {
     return prisma.user.update({

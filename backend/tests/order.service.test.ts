@@ -15,7 +15,6 @@
 
 import { OrderService } from "../src/services/order.service";
 import { OrderRepository } from "../src/repositories/order.repository";
-import { APIError } from "../src/utils/apiResponse";
 import { Prisma, OrderStatus, PaymentStatus } from "@prisma/client";
 
 // ── Mock OrderRepository ────────────────────────────────────────────
@@ -31,6 +30,7 @@ function createMockOrderRepository(): jest.Mocked<OrderRepository> {
     findById:                 jest.fn(),
     updateStatusWithRollback: jest.fn(),
     cancelExpiredOrders:      jest.fn(),
+    findTimedOutOrders:       jest.fn(),
   } as unknown as jest.Mocked<OrderRepository>;
 }
 
@@ -96,7 +96,7 @@ const MOCK_CREATED_ORDER = {
   id: 99,
   userId: MOCK_USER_ID,
   totalAmount: new Prisma.Decimal(950000), // 250000*2 + 450000*1
-  status: OrderStatus.PENDING,
+  status: OrderStatus.PENDING_PAYMENT,
   shippingAddress: MOCK_PLACE_ORDER_INPUT.shippingAddress,
   shippingPhone: MOCK_PLACE_ORDER_INPUT.shippingPhone,
   note: MOCK_PLACE_ORDER_INPUT.note,
@@ -177,6 +177,7 @@ describe("OrderService", () => {
       // 3. Output format đúng? (Decimal → number)
       expect(result.totalAmount).toBe(950000);
       expect(typeof result.totalAmount).toBe("number");
+      expect(result.status).toBe(OrderStatus.PENDING_PAYMENT);
     });
 
     /**
@@ -194,18 +195,14 @@ describe("OrderService", () => {
         items: [], // ← giỏ trống
       });
 
-      // ACT + ASSERT — expect error
-      await expect(
-        orderService.placeOrder(MOCK_USER_ID, MOCK_PLACE_ORDER_INPUT),
-      ).rejects.toThrow(APIError);
-
       await expect(
         orderService.placeOrder(MOCK_USER_ID, MOCK_PLACE_ORDER_INPUT),
       ).rejects.toMatchObject({
+        statusCode: 400,
         code: "CART_EMPTY",
       });
 
-      // createOrderAtomic KHÔNG được gọi nếu giỏ trống
+      expect(mockRepo.findCartForOrder).toHaveBeenCalledTimes(1);
       expect(mockRepo.createOrderAtomic).not.toHaveBeenCalled();
     });
 
@@ -217,7 +214,12 @@ describe("OrderService", () => {
 
       await expect(
         orderService.placeOrder(MOCK_USER_ID, MOCK_PLACE_ORDER_INPUT),
-      ).rejects.toThrow(APIError);
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        code: "CART_EMPTY",
+      });
+
+      expect(mockRepo.createOrderAtomic).not.toHaveBeenCalled();
     });
 
     /**
@@ -239,6 +241,10 @@ describe("OrderService", () => {
       ).rejects.toMatchObject({
         statusCode: 409,
         code: "INSUFFICIENT_STOCK",
+        details: {
+          productName: "Áo thun Basic",
+          available: 3,
+        },
       });
     });
 
@@ -254,6 +260,8 @@ describe("OrderService", () => {
       await expect(
         orderService.placeOrder(MOCK_USER_ID, MOCK_PLACE_ORDER_INPUT),
       ).rejects.toThrow("DB connection lost");
+
+      expect(mockRepo.createOrderAtomic).toHaveBeenCalledTimes(1);
     });
   });
 

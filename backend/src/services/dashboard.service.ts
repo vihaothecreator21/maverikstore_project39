@@ -2,8 +2,8 @@ import { OrderStatus } from "@prisma/client";
 import { AdminRepository } from "../repositories/admin.repository";
 
 /**
- * Dashboard Service — Business logic for admin overview stats
- * Handles: overview cards, today metrics, status breakdown
+ * Dashboard Service — Logic nghiệp vụ cho thống kê tổng quan Admin
+ * Xử lý: các thẻ tổng quan, chỉ số hôm nay, phân bổ trạng thái đơn hàng
  */
 export class DashboardService {
   private adminRepository: AdminRepository;
@@ -35,22 +35,22 @@ export class DashboardService {
       this.adminRepository.countOrdersByStatus(),
       this.adminRepository.countProducts(),
       this.adminRepository.countCustomers(),
-      // Net revenue (DELIVERED or COMPLETED all-time)
+      // Doanh thu thuần (DELIVERED hoặc COMPLETED từ trước đến nay)
       this.adminRepository.sumOrderAmount({
         status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
       }),
-      // Gross revenue (Now redefined as realized revenue: DELIVERED or COMPLETED)
+      // Doanh thu thực tế (đã xác định lại là: DELIVERED hoặc COMPLETED)
       this.adminRepository.sumOrderAmount({
         status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
       }),
       this.adminRepository.countLowStockProducts(10),
       this.adminRepository.countOrdersWhere({ where: { status: OrderStatus.PENDING } }),
-      // Today net
+      // Doanh thu thuần hôm nay
       this.adminRepository.sumOrderAmount({
         status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
         updatedAt: { gte: todayStart, lte: todayEnd },
       }),
-      // Today gross (matching user request: only count when DELIVERED)
+      // Doanh thu thực hôm nay (chỉ tính khi DELIVERED)
       this.adminRepository.sumOrderAmount({
         status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
         updatedAt: { gte: todayStart, lte: todayEnd },
@@ -60,7 +60,7 @@ export class DashboardService {
       }),
     ]);
 
-    // Map groupBy → object
+    // Chuyển kết quả groupBy → object key-value
     const statusMap: Record<string, number> = {};
     ordersByStatus.forEach((row) => {
       statusMap[row.status] = row._count.id;

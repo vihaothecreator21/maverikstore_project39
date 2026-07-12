@@ -15,8 +15,8 @@ import {
 import { z } from "zod";
 
 /**
- * Auth Controller - HTTP Request Handlers
- * Handles user registration, login, and authentication
+ * Auth Controller - Tầng xử lý HTTP Request
+ * Xử lý đăng ký, đăng nhập và xác thực người dùng
  */
 
 export class AuthController {
@@ -40,7 +40,7 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/register
-   * Request OTP for a new user
+   * Yêu cầu gửi OTP xác thực để đăng ký tài khoản mới
    */
   static async register(req: Request, res: Response) {
     const input = AuthController.validateBody(RegisterSchema, req.body);
@@ -92,7 +92,7 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/login
-   * Login user with email and password
+   * Đăng nhập bằng email và mật khẩu
    */
   static async login(req: Request, res: Response) {
     const input = AuthController.validateBody(LoginSchema, req.body);
@@ -103,10 +103,10 @@ export class AuthController {
 
   /**
    * GET /api/v1/auth/profile
-   * Get current user profile (requires authentication)
+   * Lấy thông tin profile người dùng hiện tại (cần xác thực)
    */
   static async getProfile(req: Request, res: Response) {
-    // Get userId from request (set by auth middleware)
+    // Lấy userId từ request (được gán bởi auth middleware)
     const userId = req.userId;
 
     if (!userId) {
@@ -125,7 +125,7 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/logout
-   * Logout user (client-side token removal)
+   * Đăng xuất người dùng (xóa token phía client)
    */
   static async logout(_req: Request, res: Response) {
     return sendSuccess(
