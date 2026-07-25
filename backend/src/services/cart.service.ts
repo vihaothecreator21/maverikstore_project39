@@ -93,6 +93,26 @@ export class CartService {
 
     // upsertCartItem: nếu (productId + size + color) đã có → cộng thêm quantity
     // Nếu chưa có → tạo CartItem mới
+    const existingCartItem = cart!.items.find(
+      (item) =>
+        item.productId === input.productId &&
+        item.size === input.size &&
+        item.color === input.color,
+    );
+    const nextQuantity = (existingCartItem?.quantity ?? 0) + input.quantity;
+    if (nextQuantity > product.stockQuantity) {
+      throw new APIError(
+        400,
+        "Not enough stock",
+        {
+          available: product.stockQuantity,
+          currentQuantity: existingCartItem?.quantity ?? 0,
+          requestedQuantity: input.quantity,
+        },
+        "INSUFFICIENT_STOCK",
+      );
+    }
+
     await this.cartRepository.upsertCartItem(
       cart!.id,
       input.productId,
@@ -186,7 +206,10 @@ export class CartService {
 
           if (existingCartItem) {
             // Cộng thêm quantity, không vượt 999
-            const newQty = Math.min(existingCartItem.quantity + requestedQty, 999);
+            const newQty = Math.min(
+              existingCartItem.quantity + requestedQty,
+              product.stockQuantity,
+            );
             await this.cartRepository.updateItemQty(existingCartItem.id, newQty);
           } else {
             // Tạo mới — số lượng không vượt tồn kho

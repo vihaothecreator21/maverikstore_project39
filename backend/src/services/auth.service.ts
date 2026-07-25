@@ -1,5 +1,6 @@
 import jwt, { type SignOptions, type JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import type { Prisma } from "@prisma/client";
 import { getEnv } from "../config/env.config";
 import { prisma } from "../config/database";
 import { UserRepository } from "../repositories/user.repository";
@@ -196,7 +197,7 @@ export class AuthService {
       // Username = tên đầy đủ lowercase, khoảng trắng → dấu gạch dưới
       const user = await tx.user.create({
         data: {
-          username: pending.name.toLowerCase().replace(/\s+/g, "_"),
+          username: await this.generateUniqueUsername(tx, pending.name),
           email,
           passwordHash: pending.passwordHash,
           phone: pending.phone,
@@ -294,5 +295,29 @@ export class AuthService {
       { retryAfterSeconds },
       "OTP_RESEND_COOLDOWN",
     );
+  }
+
+  private async generateUniqueUsername(
+    tx: Prisma.TransactionClient,
+    fullName: string,
+  ): Promise<string> {
+    const baseUsername =
+      fullName
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, "")
+        .slice(0, 45) || "user";
+
+    let username = baseUsername;
+    let suffix = 2;
+
+    while (await tx.user.findUnique({ where: { username }, select: { id: true } })) {
+      username = `${baseUsername.slice(0, 45 - String(suffix).length)}${suffix}`;
+      suffix++;
+    }
+
+    return username;
   }
 }

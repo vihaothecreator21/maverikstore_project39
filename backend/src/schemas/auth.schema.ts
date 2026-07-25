@@ -9,7 +9,7 @@ export const RegisterSchema = z.object({
     .string()
     .min(3, "Full name must be at least 3 characters")
     .max(50, "Full name must be less than 50 characters"),
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
   phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
   password: z
     .string()
@@ -21,19 +21,19 @@ export const RegisterSchema = z.object({
 });
 
 export const LoginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
 export const RegisterOtpRequestSchema = RegisterSchema;
 
 export const RegisterOtpVerifySchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
   otp: z.string().regex(/^\d{6}$/, "OTP must be a 6-digit code"),
 });
 
 export const RegisterOtpResendSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
 });
 
 export const UpdateProfileSchema = z.object({

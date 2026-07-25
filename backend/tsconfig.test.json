@@ -8,8 +8,9 @@
     "module": "CommonJS",
     "moduleResolution": "node"
   },
-  // Bao gồm cả src/ lẫn tests/ để IDE hiểu cross-reference
+  // Bao gồm src/ + toàn bộ tests/ (kể cả subdirectory unit/, integration/, setup/...)
   "include": ["src/**/*", "tests/**/*", "prisma/**/*"],
-  // Không exclude test files nữa — đây là config dành riêng cho test
+  // Không exclude test files — config này dành riêng cho test
   "exclude": ["node_modules", "dist"]
 }
+
