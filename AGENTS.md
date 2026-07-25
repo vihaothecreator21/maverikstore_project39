@@ -15,7 +15,9 @@ Maverik Store là project ecommerce fullstack cho thời trang/quần áo.
 - `docs/agents`: AI agent examples, skills, and safe-edit guidance.
 - `docs/context`: longer AI/project context documents.
 - `docs/architecture`: architecture and business-logic summaries.
+- `docs/modules`: technical docs organized by feature/module.
 - `docs/plans`: feature plans and implementation notes.
+- `docs/skills`: local skill guidance and indexes.
 - `backend/src`: backend API source code.
 - `backend/src/controllers`: HTTP controllers.
 - `backend/src/routes`: API routes.
@@ -61,6 +63,7 @@ Maverik Store là project ecommerce fullstack cho thời trang/quần áo.
 - `docs/agents/CODEX_SAFE_EDIT_EXAMPLES.md`: concrete examples for safe Codex edits.
 - `docs/context/AI_ARCHITECTURE_CONTEXT.md`: extended AI context.
 - `docs/architecture/PROJECT_LOGIC_SUMMARY.md`: core architecture and business logic notes.
+- `docs/modules/README.md`: module-level technical documentation index.
 - `docs/plans/EMAIL_OTP_REGISTRATION_PLAN.md`: email OTP registration plan.
 
 ## Do-not-break-project protocol

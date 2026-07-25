@@ -28,4 +28,4 @@ Thư mục này lưu tài liệu kỹ thuật theo module. Bản mới được 
 - Tài liệu hiện hành nằm ngoài `99-archive/`.
 - Không dùng `.resolved` cho tài liệu mới; nếu đã xử lý xong, ghi trạng thái trong nội dung.
 - Mỗi module nên có một file tổng hợp ngắn, tránh nhiều file rời rạc lặp ý.
-- Khi code thay đổi lớn, cập nhật file module liên quan và `AI_CONTEXT.md` ở project root nếu thay đổi ảnh hưởng toàn hệ thống.
+- Khi code thay đổi lớn, cập nhật file module liên quan và `PROJECT_CONTEXT.md` ở project root nếu thay đổi ảnh hưởng toàn hệ thống.

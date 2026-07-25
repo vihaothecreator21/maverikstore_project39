@@ -29,7 +29,7 @@ Maverik Store là hệ thống e-commerce fullstack cho nội thất/home produc
 | `backend/src/repositories/` | Prisma access layer |
 | `backend/src/schemas/` | Zod schemas |
 | `backend/prisma/` | Database schema and seed |
-| `module/` | Technical module documentation |
+| `docs/modules/` | Technical module documentation |
 
 ## Module Ownership
 
@@ -44,5 +44,5 @@ Maverik Store là hệ thống e-commerce fullstack cho nội thất/home produc
 ## Current Source Of Truth
 
 - Code is more current than old documents under `99-archive/`.
-- `AI_CONTEXT.md` at project root is the high-level AI context.
+- `PROJECT_CONTEXT.md` at project root is the high-level AI context.
 - For implementation details, read the relevant module doc in `02-features/` and then inspect the code files listed there.

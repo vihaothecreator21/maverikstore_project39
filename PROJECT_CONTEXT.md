@@ -40,6 +40,7 @@
 - `backend/prisma/schema.prisma`: database schema.
 - `backend/prisma/seed.ts`: seed data.
 - `backend/tests`: backend tests.
+- `docs/modules`: technical documentation organized by feature/module.
 
 ## Supabase usage
 - Supabase is currently used as object storage for product images, not as the primary database.
@@ -52,7 +53,7 @@
 
 ## Current known issues / notes
 - `backend/.env.example` may be outdated versus `backend/src/config/env.config.ts`.
-- Some docs under `module/` may be historical.
+- Some docs under `docs/modules/99-archive/` may be historical.
 - Some frontend modules duplicate API base URL logic instead of using `src/assets/js/api-config.js`.
 - Vite build may warn about admin vendor scripts loaded outside ES module bundling.
 - Review/favorite models exist, but full public API/routes may not be mounted.

@@ -113,7 +113,13 @@ Payment callbacks are split by responsibility: the browser return URL is used fo
 |   |   `-- services/            # Business logic
 |   |-- prisma/                  # Prisma schema, migrations, and seed script
 |   `-- tests/                   # Backend Jest tests
-|-- docs/                        # Architecture notes, AI agent context, and plans
+|-- docs/                        # Architecture notes, module docs, AI context, and plans
+|   |-- agents/                  # Safe-edit examples for AI agents
+|   |-- architecture/            # System/business architecture notes
+|   |-- context/                 # Longer AI/project context
+|   |-- modules/                 # Technical documentation by feature/module
+|   |-- plans/                   # Feature plans and implementation notes
+|   `-- skills/                  # Local skill guidance and indexes
 |-- PROJECT_CONTEXT.md           # High-level project context
 `-- AGENTS.md                    # Safe-edit rules for AI agents
 ```
@@ -453,6 +459,7 @@ More project context is available in:
 - `docs/README.md` for the documentation index.
 - `docs/architecture/PROJECT_LOGIC_SUMMARY.md` for business logic notes.
 - `docs/context/AI_ARCHITECTURE_CONTEXT.md` for extended AI/project context.
+- `docs/modules/README.md` for module-level technical docs.
 - `docs/plans/EMAIL_OTP_REGISTRATION_PLAN.md` for email OTP registration planning.
 
 ## License
