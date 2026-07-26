@@ -43,6 +43,7 @@ export class ValidationError extends APIError {
  * }
  */
 export interface ApiResponse<T> {
+  success?: boolean;
   status: "success" | "error";
   code: number;
   errorCode?: string;

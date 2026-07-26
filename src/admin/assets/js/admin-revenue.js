@@ -20,7 +20,7 @@
  * - #btn-export-csv/#btn-export-xlsx xuất file từ exportData cache.
  */
 
-import { requireAdminAccess, getApiBase, formatVND, formatDate, ORDER_STATUS, showToast } from "./admin-guard.js";
+import { requireAdminAccess, getApiBase, formatVND, ORDER_STATUS, showToast } from "./admin-guard.js";
 import { initSidebar } from "./admin-nav.js";
 
 const auth = requireAdminAccess();

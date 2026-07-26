@@ -27,7 +27,6 @@ module.exports = {
   testPathIgnorePatterns: [
     "/node_modules/",
     "/dist/",
-    "<rootDir>/tests/integration/",
   ],
 
   // ── TypeScript transform ──────────────────────────────────────────
@@ -85,4 +84,3 @@ module.exports = {
   // ── Output ────────────────────────────────────────────────────────
   verbose: true,
 };
-

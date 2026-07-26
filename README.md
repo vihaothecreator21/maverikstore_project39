@@ -23,7 +23,7 @@ Small fashion shops need a simple storefront plus admin tools for products, orde
 - Centralized API error handling.
 - Zod request validation.
 - Jest unit and Supertest integration tests.
-- GitHub Actions CI for frontend build and backend test/build.
+- GitHub Actions CI for frontend lint/build and backend lint/unit/integration/build/smoke configuration.
 
 ### In Progress
 
@@ -40,7 +40,7 @@ Small fashion shops need a simple storefront plus admin tools for products, orde
 
 ## Current Project Status
 
-This repository is CV-ready as a learning project, not a production store. Core backend security checks have been tightened: `/profile` requires a valid JWT, admin product mutations require an admin role from the verified session, JWT secrets must be configured through environment variables, and cart stock checks prevent cumulative quantity overflow.
+This repository is CV-ready as a learning project, not a production store. Core backend security checks have been tightened: `/profile` requires a valid JWT, admin product mutations require an admin role from the verified session, JWT secrets must be configured through environment variables, and cart stock checks prevent cumulative quantity overflow. The latest local verification ran backend unit tests, integration tests, lint, and build successfully; GitHub Actions must still be checked on GitHub after push before merging.
 
 ## Technologies
 
@@ -173,8 +173,24 @@ Default Vite URL: `http://localhost:5173`.
 
 ```bash
 cd backend
+npm run test:unit
+npm run test:integration
 npm test
 ```
+
+Latest local backend verification: `npm test` passed 53 tests total, including 32 unit tests and 21 integration tests. Frontend lint and build also pass locally. The production build starts from `backend/dist/src/server.js`; local HTTP health-check smoke was not completed in this session because background process execution was rejected by the local approval system, but CI includes a `/api/health` smoke step.
+
+## Production Build
+
+From `backend/`:
+
+```bash
+npm run prisma:generate
+npm run build
+npm start
+```
+
+Docker startup uses `npm run prisma:generate`, `npx prisma migrate deploy`, then `npm start`. It does not use `prisma db push --accept-data-loss`.
 
 ## API Overview
 
@@ -214,6 +230,8 @@ Screenshots are planned. Add storefront, product detail, cart, checkout, and adm
 
 - Frontend cart is still mostly `localStorage`; backend cart sync exists but is not a full real-time server-cart frontend rewrite.
 - Payment needs real VNPay sandbox credentials and callback URL testing before production.
+- Checkout/order/payment code exists, but payment is not claimed production-ready without sandbox end-to-end verification.
+- No live demo URL is currently documented.
 - Email OTP requires a configured Resend API key.
 - Supabase is used for product image storage only, not as the primary database.
 - Some modules have documentation/history under `docs/modules/99-archive`.

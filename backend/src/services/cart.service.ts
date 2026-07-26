@@ -1,12 +1,11 @@
-import { CartRepository } from "../repositories/cart.repository";
-import { ProductRepository } from "../repositories/product.repository";
-import { APIError } from "../utils/apiResponse";
-import { calculateSalePrice, hasDiscount } from "../utils/pricing.helper";
+import { CartRepository } from "../repositories/cart.repository.js";
+import { ProductRepository } from "../repositories/product.repository.js";
+import { APIError } from "../utils/apiResponse.js";
+import { calculateSalePrice, hasDiscount } from "../utils/pricing.helper.js";
 import type {
   AddToCartInput,
   UpdateCartItemInput,
-  SyncCartInput,
-} from "../schemas/cart.schema";
+} from "../schemas/cart.schema.js";
 
 /**
  * Cart Service — Xử lý nghiệp vụ giỏ hàng

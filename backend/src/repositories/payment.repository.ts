@@ -1,4 +1,4 @@
-import { prisma } from "../config/database";
+import { prisma } from "../config/database.js";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 /**
@@ -17,7 +17,7 @@ export class PaymentRepository {
     });
   }
 
-  async findOrderAmount(orderId: number, userId: number) {
+  async findOrderAmount(orderId: number, _userId: number) {
     return prisma.order.findUnique({
       where: { id: orderId },
       select: { id: true, totalAmount: true, userId: true },

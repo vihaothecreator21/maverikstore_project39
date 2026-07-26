@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { APIError, ValidationError, ApiResponse } from "../utils/apiResponse";
+import { APIError, ValidationError, ApiResponse } from "../utils/apiResponse.js";
 
 /**
  * Global Error Handler Middleware — Xử lý tập trung mọi lỗi
@@ -39,7 +39,7 @@ export const errorHandler = (
 
   // Giá trị mặc định cho lỗi chung (500 Internal Server Error)
   let statusCode = 500;
-  let message = "Internal Server Error";
+  let message = "Internal server error";
   let code: string | undefined;
   let details: Record<string, any> | undefined;
   let errors: Record<string, string[]> | undefined;
@@ -65,13 +65,14 @@ export const errorHandler = (
     statusCode = 400;
     message = "Invalid JSON in request body";
     code = "SYNTAX_ERROR";
-  } else if (err.message) {
+  } else if (err.message && isDevelopment) {
     // Lỗi JavaScript thuần (Error, TypeError, ...) — giữ message gốc
     message = err.message;
   }
 
   // Trả về response lỗi theo chuẩn đồng nhất
   res.status(statusCode).json({
+    success: false,
     status: "error",
     code: statusCode,
     message,

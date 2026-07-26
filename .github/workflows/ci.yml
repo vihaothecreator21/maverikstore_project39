@@ -3,7 +3,6 @@ name: CI
 on:
   push:
   pull_request:
-    branches: ["main"]
 
 permissions:
   contents: read
@@ -28,7 +27,7 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint --if-present
+        run: npm run lint
 
       - name: Build
         run: npm run build
@@ -36,6 +35,37 @@ jobs:
   backend:
     name: Backend lint, test, and build
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_DATABASE: maverikstore_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptest_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      API_VERSION: v1
+      DATABASE_URL: mysql://root:test_password@127.0.0.1:3306/maverikstore_test
+      JWT_SECRET: test-jwt-secret-with-sufficient-length
+      JWT_EXPIRE: 7d
+      BCRYPT_ROUNDS: 6
+      OTP_SECRET: test-otp-secret-with-sufficient-length
+      CORS_ORIGINS: http://localhost:3000
+      RESEND_API_KEY: re_test_fake_key_do_not_use
+      EMAIL_FROM: test@example.com
+      GEMINI_API_KEY: test-gemini-key
+      VNPAY_TMN_CODE: TESTCODE
+      VNPAY_HASH_SECRET: test-vnpay-hash-secret-16chars
+      VNPAY_RETURN_URL: http://localhost:5000/api/v1/payments/vnpay/return
+      VNPAY_FRONTEND_RETURN: http://localhost:3000/vnpay-return.html
+      VNPAY_IPN_URL: http://localhost:5000/api/v1/payments/vnpay/ipn
 
     steps:
       - name: Checkout
@@ -56,16 +86,39 @@ jobs:
         working-directory: backend
         run: npm run prisma:generate
 
+      - name: Deploy test database migrations
+        working-directory: backend
+        run: npx prisma migrate deploy
+
       - name: Lint
         working-directory: backend
-        run: npm run lint --if-present
+        run: npm run lint
 
-      - name: Test
+      - name: Unit tests
         working-directory: backend
-        run: npm test
-        env:
-          NODE_ENV: test
+        run: npm run test:unit
+
+      - name: Integration tests
+        working-directory: backend
+        run: npm run test:integration
 
       - name: Build
         working-directory: backend
         run: npm run build
+
+      - name: Production build smoke test
+        working-directory: backend
+        run: |
+          NODE_ENV=production npm start &
+          SERVER_PID=$!
+          for i in {1..30}; do
+            if curl --fail http://127.0.0.1:5000/api/health; then
+              kill $SERVER_PID
+              wait $SERVER_PID || true
+              exit 0
+            fi
+            sleep 2
+          done
+          kill $SERVER_PID
+          wait $SERVER_PID || true
+          exit 1

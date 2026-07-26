@@ -27,11 +27,13 @@ echo "✅ MySQL is ready!"
 # ── Thêm 3 giây buffer để MySQL hoàn toàn init xong ──
 sleep 3
 
-# ── Sync schema trực tiếp vào DB mới (bỏ qua migration history) ──
-echo "🔄 Pushing Prisma schema to database..."
-npx prisma db push --accept-data-loss
-echo "✅ Schema synced!"
+echo "Generating Prisma client..."
+npm run prisma:generate
+
+echo "Deploying Prisma migrations..."
+npx prisma migrate deploy
+echo "Migrations deployed!"
 
 # ── Start Server ──────────────────────────────────
-echo "🚀 Starting Maverik Store API on port $PORT..."
-exec npx tsx src/server.ts
+echo "Starting Maverik Store API on port $PORT..."
+exec npm start

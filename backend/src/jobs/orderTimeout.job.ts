@@ -1,4 +1,4 @@
-import { orderRepository } from "../container";
+import { orderRepository } from "../container.js";
 import { OrderStatus } from "@prisma/client";
 
 /**
@@ -69,7 +69,7 @@ export const runOrderTimeoutJob = async (): Promise<void> => {
  *
  * Gọi hàm này trong server.ts ngay sau khi server start và DB connect thành công
  */
-export const startOrderTimeoutJob = (): void => {
+export const startOrderTimeoutJob = (): NodeJS.Timeout => {
   const INTERVAL_MS = 60 * 1000; // 1 phút = 60.000 ms
   console.log("[OrderTimeout] Job started — checking every 1 minute");
 
@@ -77,5 +77,5 @@ export const startOrderTimeoutJob = (): void => {
   runOrderTimeoutJob();
 
   // Sau đó cứ mỗi 1 phút chạy 1 lần
-  setInterval(runOrderTimeoutJob, INTERVAL_MS);
+  return setInterval(runOrderTimeoutJob, INTERVAL_MS);
 };

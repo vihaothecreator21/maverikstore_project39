@@ -1,6 +1,6 @@
 // Import Bootstrap JS
 import "./ui-feedback.js";
-import * as bootstrap from "bootstrap";
+import "bootstrap";
 import "./navbar.js";
 import "./custom.js";
 import "./swiper.js";

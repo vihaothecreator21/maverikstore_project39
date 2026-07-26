@@ -76,7 +76,7 @@ async function loadCategories() {
     const json = await res.json();
     categories = Array.isArray(json.data) ? json.data : [];
 
-    const opts = categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+    const opts = categories.map((c) => `<option value="${escapeAttr(c.id)}">${escapeHtml(c.name)}</option>`).join("");
     document.getElementById("filter-category").insertAdjacentHTML("beforeend", opts);
     document.getElementById("pf-category").insertAdjacentHTML("beforeend", opts);
   } catch { showToast("❌ Không thể tải danh mục", "error"); }
@@ -89,7 +89,6 @@ async function loadProducts() {
 
   const search    = document.getElementById("search-products").value.trim();
   const catFilter = document.getElementById("filter-category").value;
-  const stock     = document.getElementById("filter-stock").value;
 
   // Build query string — field names must match ProductQuerySchema
   const params = new URLSearchParams();
@@ -138,27 +137,38 @@ function renderTable() {
     const cat        = categories.find((c) => c.id === p.categoryId);
     const qty        = Number(p.stockQuantity ?? 0);
     const priceHtml  = renderPriceCell(p);
+    const productId  = Number(p.id);
+    const productName = escapeHtml(p.name);
+    const imageUrl = safeImageUrl(p.imageUrl);
     const stockBadge =
       qty === 0 ? `<span class="badge badge-cancelled">Hết hàng</span>` :
       qty <  10 ? `<span class="badge badge-pending">${qty} còn lại</span>` :
                   `<span class="badge badge-completed">${qty}</span>`;
 
     return `<tr>
-      <td style="color:#aaa;font-size:.8rem;">#${p.id}</td>
-      <td>${p.imageUrl
-        ? `<img src="${p.imageUrl}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:38px;height:48px;object-fit:cover;border-radius:4px;">`
+      <td style="color:#aaa;font-size:.8rem;">#${Number.isFinite(productId) ? productId : ""}</td>
+      <td>${imageUrl
+        ? `<img src="${escapeAttr(imageUrl)}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:38px;height:48px;object-fit:cover;border-radius:4px;">`
         : `<div style="width:38px;height:48px;background:#f5f5f5;border-radius:4px;display:grid;place-items:center;font-size:.65rem;color:#ccc;">N/A</div>`
       }</td>
-      <td style="font-weight:600;font-size:.85rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</td>
-      <td><span class="badge" style="background:#f5f5f2;color:#555;">${cat?.name ?? "—"}</span></td>
+      <td style="font-weight:600;font-size:.85rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${productName}</td>
+      <td><span class="badge" style="background:#f5f5f2;color:#555;">${escapeHtml(cat?.name ?? "—")}</span></td>
       <td style="font-weight:700;">${priceHtml}</td>
       <td>${stockBadge}</td>
       <td style="text-align:center;white-space:nowrap;">
-        <button class="btn btn-outline btn-sm" style="margin-right:6px;" onclick="window._editProduct(${p.id})"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="window._deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')"><i class="bi bi-trash"></i></button>
+        <button class="btn btn-outline btn-sm" style="margin-right:6px;" onclick="window._editProduct(${productId})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-danger btn-sm" data-delete-product-id="${escapeAttr(productId)}"><i class="bi bi-trash"></i></button>
       </td>
     </tr>`;
   }).join("");
+
+  tbody.querySelectorAll("[data-delete-product-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = Number(button.dataset.deleteProductId);
+      const product = allProducts.find((p) => p.id === id);
+      window._deleteProduct(id, product?.name || "");
+    });
+  });
 }
 
 function getDiscountInfo(product) {
@@ -186,6 +196,28 @@ function renderPriceCell(product) {
       <span class="badge" style="background:#fee2e2;color:#b91c1c;margin-top:3px;">${discount.label}</span>
     </div>
   `;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function safeImageUrl(value) {
+  const url = String(value ?? "").trim();
+  if (!url) return "";
+  if (url.startsWith("./") || url.startsWith("/") || /^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return "";
 }
 
 // ── Pagination ────────────────────────────────────────────────
