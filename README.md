@@ -25,22 +25,8 @@ Small fashion shops need a simple storefront plus admin tools for products, orde
 - Jest unit and Supertest integration tests.
 - GitHub Actions CI for frontend lint/build and backend lint/unit/integration/build/smoke configuration.
 
-### In Progress
 
-- Frontend cart still primarily uses `localStorage` with a backend sync endpoint available after login.
-- Checkout and VNPay flows exist in code, but should be tested end-to-end with sandbox credentials before production use.
-- Admin dashboard/reporting exists, with additional polish still possible.
 
-### Planned
-
-- Public favorites API mounting.
-- More full-stack E2E tests.
-- Production deployment hardening.
-- Screenshots and live demo links.
-
-## Current Project Status
-
-This repository is CV-ready as a learning project, not a production store. Core backend security checks have been tightened: `/profile` requires a valid JWT, admin product mutations require an admin role from the verified session, JWT secrets must be configured through environment variables, and cart stock checks prevent cumulative quantity overflow. The latest local verification ran backend unit tests, integration tests, lint, and build successfully; GitHub Actions must still be checked on GitHub after push before merging.
 
 ## Technologies
 
@@ -133,7 +119,6 @@ VNPAY_TMN_CODE=your-vnpay-tmn-code
 VNPAY_HASH_SECRET=replace-with-your-vnpay-hash-secret-at-least-16-chars
 ```
 
-Never commit `.env` or real secrets.
 
 ## Database Migration
 
@@ -217,34 +202,6 @@ Common response shape:
   "data": {}
 }
 ```
-
-## Demo Account
-
-Demo credentials are not committed. Create accounts with the seed script or through the registration flow in a local environment.
-
-## Screenshots
-
-Screenshots are planned. Add storefront, product detail, cart, checkout, and admin dashboard images before publishing the repository publicly.
-
-## Known Limitations
-
-- Frontend cart is still mostly `localStorage`; backend cart sync exists but is not a full real-time server-cart frontend rewrite.
-- Payment needs real VNPay sandbox credentials and callback URL testing before production.
-- Docker build/runtime was not locally verified because the Docker daemon was unavailable in this session.
-- GitHub Actions result for the latest pushed commit still must be verified before merging.
-- Checkout/order/payment code exists, but payment is not claimed production-ready without sandbox end-to-end verification.
-- No live demo URL is currently documented.
-- Email OTP requires a configured Resend API key.
-- Supabase is used for product image storage only, not as the primary database.
-- Some modules have documentation/history under `docs/modules/99-archive`.
-
-## Future Improvements
-
-- Add Playwright E2E tests for customer checkout and admin product management.
-- Add screenshots and deployment guide for a hosted demo.
-- Mount and document favorites routes if the feature is completed.
-- Add stricter frontend XSS-safe rendering utilities where API data is rendered with templates.
-- Verify Docker image builds in GitHub Actions before merge.
 
 ## Team Members And Contribution
 
