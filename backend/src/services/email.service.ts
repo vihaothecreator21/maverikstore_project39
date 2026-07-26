@@ -1,9 +1,17 @@
-import { getEnv } from "../config/env.config";
-import { APIError } from "../utils/apiResponse";
+import { getEnv } from "../config/env.config.js";
+import { APIError } from "../utils/apiResponse.js";
 
 export class EmailService {
   async sendRegistrationOtp(email: string, otp: string, expiresInMinutes: number) {
     const env = getEnv();
+    if (!env.RESEND_API_KEY || !env.EMAIL_FROM) {
+      throw new APIError(
+        503,
+        "Email OTP is not configured. Set RESEND_API_KEY and EMAIL_FROM.",
+        {},
+        "EMAIL_NOT_CONFIGURED",
+      );
+    }
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -39,4 +47,3 @@ export class EmailService {
     `;
   }
 }
-

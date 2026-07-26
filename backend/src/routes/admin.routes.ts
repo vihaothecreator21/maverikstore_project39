@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { AdminController } from "../controllers/admin.controller";
-import { catchAsync } from "../utils/catchAsync";
-import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware";
+import { AdminController } from "../controllers/admin.controller.js";
+import { catchAsync } from "../utils/catchAsync.js";
+import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware.js";
 
 /**
  * Admin Analytics Routes — /api/v1/admin

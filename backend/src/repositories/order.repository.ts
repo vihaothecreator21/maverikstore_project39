@@ -1,7 +1,7 @@
-import { prisma } from "../config/database";
+import { prisma } from "../config/database.js";
 import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
-import { writeAuditLog } from "../utils/auditLog.helper";
-import { shouldMarkPaymentSuccess } from "../policies/orderStatus.policy";
+import { writeAuditLog } from "../utils/auditLog.helper.js";
+import { shouldMarkPaymentSuccess } from "../policies/orderStatus.policy.js";
 
 // ── Preset include dùng chung cho tất cả query lấy đơn hàng ────────────
 // Định nghĩa 1 lần ở đây để tránh lặp code và đảm bảo nhất quán

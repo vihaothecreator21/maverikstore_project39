@@ -1,10 +1,10 @@
 import slugify from "slugify";
-import { CategoryRepository } from "../repositories/category.repository";
-import { APIError } from "../utils/apiResponse";
+import { CategoryRepository } from "../repositories/category.repository.js";
+import { APIError } from "../utils/apiResponse.js";
 import {
   CreateCategoryInput,
   UpdateCategoryInput,
-} from "../schemas/category.schema";
+} from "../schemas/category.schema.js";
 
 // ✅ CẢI TIẾN: Backend tự quản lý việc tạo slug. Client chỉ gửi name + description.
 export class CategoryService {

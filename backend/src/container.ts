@@ -11,15 +11,15 @@
  */
 
 // ── Repositories ────────────────────────────────────────────────────
-import { OrderRepository }   from "./repositories/order.repository";
-import { AdminRepository }   from "./repositories/admin.repository";
-import { PaymentRepository } from "./repositories/payment.repository";
-import { UserRepository }    from "./repositories/user.repository";
-import { PendingRegistrationRepository } from "./repositories/pending-registration.repository";
-import { ProductRepository } from "./repositories/product.repository";
-import { CategoryRepository} from "./repositories/category.repository";
-import { CartRepository }    from "./repositories/cart.repository";
-import { ReviewRepository }  from "./repositories/review.repository";
+import { OrderRepository }   from "./repositories/order.repository.js";
+import { AdminRepository }   from "./repositories/admin.repository.js";
+import { PaymentRepository } from "./repositories/payment.repository.js";
+import { UserRepository }    from "./repositories/user.repository.js";
+import { PendingRegistrationRepository } from "./repositories/pending-registration.repository.js";
+import { ProductRepository } from "./repositories/product.repository.js";
+import { CategoryRepository} from "./repositories/category.repository.js";
+import { CartRepository }    from "./repositories/cart.repository.js";
+import { ReviewRepository }  from "./repositories/review.repository.js";
 
 export const orderRepository   = new OrderRepository();
 export const adminRepository   = new AdminRepository();
@@ -32,19 +32,19 @@ export const cartRepository    = new CartRepository();
 export const reviewRepository  = new ReviewRepository();
 
 // ── Services (inject repositories) ─────────────────────────────────
-import { OrderService }       from "./services/order.service";
-import { DashboardService }   from "./services/dashboard.service";
-import { AdminReportService } from "./services/adminReport.service";
-import { PaymentService }     from "./services/payment.service";
-import { AuthService }        from "./services/auth.service";
-import { EmailService }       from "./services/email.service";
-import { OtpService }         from "./services/otp.service";
-import { UserService }        from "./services/user.service";
-import { ProductService }     from "./services/product.service";
-import { CategoryService }    from "./services/category.service";
-import { CartService }        from "./services/cart.service";
-import { SupportChatService } from "./services/supportChat.service";
-import { ReviewService }      from "./services/review.service";
+import { OrderService }       from "./services/order.service.js";
+import { DashboardService }   from "./services/dashboard.service.js";
+import { AdminReportService } from "./services/adminReport.service.js";
+import { PaymentService }     from "./services/payment.service.js";
+import { AuthService }        from "./services/auth.service.js";
+import { EmailService }       from "./services/email.service.js";
+import { OtpService }         from "./services/otp.service.js";
+import { UserService }        from "./services/user.service.js";
+import { ProductService }     from "./services/product.service.js";
+import { CategoryService }    from "./services/category.service.js";
+import { CartService }        from "./services/cart.service.js";
+import { SupportChatService } from "./services/supportChat.service.js";
+import { ReviewService }      from "./services/review.service.js";
 
 export const orderService       = new OrderService(orderRepository);
 export const dashboardService   = new DashboardService(adminRepository);

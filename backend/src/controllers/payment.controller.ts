@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { paymentService } from "../container";
+import { paymentService } from "../container.js";
 import { CreateVNPayUrlSchema } from "../schemas/payment.schema.js";
 import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse.js";
 import { getEnv } from "../config/env.config.js";
@@ -55,8 +55,9 @@ export class PaymentController {
 
     const env = getEnv();
 
-    // Base URLs của từng trang kết quả trên frontend
-    const baseUrl  = env.VNPAY_FRONTEND_RETURN.replace(/\/[^/]*$/, ""); // strip last segment
+    // Lấy origin frontend từ VNPAY_FRONTEND_RETURN qua URL API (chuẩn hơn regex strip)
+    // VD: "http://10.x.x.x:3000/vnpay-return.html" → origin = "http://10.x.x.x:3000"
+    const baseUrl = new URL(env.VNPAY_FRONTEND_RETURN).origin;
 
     const commonParams = new URLSearchParams({
       orderId:      String(result.orderId),
@@ -65,21 +66,29 @@ export class PaymentController {
       message:      result.message,
     });
 
+    let redirectTarget: string;
+
     // ── Route theo responseCode ───────────────────────────────────────
     if (result.isSuccess) {
       // "00" → thanh toán thành công
-      res.redirect(`${baseUrl}/payment-success.html?${commonParams}`);
-      return;
-    }
-
-    if (result.isCancelled) {
+      redirectTarget = `${baseUrl}/payment-success.html?${commonParams}`;
+    } else if (result.isCancelled) {
       // "24" → user tự huỷ — KHÔNG phải lỗi
-      res.redirect(`${baseUrl}/payment-cancel.html?${commonParams}`);
-      return;
+      redirectTarget = `${baseUrl}/payment-cancel.html?${commonParams}`;
+    } else {
+      // else → thanh toán thất bại (bank decline, timeout, etc.)
+      redirectTarget = `${baseUrl}/payment-failed.html?${commonParams}`;
     }
 
-    // else → thanh toán thất bại (bank decline, timeout, etc.)
-    res.redirect(`${baseUrl}/payment-failed.html?${commonParams}`);
+    console.info("[PaymentController.vnpayReturn] Redirect:", {
+      requestId:     req.requestId,
+      isValid:       result.isValid,
+      isSuccess:     result.isSuccess,
+      isCancelled:   result.isCancelled,
+      redirectTarget,
+    });
+
+    res.redirect(redirectTarget);
   }
 
   /**

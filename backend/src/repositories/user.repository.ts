@@ -1,4 +1,4 @@
-import { prisma } from "../config/database";
+import { prisma } from "../config/database.js";
 
 /**
  * User Repository - Tầng truy cập cơ sở dữ liệu

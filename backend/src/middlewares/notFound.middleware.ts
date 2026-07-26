@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { APIError, ApiResponse } from "../utils/apiResponse";
+import { APIError, ApiResponse } from "../utils/apiResponse.js";
 
 /**
  * Middleware Xử lý 404 Not Found

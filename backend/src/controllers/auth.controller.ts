@@ -1,17 +1,17 @@
 import { Request, Response } from "express";
-import { authService } from "../container";
+import { authService } from "../container.js";
 import {
   LoginSchema,
   RegisterSchema,
   RegisterOtpRequestSchema,
   RegisterOtpVerifySchema,
   RegisterOtpResendSchema,
-} from "../schemas/auth.schema";
+} from "../schemas/auth.schema.js";
 import {
   ValidationError,
   sendSuccess,
   HTTP_STATUS,
-} from "../utils/apiResponse";
+} from "../utils/apiResponse.js";
 import { z } from "zod";
 
 /**

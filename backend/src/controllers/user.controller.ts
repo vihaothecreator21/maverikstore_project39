@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { userService } from "../container";
-import { sendSuccess, ValidationError, HTTP_STATUS } from "../utils/apiResponse";
-import { UpdateProfileSchema } from "../schemas/auth.schema";
+import { userService } from "../container.js";
+import { sendSuccess, ValidationError, HTTP_STATUS } from "../utils/apiResponse.js";
+import { UpdateProfileSchema } from "../schemas/auth.schema.js";
 
 /**
  * User Controller - Xử lý quản lý hồ sơ khách hàng

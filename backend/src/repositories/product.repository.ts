@@ -1,9 +1,9 @@
-import { prisma } from "../config/database";
+import { prisma } from "../config/database.js";
 import type {
   CreateProductInput,
   UpdateProductInput,
-} from "../schemas/product.schema";
-import { generateSlug } from "../utils/slug.helper";
+} from "../schemas/product.schema.js";
+import { generateSlug } from "../utils/slug.helper.js";
 
 /**
  * Product Repository - Tầng truy cập cơ sở dữ liệu

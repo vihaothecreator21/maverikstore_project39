@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
-import { cartService } from "../container";
+import { cartService } from "../container.js";
 import {
   AddToCartSchema,
   UpdateCartItemSchema,
   SyncCartSchema,
-} from "../schemas/cart.schema";
+} from "../schemas/cart.schema.js";
 import {
   ValidationError,
   sendSuccess,
   HTTP_STATUS,
-} from "../utils/apiResponse";
+} from "../utils/apiResponse.js";
 
 export class CartController {
   static async getCart(req: Request, res: Response) {

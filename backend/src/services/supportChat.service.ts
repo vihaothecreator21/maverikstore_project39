@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { prisma } from "../config/database";
-import { getEnv } from "../config/env.config";
-import type { SupportChatRequestInput } from "../schemas/supportChat.schema";
-import { APIError } from "../utils/apiResponse";
-import { calculateSalePrice, hasDiscount } from "../utils/pricing.helper";
+import { prisma } from "../config/database.js";
+import { getEnv } from "../config/env.config.js";
+import type { SupportChatRequestInput } from "../schemas/supportChat.schema.js";
+import { APIError } from "../utils/apiResponse.js";
+import { calculateSalePrice, hasDiscount } from "../utils/pricing.helper.js";
 
 type ChatProduct = {
   id: number;

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { supportChatService } from "../container";
+import { supportChatService } from "../container.js";
 import { SupportChatRequestSchema } from "../schemas/supportChat.schema.js";
-import { HTTP_STATUS, sendSuccess } from "../utils/apiResponse";
+import { HTTP_STATUS, sendSuccess } from "../utils/apiResponse.js";
 
 export class SupportChatController {
   static async chat(req: Request, res: Response): Promise<void> {

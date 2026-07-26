@@ -1,5 +1,5 @@
 import { OrderStatus } from "@prisma/client";
-import { AdminRepository } from "../repositories/admin.repository";
+import { AdminRepository } from "../repositories/admin.repository.js";
 
 export interface AdminOrderExportDTO {
   orderId: number;
@@ -242,7 +242,7 @@ export class AdminReportService {
       PROCESSING: "Đang chuẩn bị",
       SHIPPING: "Đang giao hàng",
       DELIVERED: "Đã giao",
-      COMPLETED: "Hoàn thành",
+      COMPLETED: "Hoàn thành",                                              
       CANCELLED: "Đã hủy",
       RETURNED: "Trả hàng",
     };

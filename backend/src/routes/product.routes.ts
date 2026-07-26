@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { ProductController } from "../controllers/product.controller";
-import { catchAsync } from "../utils/catchAsync";
-import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware";
+import { ProductController } from "../controllers/product.controller.js";
+import { catchAsync } from "../utils/catchAsync.js";
+import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware.js";
 
 /**
  * Product Routes

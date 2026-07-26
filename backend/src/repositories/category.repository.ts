@@ -1,4 +1,4 @@
-import { prisma } from "../config/database";
+import { prisma } from "../config/database.js";
 
 const SELECT_WITH_COUNT = {
   id: true, name: true, slug: true, description: true,

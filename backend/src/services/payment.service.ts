@@ -1,7 +1,7 @@
 import { PaymentStatus } from "@prisma/client";
-import { buildVNPayPaymentUrl, verifyVNPayReturn, type VNPayBankCode, type VNPayVerificationResult } from "../gateways/vnpay.gateway";
-import { PaymentRepository } from "../repositories/payment.repository";
-import { APIError } from "../utils/apiResponse";
+import { buildVNPayPaymentUrl, verifyVNPayReturn, type VNPayBankCode, type VNPayVerificationResult } from "../gateways/vnpay.gateway.js";
+import { PaymentRepository } from "../repositories/payment.repository.js";
+import { APIError } from "../utils/apiResponse.js";
 
 /**
  * Payment Service — Xử lý thanh toán VNPAY

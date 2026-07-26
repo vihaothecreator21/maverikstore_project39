@@ -1,5 +1,5 @@
 import { OrderStatus } from "@prisma/client";
-import { AdminRepository } from "../repositories/admin.repository";
+import { AdminRepository } from "../repositories/admin.repository.js";
 
 /**
  * Dashboard Service — Logic nghiệp vụ cho thống kê tổng quan Admin

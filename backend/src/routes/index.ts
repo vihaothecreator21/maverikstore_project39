@@ -1,16 +1,16 @@
 import { Router, Request, Response } from "express";
-import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse";
-import { getEnv } from "../config/env.config";
-import { authRoutes } from "./auth.routes";
-import { userRoutes } from "./user.routes";
-import { productRoutes } from "./product.routes";
-import { categoryRoutes } from "./category.routes";
-import { cartRoutes } from "./cart.routes";
-import { orderRoutes, adminOrderRoutes } from "./order.routes";
-import { adminRoutes } from "./admin.routes";
-import { paymentRoutes } from "./payment.routes";
-import { supportChatRoutes } from "./supportChat.routes";
-import { reviewRoutes } from "./review.routes";
+import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse.js";
+import { getEnv } from "../config/env.config.js";
+import { authRoutes } from "./auth.routes.js";
+import { userRoutes } from "./user.routes.js";
+import { productRoutes } from "./product.routes.js";
+import { categoryRoutes } from "./category.routes.js";
+import { cartRoutes } from "./cart.routes.js";
+import { orderRoutes, adminOrderRoutes } from "./order.routes.js";
+import { adminRoutes } from "./admin.routes.js";
+import { paymentRoutes } from "./payment.routes.js";
+import { supportChatRoutes } from "./supportChat.routes.js";
+import { reviewRoutes } from "./review.routes.js";
 
 const router = Router();
 

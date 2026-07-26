@@ -1,12 +1,12 @@
 import { Router, Request, Response } from "express";
-import { categoryService } from "../container";
-import { catchAsync } from "../utils/catchAsync";
-import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse";
+import { categoryService } from "../container.js";
+import { catchAsync } from "../utils/catchAsync.js";
+import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse.js";
 import {
   CreateCategorySchema,
   UpdateCategorySchema,
-} from "../schemas/category.schema";
-import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware";
+} from "../schemas/category.schema.js";
+import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware.js";
 
 export const categoryRoutes = Router();
 

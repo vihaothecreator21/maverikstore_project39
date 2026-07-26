@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { UserController } from "../controllers/user.controller";
-import { catchAsync } from "../utils/catchAsync";
-import { authMiddleware } from "../middlewares/auth.middleware";
+import { UserController } from "../controllers/user.controller.js";
+import { catchAsync } from "../utils/catchAsync.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 /**
  * User Routes — /api/v1/users

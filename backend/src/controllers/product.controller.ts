@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
-import { productService } from "../container";
+import { productService } from "../container.js";
 import {
   CreateProductSchema,
   UpdateProductSchema,
   ProductQuerySchema,
-} from "../schemas/product.schema";
+} from "../schemas/product.schema.js";
 import {
   ValidationError,
   sendSuccess,
   HTTP_STATUS,
-} from "../utils/apiResponse";
+} from "../utils/apiResponse.js";
 
 /**
  * Product Controller - Tầng xử lý HTTP Request

@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getEnv } from "../config/env.config";
+import { getEnv } from "../config/env.config.js";
 
 const OTP_LENGTH = 6;
 

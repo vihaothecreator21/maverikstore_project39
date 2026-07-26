@@ -74,6 +74,18 @@ function sanitizeDeep(obj: any): any {
  * app.use(sanitizeInput);   // ← thêm vào đây
  * app.use("/api", apiRoutes);
  */
+/**
+ * Danh sách path prefix mà req.query KHÔNG được sanitize.
+ *
+ * Lý do: VNPAY ký HMAC-SHA512 trên toàn bộ query params.
+ * Nếu sanitize biến đổi bất kỳ ký tự nào trong query (kể cả vnp_SecureHash),
+ * hash sẽ không khớp khi verify → isValid=false → mọi thanh toán bị reject.
+ */
+const SKIP_QUERY_SANITIZE_PATHS = [
+  "/api/v1/payments/vnpay/return",
+  "/api/v1/payments/vnpay/ipn",
+];
+
 export const sanitizeInput = (
   req: Request,
   _res: Response,
@@ -82,9 +94,13 @@ export const sanitizeInput = (
   if (req.body && typeof req.body === "object") {
     req.body = sanitizeDeep(req.body);
   }
-  if (req.query && typeof req.query === "object") {
+
+  // VNPAY callback: KHÔNG sanitize query để tránh làm hỏng chữ ký HMAC
+  const skipQuery = SKIP_QUERY_SANITIZE_PATHS.some((p) => req.path === p || req.originalUrl.startsWith(p));
+  if (!skipQuery && req.query && typeof req.query === "object") {
     req.query = sanitizeDeep(req.query);
   }
+
   if (req.params && typeof req.params === "object") {
     req.params = sanitizeDeep(req.params);
   }

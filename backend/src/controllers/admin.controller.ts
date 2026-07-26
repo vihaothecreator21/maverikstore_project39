@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { dashboardService, adminReportService } from "../container";
-import { sendSuccess, HTTP_STATUS, APIError } from "../utils/apiResponse";
+import { dashboardService, adminReportService } from "../container.js";
+import { sendSuccess, HTTP_STATUS, APIError } from "../utils/apiResponse.js";
 
 /**
  * Admin Controller — Dashboard, Báo cáo, Xuất dữ liệu

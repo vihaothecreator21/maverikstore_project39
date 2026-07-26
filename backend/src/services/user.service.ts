@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
-import { UserRepository } from "../repositories/user.repository";
-import { APIError, ValidationError } from "../utils/apiResponse";
-import { getEnv } from "../config/env.config";
+import { UserRepository } from "../repositories/user.repository.js";
+import { APIError, ValidationError } from "../utils/apiResponse.js";
+import { getEnv } from "../config/env.config.js";
 
 /**
  * User Service — Logic nghiệp vụ quản lý hồ sơ người dùng

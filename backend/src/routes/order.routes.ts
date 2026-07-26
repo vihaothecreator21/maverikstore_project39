@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { OrderController } from "../controllers/order.controller";
-import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware";
-import { catchAsync } from "../utils/catchAsync";
+import { OrderController } from "../controllers/order.controller.js";
+import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware.js";
+import { catchAsync } from "../utils/catchAsync.js";
 
 // ── User Order Routes — /api/v1/orders ────────────────────────────
 export const orderRoutes = Router();

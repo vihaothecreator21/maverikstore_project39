@@ -3,12 +3,12 @@ import { z } from "zod";
 /**
  * Environment Variables Schema Validation
  * Uses Zod to validate and parse environment variables at application startup
- * 
+ *
  * Ensures:
  * - All required variables are present
  * - Variables have correct types and formats
  * - Invalid configs fail fast at boot time (not during runtime)
- * 
+ *
  * @throws {Error} If any environment variable is invalid
  */
 const envSchema = z.object({
@@ -44,12 +44,8 @@ const envSchema = z.object({
     .default(10),
 
   // Email OTP Registration
-  RESEND_API_KEY: z
-    .string()
-    .min(1, "RESEND_API_KEY is required for registration OTP emails"),
-  EMAIL_FROM: z
-    .string()
-    .min(1, "EMAIL_FROM is required for registration OTP emails"),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
   OTP_SECRET: z
     .string()
     .min(32, "OTP_SECRET must be at least 32 characters")
@@ -57,7 +53,7 @@ const envSchema = z.object({
 
   // CORS Configuration
   // Production: set CORS_ORIGINS=https://yourdomain.com (comma-separated, NO wildcard)
-  // Development fallback only — will warn in production
+  // Development fallback only - will warn in production
   CORS_ORIGINS: z
     .string()
     .transform((val) => val.split(",").map((url) => url.trim()).filter(Boolean))
@@ -82,22 +78,16 @@ const envSchema = z.object({
     .default("debug"),
 
   // Gemini AI Chatbot
-  // Dùng optional để server vẫn chạy được khi bạn chưa bật chatbot ở môi trường khác.
-  // Khi người dùng gọi /support-chat mà thiếu key, service sẽ trả lỗi cấu hình rõ ràng.
-  GEMINI_API_KEY: z
-    .string()
-    .min(1, "GEMINI_API_KEY is required for support chat"),
+  // Optional so the server can start in dev when chatbot is not configured.
+  // Missing key is handled by support chat service at request time.
+  GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
 
   // VNPay Configuration
-  // ⚠️ SECURITY: NEVER hardcode real secrets here. Always set via .env file.
-  // These will throw at startup if missing — INTENTIONAL fail-fast behavior.
-  VNPAY_TMN_CODE: z
-    .string()
-    .min(1, "VNPAY_TMN_CODE is required — set it in your .env file"),
-  VNPAY_HASH_SECRET: z
-    .string()
-    .min(16, "VNPAY_HASH_SECRET must be at least 16 chars — set it in your .env file"),
+  // SECURITY: NEVER hardcode real secrets here. Always set via .env file.
+  // These will throw at startup in production if missing.
+  VNPAY_TMN_CODE: z.string().optional(),
+  VNPAY_HASH_SECRET: z.string().optional(),
   VNPAY_RETURN_URL: z
     .string()
     .url()
@@ -109,6 +99,34 @@ const envSchema = z.object({
   VNPAY_IPN_URL: z
     .string()
     .default("http://localhost:5000/api/v1/payments/vnpay/ipn"),
+}).superRefine((env, ctx) => {
+  if (env.NODE_ENV !== "production") return;
+
+  const requiredInProduction: Array<keyof typeof env> = [
+    "RESEND_API_KEY",
+    "EMAIL_FROM",
+    "GEMINI_API_KEY",
+    "VNPAY_TMN_CODE",
+    "VNPAY_HASH_SECRET",
+  ];
+
+  requiredInProduction.forEach((key) => {
+    if (!env[key]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: `${key} is required in production`,
+      });
+    }
+  });
+
+  if (env.VNPAY_HASH_SECRET && env.VNPAY_HASH_SECRET.length < 16) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["VNPAY_HASH_SECRET"],
+      message: "VNPAY_HASH_SECRET must be at least 16 chars in production",
+    });
+  }
 });
 
 /**
@@ -122,10 +140,10 @@ let env: Environment;
 /**
  * Initialize and validate environment variables
  * Call this function at application startup (in server.ts)
- * 
+ *
  * @throws {ZodError} If validation fails
  * @returns {Environment} Validated environment variables
- * 
+ *
  * @example
  * // In server.ts
  * const env = initializeEnv();
@@ -135,11 +153,11 @@ export const initializeEnv = (): Environment => {
   try {
     env = envSchema.parse(process.env);
 
-    console.log("✓ Environment variables validated successfully");
+    console.log("Environment variables validated successfully");
 
     // Log non-sensitive config in development
     if (env.NODE_ENV === "development") {
-      console.log("📋 Environment Config:", {
+      console.log("Environment Config:", {
         NODE_ENV: env.NODE_ENV,
         PORT: env.PORT,
         API_VERSION: env.API_VERSION,
@@ -155,7 +173,7 @@ export const initializeEnv = (): Environment => {
     return env;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("❌ Environment variable validation failed:");
+      console.error("Environment variable validation failed:");
       error.errors.forEach((err) => {
         console.error(`  - ${String(err.path)}: ${err.message}`);
       });
@@ -165,7 +183,7 @@ export const initializeEnv = (): Environment => {
         .map((e) => e.path.join("."))
         .join(", ");
       console.error(`\nMissing or invalid: ${missingVars}`);
-      console.error("\n⚠️ Server cannot start with invalid configuration");
+      console.error("\nServer cannot start with invalid configuration");
     }
 
     process.exit(1);
@@ -175,10 +193,10 @@ export const initializeEnv = (): Environment => {
 /**
  * Get validated environment variables
  * Safe to use after initializeEnv() has been called
- * 
+ *
  * @throws {Error} If called before initializeEnv()
  * @returns {Environment} Validated environment variables
- * 
+ *
  * @example
  * const env = getEnv();
  * const dbUrl = env.DATABASE_URL;
@@ -195,7 +213,7 @@ export const getEnv = (): Environment => {
 /**
  * Set environment for testing purposes
  * Use only in test files
- * 
+ *
  * @internal
  */
 export const __setEnvForTesting = (testEnv: Partial<Environment>): void => {

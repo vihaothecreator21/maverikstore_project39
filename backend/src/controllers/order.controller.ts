@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { orderService } from "../container";
+import { orderService } from "../container.js";
 import {
   PlaceOrderSchema,
   UpdateOrderStatusSchema,
   OrderQuerySchema,
-} from "../schemas/order.schema";
-import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse";
+} from "../schemas/order.schema.js";
+import { sendSuccess, HTTP_STATUS } from "../utils/apiResponse.js";
 
 export class OrderController {
   // POST /api/v1/orders

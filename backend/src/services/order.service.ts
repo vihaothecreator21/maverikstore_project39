@@ -1,17 +1,17 @@
-import { OrderRepository } from "../repositories/order.repository";
+import { OrderRepository } from "../repositories/order.repository.js";
 import {
   allowedTransitions,
   canTransition,
   shouldRestoreStock,
-} from "../policies/orderStatus.policy";
-import { APIError } from "../utils/apiResponse";
-import { calculateSalePrice } from "../utils/pricing.helper";
+} from "../policies/orderStatus.policy.js";
+import { APIError } from "../utils/apiResponse.js";
+import { calculateSalePrice } from "../utils/pricing.helper.js";
 import { OrderStatus, Prisma } from "@prisma/client";
 import type {
   PlaceOrderInput,
   UpdateOrderStatusInput,
   OrderQueryInput,
-} from "../schemas/order.schema";
+} from "../schemas/order.schema.js";
 
 // Kiểu dữ liệu trả về sau khi đã chuyển Decimal → number
 type FormattedOrder = Record<string, unknown> & {

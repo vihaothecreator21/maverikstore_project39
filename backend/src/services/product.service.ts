@@ -1,10 +1,10 @@
-import { ProductRepository } from "../repositories/product.repository";
-import { APIError } from "../utils/apiResponse";
+import { ProductRepository } from "../repositories/product.repository.js";
+import { APIError } from "../utils/apiResponse.js";
 import type {
   CreateProductInput,
   UpdateProductInput,
   ProductQueryInput,
-} from "../schemas/product.schema";
+} from "../schemas/product.schema.js";
 
 /**
  * Product Service - Tầng xử lý nghiệp vụ

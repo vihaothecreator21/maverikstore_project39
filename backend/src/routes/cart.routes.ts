@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { CartController } from "../controllers/cart.controller";
-import { authMiddleware } from "../middlewares/auth.middleware";
-import { catchAsync } from "../utils/catchAsync";
+import { CartController } from "../controllers/cart.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { catchAsync } from "../utils/catchAsync.js";
 
 export const cartRoutes = Router();
 

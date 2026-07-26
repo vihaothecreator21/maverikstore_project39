@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { SupportChatController } from "../controllers/supportChat.controller.js";
-import { catchAsync } from "../utils/catchAsync";
+import { catchAsync } from "../utils/catchAsync.js";
 
 export const supportChatRoutes = Router();
 

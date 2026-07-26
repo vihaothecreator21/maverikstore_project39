@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 import * as qs from "qs";
-import { getEnv } from "../config/env.config";
+import { getEnv } from "../config/env.config.js";
+import { APIError } from "../utils/apiResponse.js";
 
 /** Mã ngân hàng hỗ trợ — INTCARD = thẻ quốc tế (Visa, Mastercard, JCB) */
 export type VNPayBankCode = "INTCARD";
@@ -63,7 +64,15 @@ function getVNPayCreateDate(date?: Date): string {
  * Secret key lấy từ biến môi trường VNPAY_HASH_SECRET
  */
 function hmacSha512(data: string): string {
-  const secret = getEnv().VNPAY_HASH_SECRET.trim();
+  const secret = getEnv().VNPAY_HASH_SECRET?.trim();
+  if (!secret) {
+    throw new APIError(
+      503,
+      "VNPay is not configured. Set VNPAY_TMN_CODE and VNPAY_HASH_SECRET.",
+      {},
+      "VNPAY_NOT_CONFIGURED",
+    );
+  }
   return crypto.createHmac("sha512", secret).update(data, "utf-8").digest("hex");
 }
 
@@ -117,19 +126,31 @@ export function buildVNPayPaymentUrl(input: {
   bankCode?: VNPayBankCode;
 }): string {
   const env = getEnv();
+  if (!env.VNPAY_TMN_CODE || !env.VNPAY_HASH_SECRET) {
+    throw new APIError(
+      503,
+      "VNPay is not configured. Set VNPAY_TMN_CODE and VNPAY_HASH_SECRET.",
+      {},
+      "VNPAY_NOT_CONFIGURED",
+    );
+  }
+
+  const createDate = new Date();
   const params: Record<string, string | number> = {
-    vnp_Version:   "2.1.0",
-    vnp_Command:   "pay",
-    vnp_TmnCode:   env.VNPAY_TMN_CODE,
-    vnp_Amount:    Math.round(input.amount * 100), // Đơn vị xu = VNĐ × 100
-    vnp_CurrCode:  "VND",
-    vnp_TxnRef:    String(input.orderId),          // Mã đơn hàng (dùng để tra cứu sau)
-    vnp_OrderInfo: `Thanh toan don hang ${input.orderId}`,
-    vnp_OrderType: "other",
-    vnp_Locale:    "vn",
-    vnp_ReturnUrl: env.VNPAY_RETURN_URL,           // URL VNPAY redirect user về sau thanh toán
-    vnp_IpAddr:    input.clientIp,
-    vnp_CreateDate: getVNPayCreateDate(),           // Thời gian tạo lệnh thanh toán (GMT+7)
+    vnp_Version:    "2.1.0",
+    vnp_Command:    "pay",
+    vnp_TmnCode:    env.VNPAY_TMN_CODE,
+    vnp_Amount:     Math.round(input.amount * 100), // Đơn vị xu = VNĐ × 100
+    vnp_CurrCode:   "VND",
+    vnp_TxnRef:     String(input.orderId),           // Mã đơn hàng (dùng để tra cứu sau)
+    vnp_OrderInfo:  `Thanh toan don hang ${input.orderId}`,
+    vnp_OrderType:  "other",
+    vnp_Locale:     "vn",
+    vnp_ReturnUrl:  env.VNPAY_RETURN_URL,            // URL VNPAY redirect user về sau thanh toán
+    vnp_IpAddr:     input.clientIp,
+    vnp_CreateDate: getVNPayCreateDate(createDate),  // Thời gian tạo lệnh thanh toán (GMT+7)
+    // VNPAY 2.1.0 yêu cầu vnp_ExpireDate — thiếu trường này sẽ gây lỗi code 71 (Transaction expired)
+    vnp_ExpireDate: getVNPayCreateDate(new Date(createDate.getTime() + 15 * 60 * 1000)), // Hết hạn sau 15 phút
   };
 
   // vnp_BankCode chỉ gửi nếu user chọn cụ thể (vd: INTCARD)

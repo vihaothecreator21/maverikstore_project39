@@ -1,20 +1,20 @@
 import jwt, { type SignOptions, type JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import type { Prisma } from "@prisma/client";
-import { getEnv } from "../config/env.config";
-import { prisma } from "../config/database";
-import { UserRepository } from "../repositories/user.repository";
-import { PendingRegistrationRepository } from "../repositories/pending-registration.repository";
-import { EmailService } from "./email.service";
-import { OtpService } from "./otp.service";
-import { APIError } from "../utils/apiResponse";
+import { getEnv } from "../config/env.config.js";
+import { prisma } from "../config/database.js";
+import { UserRepository } from "../repositories/user.repository.js";
+import { PendingRegistrationRepository } from "../repositories/pending-registration.repository.js";
+import { EmailService } from "./email.service.js";
+import { OtpService } from "./otp.service.js";
+import { APIError } from "../utils/apiResponse.js";
 import type {
   RegisterInput,
   LoginInput,
   RegisterOtpRequestInput,
   RegisterOtpVerifyInput,
   RegisterOtpResendInput,
-} from "../schemas/auth.schema";
+} from "../schemas/auth.schema.js";
 
 // Hằng số thời gian OTP — tập trung để dễ thay đổi
 const OTP_EXPIRES_IN_MS = 5 * 60 * 1000;       // OTP hết hạn sau 5 phút

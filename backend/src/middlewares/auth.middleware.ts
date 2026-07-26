@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { HTTP_STATUS, sendError } from "../utils/apiResponse";
-import { getEnv } from "../config/env.config";
-import { userRepository } from "../container";
+import { HTTP_STATUS, sendError } from "../utils/apiResponse.js";
+import { getEnv } from "../config/env.config.js";
+import { userRepository } from "../container.js";
 
 /**
  * authMiddleware — Xác thực JWT trên mỗi request

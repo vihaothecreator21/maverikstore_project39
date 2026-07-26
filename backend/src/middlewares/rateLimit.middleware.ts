@@ -73,7 +73,8 @@ export const rateLimit = (
     // Kiểm tra có vượt giới hạn không
     if (store[key].count > maxRequests) {
       const resetDate = new Date(store[key].resetTime);
-      throw new APIError(
+      // Dùng next(err) thay vì throw — Express 4 không bắt throw trong sync middleware
+      return next(new APIError(
         429, // Too Many Requests
         `Too many requests from this IP. Try again after ${resetDate.toLocaleTimeString()}`,
         {
@@ -82,7 +83,7 @@ export const rateLimit = (
           window: Math.round(windowMs / 1000),
         },
         "RATE_LIMIT_EXCEEDED",
-      );
+      ));
     }
 
     // Gắn thông tin rate limit vào header để client biết còn bao nhiêu lượt
