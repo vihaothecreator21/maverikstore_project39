@@ -57,7 +57,7 @@ services:
       # Bcrypt
       BCRYPT_ROUNDS: "10"
       # CORS — Cho phép cả localhost:80 (frontend docker) và dev ports
-      CORS_ORIGINS: "http://localhost,http://localhost:80,http://localhost:3000,http://localhost:5173"
+      CORS_ORIGINS: "http://localhost,http://localhost:80,http://localhost:8080,http://localhost:3000,http://localhost:5173"
       # Supabase Storage (giữ nguyên cloud)
       SUPABASE_URL: "${SUPABASE_URL:?Set SUPABASE_URL}"
       SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY:?Set SUPABASE_SERVICE_ROLE_KEY}"

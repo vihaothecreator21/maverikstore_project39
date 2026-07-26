@@ -244,6 +244,7 @@ Screenshots are planned. Add storefront, product detail, cart, checkout, and adm
 - Add screenshots and deployment guide for a hosted demo.
 - Mount and document favorites routes if the feature is completed.
 - Add stricter frontend XSS-safe rendering utilities where API data is rendered with templates.
+- Verify Docker image builds in GitHub Actions before merge.
 
 ## Team Members And Contribution
 

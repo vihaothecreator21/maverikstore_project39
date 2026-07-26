@@ -13,6 +13,7 @@
 import { getApiBase } from "./api-config.js";
 
 const API_BASE = getApiBase();
+const FALLBACK_PRODUCT_IMAGE = "./assets/images/product-img-1.jpg";
 
 // ── State ─────────────────────────────────────────────────────
 let currentPage = 1;
@@ -60,8 +61,8 @@ async function loadCategories() {
       list.insertAdjacentHTML(
         "beforeend",
         `<li>
-          <a href="#" class="category-link text-dark" data-id="${cat.id}">
-            ${cat.name}
+          <a href="#" class="category-link text-dark" data-id="${escapeAttr(cat.id)}">
+            ${escapeHtml(cat.name)}
           </a>
         </li>`,
       );
@@ -141,22 +142,25 @@ function renderProducts(products) {
 }
 
 function buildProductCard(product) {
-  const image = product.imageUrl || getPlaceholderImage(product.name);
-  const categoryName = product.category?.name || "Maverik";
+  const image = safeImageUrl(product.imageUrl || getPlaceholderImage(product.name));
+  const categoryName = escapeHtml(product.category?.name || "Maverik");
   const discount = getDiscountInfo(product);
   const inStock = product.stockQuantity > 0;
-  const slug = product.slug;
+  const detailUrl = productDetailUrl(product);
+  const productName = escapeHtml(product.name);
+  const productDescription = escapeHtml(truncate(product.description || "", 80));
+  const productId = escapeAttr(product.id);
 
   return `
     <div class="col-sm-6 col-md-4 product-item" data-aos="fade-up">
       <div class="card product-card h-100 border-0 shadow-sm">
         <div class="position-relative overflow-hidden product-img-wrap">
-          <a href="product-detail.html?slug=${slug}">
+          <a href="${detailUrl}">
             <img
-              src="${image}"
+              src="${escapeAttr(image)}"
               class="card-img-top product-card-img"
-              alt="${product.name}"
-              onerror="this.src='./assets/images/product-img-1.jpg'"
+              alt="${productName}"
+              onerror="this.src='${FALLBACK_PRODUCT_IMAGE}'"
             />
           </a>
           ${!inStock ? `<span class="badge bg-secondary position-absolute top-0 end-0 m-2">Hết hàng</span>` : ""}
@@ -164,21 +168,21 @@ function buildProductCard(product) {
         <div class="card-body d-flex flex-column">
           <p class="text-muted mb-1 text-uppercase small">${categoryName}</p>
           <h3 class="h6 mb-2">
-            <a href="product-detail.html?slug=${slug}" class="text-dark text-decoration-none product-name">
-              ${product.name}
+            <a href="${detailUrl}" class="text-dark text-decoration-none product-name">
+              ${productName}
             </a>
           </h3>
           <p class="text-muted small mb-3 product-desc">
-            ${truncate(product.description || "", 80)}
+            ${productDescription}
           </p>
           <div class="mt-auto d-flex align-items-center justify-content-between">
             ${renderPriceHtml(product)}
             <button
               class="btn btn-dark btn-sm add-to-cart-btn"
-              data-product-id="${product.id}"
-              data-product-name="${product.name}"
+              data-product-id="${productId}"
+              data-product-name="${productName}"
               data-product-price="${discount.salePrice}"
-              data-product-image="${image}"
+              data-product-image="${escapeAttr(image)}"
               ${!inStock ? "disabled" : ""}
             >
               ${inStock ? '<i class="bi bi-cart-plus me-1"></i>Thêm giỏ' : "Hết hàng"}
@@ -367,7 +371,7 @@ function showError(msg) {
   grid.innerHTML = `
     <div class="col-12 text-center py-5">
       <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block"></i>
-      <h5 class="text-muted">${msg}</h5>
+      <h5 class="text-muted">${escapeHtml(msg)}</h5>
     </div>
   `;
 }
@@ -393,8 +397,38 @@ function truncate(str, maxLen) {
 }
 
 function getPlaceholderImage(name) {
-  const index = (name.charCodeAt(0) % 7) + 1;
+  const safeName = String(name || "Maverik");
+  const index = (safeName.charCodeAt(0) % 7) + 1;
   return `./assets/images/product-img-${index}.jpg`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function safeImageUrl(value) {
+  const url = String(value ?? "").trim();
+  if (!url) return FALLBACK_PRODUCT_IMAGE;
+  if (url.startsWith("./") || url.startsWith("/") || /^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return FALLBACK_PRODUCT_IMAGE;
+}
+
+function productDetailUrl(product) {
+  if (product.slug) {
+    return `product-detail.html?slug=${encodeURIComponent(product.slug)}`;
+  }
+  return `product-detail.html?id=${encodeURIComponent(String(product.id ?? ""))}`;
 }
 
 // ════════════════════════════════════════════════════════════

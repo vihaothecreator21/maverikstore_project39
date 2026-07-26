@@ -53,12 +53,11 @@
 
       const params = new URLSearchParams(window.location.search);
       const responseCode = params.get("responseCode") || "99";
-      const isSuccess    = params.get("isSuccess") === "true";
 
       // Forward tất cả query params sang trang đích
       const query = window.location.search;
 
-      if (isSuccess || responseCode === "00") {
+      if (responseCode === "00") {
         window.location.replace("payment-success.html" + query);
       } else if (responseCode === "24") {
         window.location.replace("payment-cancel.html" + query);
