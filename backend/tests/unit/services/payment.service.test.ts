@@ -1,5 +1,5 @@
 import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
-import { PaymentService } from "../../../src/services/payment.service";
+import { PaymentService } from "../../../src/services/payment.service.js";
 
 jest.mock("../../../src/gateways/vnpay.gateway", () => ({
   buildVNPayPaymentUrl: jest.fn(() => "https://vnpay.test/pay"),

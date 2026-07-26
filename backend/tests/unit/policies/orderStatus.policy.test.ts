@@ -2,7 +2,7 @@ import { OrderStatus } from "@prisma/client";
 import {
   canTransition,
   shouldRestoreStock,
-} from "../../../src/policies/orderStatus.policy";
+} from "../../../src/policies/orderStatus.policy.js";
 
 describe("order status policy", () => {
   it("allows only production order lifecycle transitions", () => {

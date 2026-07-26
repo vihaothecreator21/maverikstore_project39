@@ -13,8 +13,8 @@
  *   npm test -- --testNamePattern="placeOrder"  → chạy test cụ thể
  */
 
-import { OrderService } from "../../../src/services/order.service";
-import { OrderRepository } from "../../../src/repositories/order.repository";
+import { OrderService } from "../../../src/services/order.service.js";
+import { OrderRepository } from "../../../src/repositories/order.repository.js";
 import { Prisma, OrderStatus, PaymentStatus } from "@prisma/client";
 
 // ── Mock OrderRepository ────────────────────────────────────────────

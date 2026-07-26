@@ -1,9 +1,9 @@
 import request from "supertest";
-import app from "../../src/app";
+import app from "../../src/app.js";
 import jwt from "jsonwebtoken";
-import { getEnv } from "../../src/config/env.config";
-import { cartService, orderService, userRepository } from "../../src/container";
-import { APIError } from "../../src/utils/apiResponse";
+import { getEnv } from "../../src/config/env.config.js";
+import { cartService, orderService, userRepository } from "../../src/container.js";
+import { APIError } from "../../src/utils/apiResponse.js";
 
 // MOCK SERVICES & REPOSITORIES TRONG CONTAINER
 jest.mock("../../src/container", () => ({

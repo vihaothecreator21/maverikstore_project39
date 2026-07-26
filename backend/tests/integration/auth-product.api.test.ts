@@ -1,9 +1,9 @@
 import request from "supertest";
 import jwt from "jsonwebtoken";
-import app from "../../src/app";
-import { getEnv } from "../../src/config/env.config";
-import { authService, productService, userRepository } from "../../src/container";
-import { APIError } from "../../src/utils/apiResponse";
+import app from "../../src/app.js";
+import { getEnv } from "../../src/config/env.config.js";
+import { authService, productService, userRepository } from "../../src/container.js";
+import { APIError } from "../../src/utils/apiResponse.js";
 
 jest.mock("../../src/config/database", () => ({
   prisma: {
