@@ -15,6 +15,7 @@
     "test:coverage": "jest --config jest.config.cjs --coverage --runInBand",
     "lint": "eslint src tests --max-warnings=0",
     "lint:fix": "eslint src tests --fix",
+    "smoke:production": "node scripts/smoke-production.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",

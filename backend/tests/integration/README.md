@@ -21,7 +21,7 @@ npm test
 
 ## Database test
 
-Các integration test hiện tại mock data-access/service nên không cần kết nối MySQL thật. CI vẫn cấu hình MySQL test riêng và chạy `npx prisma migrate deploy` để xác minh migration có thể deploy trước khi test/build/smoke.
+Integration tests hiện tại mock data-access/service nên không cần kết nối MySQL thật. CI vẫn cấu hình MySQL test riêng và chạy `npx prisma migrate deploy` để xác minh migration có thể deploy trước khi test/build/smoke.
 
 Không dùng production database cho test. Khi thêm integration test cần DB thật, cấu hình `DATABASE_URL` trỏ tới database test riêng, ví dụ:
 
@@ -43,6 +43,7 @@ npm run lint
 npm run test:unit
 npm run test:integration
 npm run build
+npm run smoke:production
 ```
 
-Sau build, CI start backend từ `dist/src/server.js` bằng `npm start` và gọi `GET /api/health`, endpoint trả `{ "success": true, "status": "ok" }`.
+Sau build, CI chạy `npm run smoke:production`; script start backend từ `dist/src/server.js`, gọi `GET /health`, kiểm tra response `{ "success": true, "status": "ok" }`, rồi dừng server.

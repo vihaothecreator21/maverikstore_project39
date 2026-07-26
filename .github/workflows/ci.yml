@@ -108,14 +108,4 @@ jobs:
 
       - name: Production build smoke test
         working-directory: backend
-        run: |
-          NODE_ENV=production npm start &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          for i in {1..30}; do
-            if curl --fail http://127.0.0.1:5000/api/health; then
-              exit 0
-            fi
-            sleep 2
-          done
-          exit 1
+        run: npm run smoke:production
