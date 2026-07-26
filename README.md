@@ -207,6 +207,3 @@ Common response shape:
 
 This is a personal portfolio project by Vi Hao. Contributions should follow the existing modular-monolith structure and keep changes scoped to the relevant module.
 
-## License
-
-The root package uses MIT metadata. The backend package currently uses ISC metadata. Standardize licensing before publishing as an open-source project.
