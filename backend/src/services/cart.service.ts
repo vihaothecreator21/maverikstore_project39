@@ -205,10 +205,7 @@ export class CartService {
 
           if (existingCartItem) {
             // Cộng thêm quantity, không vượt 999
-            const newQty = Math.min(
-              existingCartItem.quantity + requestedQty,
-              product.stockQuantity,
-            );
+            const newQty = Math.min(existingCartItem.quantity + requestedQty, 999);
             await this.cartRepository.updateItemQty(existingCartItem.id, newQty);
           } else {
             // Tạo mới — số lượng không vượt tồn kho

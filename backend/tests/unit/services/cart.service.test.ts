@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { CartService } from "../../../src/services/cart.service";
+import { CartService } from "../../../src/services/cart.service.js";
 
 const product = {
   id: 1,
@@ -87,7 +87,7 @@ describe("CartService", () => {
       { productId: 1, quantity: 4, size: "M", color: "Den" },
     ]);
 
-    expect(cartRepository.updateItemQty).toHaveBeenCalledWith(5, 3);
+    expect(cartRepository.updateItemQty).toHaveBeenCalledWith(5, 6);
     expect(cartRepository.upsertCartItem).not.toHaveBeenCalled();
   });
 
