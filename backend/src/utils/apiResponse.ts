@@ -25,6 +25,7 @@ export class ValidationError extends APIError {
   constructor(message: string, public errors: Record<string, string[]>) {
     super(400, message, errors, "VALIDATION_ERROR");
     this.name = "ValidationError";
+    Object.setPrototypeOf(this, ValidationError.prototype);
   }
 }
 
@@ -126,15 +127,15 @@ export const sendError = (
   let errors: Record<string, string[]> | undefined;
   const isDevelopment = process.env.NODE_ENV === "development";
 
-  if (error instanceof APIError) {
-    status = error.statusCode;
-    message = error.message;
-    details = error.details;
-    code = error.code;
-  } else if (error instanceof ValidationError) {
+  if (error instanceof ValidationError) {
     status = error.statusCode;
     message = error.message;
     errors = error.errors;
+    code = error.code;
+  } else if (error instanceof APIError) {
+    status = error.statusCode;
+    message = error.message;
+    details = error.details;
     code = error.code;
   } else if (error instanceof SyntaxError) {
     status = 400;

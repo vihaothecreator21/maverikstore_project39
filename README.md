@@ -178,7 +178,7 @@ npm run test:integration
 npm test
 ```
 
-Latest local backend verification: `npm test` passed 53 tests total, including 32 unit tests and 21 integration tests. Frontend lint and build also pass locally. The production build starts from `backend/dist/src/server.js`; local HTTP health-check smoke was not completed in this session because background process execution was rejected by the local approval system, but CI includes a `/api/health` smoke step.
+Latest local backend verification: unit tests passed 5 suites / 38 tests, and integration/API tests passed 2 suites / 23 tests. Frontend lint and build also pass locally. The production build compiles to `backend/dist/src/server.js`; local `npm start` HTTP smoke still needs a reachable MySQL database. CI includes a `/api/health` smoke step.
 
 ## Production Build
 
@@ -190,7 +190,7 @@ npm run build
 npm start
 ```
 
-Docker startup uses `npm run prisma:generate`, `npx prisma migrate deploy`, then `npm start`. It does not use `prisma db push --accept-data-loss`.
+Docker startup uses `npx prisma migrate deploy`, then `npm start`. It does not use `prisma db push --accept-data-loss`.
 
 ## API Overview
 
@@ -230,6 +230,8 @@ Screenshots are planned. Add storefront, product detail, cart, checkout, and adm
 
 - Frontend cart is still mostly `localStorage`; backend cart sync exists but is not a full real-time server-cart frontend rewrite.
 - Payment needs real VNPay sandbox credentials and callback URL testing before production.
+- Docker build/runtime was not locally verified because the Docker daemon was unavailable in this session.
+- Production `npm start` health smoke was not locally verified because no MySQL test service was available.
 - Checkout/order/payment code exists, but payment is not claimed production-ready without sandbox end-to-end verification.
 - No live demo URL is currently documented.
 - Email OTP requires a configured Resend API key.

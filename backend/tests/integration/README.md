@@ -4,7 +4,7 @@ Thư mục này chứa Supertest integration tests chạy trên cùng Express ap
 
 ## Test hiện có
 
-- `auth-product.api.test.ts`: đăng ký, đăng nhập, profile JWT, phân quyền customer/admin cho product API, product list/detail.
+- `auth-product.api.test.ts`: health check, đăng ký, đăng nhập, profile JWT, phân quyền customer/admin cho product API, product list/detail.
 - `cart-order.api.test.ts`: cart authenticated API, add cart item, lỗi thiếu stock, tạo order, chặn customer xem order không thuộc mình.
 
 ## Cách chạy
@@ -45,4 +45,4 @@ npm run test:integration
 npm run build
 ```
 
-Sau build, CI start backend từ `dist/src/server.js` bằng `npm start` và gọi `GET /api/health`.
+Sau build, CI start backend từ `dist/src/server.js` bằng `npm start` và gọi `GET /api/health`, endpoint trả `{ "success": true, "status": "ok" }`.

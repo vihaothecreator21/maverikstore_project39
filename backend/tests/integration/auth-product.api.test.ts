@@ -45,6 +45,20 @@ describe("Auth, authorization, and product API", () => {
     jest.clearAllMocks();
   });
 
+  it("GET /health returns a public health response", async () => {
+    const res = await request(app).get("/health");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, status: "ok" });
+  });
+
+  it("GET /api/health returns a public API health response", async () => {
+    const res = await request(app).get("/api/health");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, status: "ok" });
+  });
+
   it("POST /api/v1/auth/register returns accepted for valid registration", async () => {
     (authService.register as jest.Mock).mockResolvedValue({
       email: "new@example.com",

@@ -66,7 +66,7 @@ describe("CartService", () => {
     expect(cartRepository.upsertCartItem).toHaveBeenCalledWith(10, 1, "M", "Den", 3);
   });
 
-  it("merges matching localStorage items into an existing cart item", async () => {
+  it("caps merged localStorage items to available stock", async () => {
     const { cartRepository, productRepository } = createRepos();
     const service = new CartService(cartRepository as any, productRepository as any);
     const existingItem = {
@@ -87,7 +87,7 @@ describe("CartService", () => {
       { productId: 1, quantity: 4, size: "M", color: "Den" },
     ]);
 
-    expect(cartRepository.updateItemQty).toHaveBeenCalledWith(5, 6);
+    expect(cartRepository.updateItemQty).toHaveBeenCalledWith(5, 3);
     expect(cartRepository.upsertCartItem).not.toHaveBeenCalled();
   });
 

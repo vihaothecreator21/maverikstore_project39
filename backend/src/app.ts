@@ -43,6 +43,10 @@ export const createApp = (): Express => {
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
   app.use(sanitizeInput);
 
+  app.get("/health", (_req: Request, res: Response) => {
+    res.status(200).json({ success: true, status: "ok" });
+  });
+
   if (env.NODE_ENV === "development") {
     app.use((req: Request, _res: Response, next: NextFunction) => {
       console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);

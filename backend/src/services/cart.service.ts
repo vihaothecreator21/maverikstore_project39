@@ -193,7 +193,12 @@ export class CartService {
           // Giá trị mặc định cho size/color nếu không có
           const itemSize     = item.size || "One Size";
           const itemColor    = item.color || "Default";
-          const requestedQty = Math.min(item.quantity || 1, 999); // Tối đa 999
+          const requestedQty = Number.isInteger(item.quantity)
+            ? Math.min(item.quantity, 999)
+            : 0;
+          if (requestedQty <= 0 || product.stockQuantity <= 0) {
+            continue;
+          }
 
           // Tìm CartItem trùng (cùng productId + size + color)
           const existingCartItem = cart!.items.find(
@@ -204,15 +209,13 @@ export class CartService {
           );
 
           if (existingCartItem) {
-            // Cộng thêm quantity, không vượt 999
-            const newQty = Math.min(existingCartItem.quantity + requestedQty, 999);
+            const newQty = Math.min(
+              existingCartItem.quantity + requestedQty,
+              product.stockQuantity,
+            );
             await this.cartRepository.updateItemQty(existingCartItem.id, newQty);
           } else {
-            // Tạo mới — số lượng không vượt tồn kho
-            const availableQty =
-              product.stockQuantity < requestedQty
-                ? Math.min(requestedQty, product.stockQuantity)
-                : requestedQty;
+            const availableQty = Math.min(requestedQty, product.stockQuantity);
 
             await this.cartRepository.upsertCartItem(
               cart!.id,

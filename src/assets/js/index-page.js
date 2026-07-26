@@ -38,7 +38,7 @@ async function loadNewArrivals() {
 async function loadBestSellers() {
     try {
         // Lấy 8 sản phẩm bán chạy nhất
-        const response = await fetch(`${API_CONFIG.BASE_URL}/products/featured/best-sellers?limit=8`);
+        const response = await fetch(`${API_CONFIG.BASE_URL}/products/featured/best-sellers?limit=9`);
         const data = await response.json();
 
         if (data.status === 'success') {
@@ -55,7 +55,9 @@ function renderSlider(products) {
     const swiperWrapper = document.querySelector('#swiper-6 .swiper-wrapper');
     if (!swiperWrapper || !products.length) return;
 
-    swiperWrapper.innerHTML = products.map(product => `
+    swiperWrapper.innerHTML = products.map((rawProduct) => {
+        const product = safeProduct(rawProduct);
+        return `
         <div class="swiper-slide">
             <div class="container">
                 <div class="row align-items-center min-vh-75 py-5">
@@ -99,13 +101,16 @@ function renderSlider(products) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 function renderBestSellers(products) {
     const swiperWrapper = document.querySelector('#swiper-3 .swiper-wrapper');
     if (!swiperWrapper || !products.length) return;
 
-    swiperWrapper.innerHTML = products.map(product => `
+    swiperWrapper.innerHTML = products.map((rawProduct) => {
+        const product = safeProduct(rawProduct);
+        return `
         <div class="swiper-slide">
             <div class="card border-0 product-card h-100">
                 <div class="position-relative overflow-hidden">
@@ -131,7 +136,8 @@ function renderBestSellers(products) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function getDiscountInfo(product) {
@@ -155,4 +161,35 @@ function renderPriceHtml(product) {
             <span class="fw-bold text-danger">${discount.salePrice.toLocaleString()} đ</span>
         </span>
     `;
+}
+
+function safeProduct(product) {
+    return {
+        ...product,
+        name: escapeHtml(product.name),
+        description: product.description ? escapeHtml(product.description) : product.description,
+        slug: encodeURIComponent(String(product.slug ?? "")),
+        imageUrl: escapeAttr(safeImageUrl(product.imageUrl)),
+    };
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(value) {
+    return escapeHtml(value);
+}
+
+function safeImageUrl(value) {
+    const url = String(value ?? "").trim();
+    if (url.startsWith("./") || url.startsWith("/") || /^https?:\/\//i.test(url)) {
+        return url;
+    }
+    return "./assets/images/placeholder.jpg";
 }

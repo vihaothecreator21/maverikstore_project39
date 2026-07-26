@@ -47,16 +47,7 @@ router.get("/", (_req: Request, res: Response) => {
 
 // ==================== Health Check Route ====================
 router.get("/health", (_req: Request, res: Response) => {
-  // getEnv() bên trong handler — an toàn, lazy evaluation
-  const env = getEnv();
-  const healthStatus = {
-    status: "healthy",
-    environment: env.NODE_ENV,
-    apiVersion: env.API_VERSION,
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-  };
-  sendSuccess(res, healthStatus, "Maverik Store API is running", HTTP_STATUS.OK);
+  res.status(HTTP_STATUS.OK).json({ success: true, status: "ok" });
 });
 
 // ==================== Route Mounting ====================

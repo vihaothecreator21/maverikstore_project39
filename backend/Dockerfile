@@ -1,25 +1,36 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# openssl cho Prisma, netcat cho healthcheck trong entrypoint
-RUN apk add --no-cache openssl netcat-openbsd
+RUN apk add --no-cache openssl
 
-# Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
-
-# Cài toàn bộ deps (bao gồm tsx, ts-node để chạy TypeScript trực tiếp)
 RUN npm ci
 
-# Sinh Prisma Client cho Linux/Alpine
+COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy toàn bộ source code
-COPY . .
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
 
-# Copy và cấp quyền entrypoint
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN apk add --no-cache openssl netcat-openbsd
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY prisma ./prisma
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
+
 RUN chmod +x ./docker-entrypoint.sh
 
 EXPOSE 5000
