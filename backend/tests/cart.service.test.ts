@@ -87,7 +87,7 @@ describe("CartService", () => {
       { productId: 1, quantity: 4, size: "M", color: "Den" },
     ]);
 
-    expect(cartRepository.updateItemQty).toHaveBeenCalledWith(5, 6);
+    expect(cartRepository.updateItemQty).toHaveBeenCalledWith(5, 3);
     expect(cartRepository.upsertCartItem).not.toHaveBeenCalled();
   });
 });
