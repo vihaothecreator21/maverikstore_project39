@@ -1,26 +1,31 @@
-import { ProductRepository } from "../repositories/product.repository";
-import { APIError } from "../utils/apiResponse";
+import { ProductRepository } from "../repositories/product.repository.js";
+import { APIError } from "../utils/apiResponse.js";
 import type {
   CreateProductInput,
   UpdateProductInput,
   ProductQueryInput,
-} from "../schemas/product.schema";
+} from "../schemas/product.schema.js";
 
 /**
- * Product Service - Business Logic Layer
- * Handles all product-related business logic
+ * Product Service - Tầng xử lý nghiệp vụ
+ * Xử lý toàn bộ logic liên quan đến sản phẩm
  */
-
 export class ProductService {
+  private productRepository: ProductRepository;
+
+  constructor(productRepository: ProductRepository) {
+    this.productRepository = productRepository;
+  }
+
   /**
-   * Generate a URL-friendly slug from a product name
-   * e.g. "Áo Thun Maverik 2024" => "ao-thun-maverik-2024"
+   * Tạo slug thân thiện với URL từ tên sản phẩm
+   * Ví dụ: "Áo Thun Maverik 2024" => "ao-thun-maverik-2024"
    */
-  private static generateSlug(name: string): string {
+  private generateSlug(name: string): string {
     return name
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")  // Remove diacritics
+      .replace(/[\u0300-\u036f]/g, "") // Loại bỏ dấu thanh/dấu phụ
       .replace(/đ/g, "d")
       .replace(/[^a-z0-9\s-]/g, "")
       .trim()
@@ -29,17 +34,16 @@ export class ProductService {
   }
 
   /**
-   * Ensure slug is unique by appending a number if needed
-   * e.g. "ao-thun" => "ao-thun-2" if "ao-thun" already exists
+   * Đảm bảo slug là duy nhất — thêm số đếm vào cuối nếu cần
    */
-  private static async ensureUniqueSlug(
+  private async ensureUniqueSlug(
     baseSlug: string,
     excludeId?: number,
   ): Promise<string> {
     let slug = baseSlug;
     let counter = 1;
 
-    while (await ProductRepository.slugExists(slug, excludeId)) {
+    while (await this.productRepository.slugExists(slug, excludeId)) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -48,16 +52,18 @@ export class ProductService {
   }
 
   /**
-   * Get all products with pagination and filtering
+   * Lấy danh sách tất cả sản phẩm (có phân trang và lọc)
    */
-  static async getAll(query: ProductQueryInput) {
-    const { page, limit, categoryId, search } = query;
-
-    const { products, total } = await ProductRepository.findAll({
+  async getAll(query: ProductQueryInput) {
+    const { page, limit, categoryId, search, minPrice, maxPrice, sort } = query;
+    const { products, total } = await this.productRepository.findAll({
       page,
       limit,
       categoryId,
       search,
+      minPrice,
+      maxPrice,
+      sort,
     });
 
     return {
@@ -72,97 +78,80 @@ export class ProductService {
   }
 
   /**
-   * Get a single product by its ID
+   * Lấy thông tin một sản phẩm theo ID
    */
-  static async getById(id: number) {
-    const product = await ProductRepository.findById(id);
+  async getById(id: number) {
+    const product = await this.productRepository.findById(id);
     if (!product) {
-      throw new APIError(
-        404,
-        `Product with ID ${id} not found`,
-        {},
-        "PRODUCT_NOT_FOUND",
-      );
+      throw new APIError(404, `Product with ID ${id} not found`, {}, "PRODUCT_NOT_FOUND");
     }
     return product;
   }
 
   /**
-   * Get a single product by its slug
+   * Lấy thông tin một sản phẩm theo slug
    */
-  static async getBySlug(slug: string) {
-    const product = await ProductRepository.findBySlug(slug);
+  async getBySlug(slug: string) {
+    const product = await this.productRepository.findBySlug(slug);
     if (!product) {
-      throw new APIError(
-        404,
-        `Product "${slug}" not found`,
-        {},
-        "PRODUCT_NOT_FOUND",
-      );
+      throw new APIError(404, `Product "${slug}" not found`, {}, "PRODUCT_NOT_FOUND");
     }
     return product;
   }
 
   /**
-   * Create a new product (Admin only)
+   * Tạo sản phẩm mới (chỉ Admin)
    */
-  static async create(input: CreateProductInput) {
-    // Generate and ensure unique slug from product name
+  async create(input: CreateProductInput) {
     const baseSlug = this.generateSlug(input.name);
     const slug = await this.ensureUniqueSlug(baseSlug);
-
-    const product = await ProductRepository.create({ ...input, slug });
-
-    return product;
+    return this.productRepository.create({ ...input, slug });
   }
 
   /**
-   * Update an existing product by ID (Admin only)
+   * Cập nhật sản phẩm theo ID (chỉ Admin)
    */
-  static async update(id: number, input: UpdateProductInput) {
-    // Make sure product exists
-    const existing = await ProductRepository.findById(id);
-    if (!existing) {
-      throw new APIError(
-        404,
-        `Product with ID ${id} not found`,
-        {},
-        "PRODUCT_NOT_FOUND",
-      );
-    }
-
-    // Re-generate slug only if name changed
+  async update(id: number, input: UpdateProductInput) {
     let slugUpdate: { slug?: string } = {};
-    if (input.name && input.name !== existing.name) {
-      const baseSlug = this.generateSlug(input.name);
-      const slug = await this.ensureUniqueSlug(baseSlug, id);
-      slugUpdate = { slug };
+
+    if (input.name) {
+      const existing = await this.productRepository.findById(id);
+      if (!existing) {
+        throw new APIError(404, `Product with ID ${id} not found`, {}, "PRODUCT_NOT_FOUND");
+      }
+
+      if (input.name !== existing.name) {
+        const baseSlug = this.generateSlug(input.name);
+        const slug = await this.ensureUniqueSlug(baseSlug, id);
+        slugUpdate = { slug };
+      }
+    } else {
+      const exists = await this.productRepository.productExists(id);
+      if (!exists) {
+        throw new APIError(404, `Product with ID ${id} not found`, {}, "PRODUCT_NOT_FOUND");
+      }
     }
 
-    const product = await ProductRepository.update(id, {
-      ...input,
-      ...slugUpdate,
-    });
-
-    return product;
+    return this.productRepository.update(id, { ...input, ...slugUpdate });
   }
 
   /**
-   * Delete a product by ID (Admin only)
+   * Xóa sản phẩm theo ID (chỉ Admin)
    */
-  static async delete(id: number) {
-    // Make sure product exists before deleting
-    const existing = await ProductRepository.findById(id);
-    if (!existing) {
-      throw new APIError(
-        404,
-        `Product with ID ${id} not found`,
-        {},
-        "PRODUCT_NOT_FOUND",
-      );
-    }
+  async delete(id: number) {
+    return this.productRepository.deleteOrThrow(id);
+  }
 
-    const deleted = await ProductRepository.delete(id);
-    return deleted;
+  /**
+   * Sửa các sản phẩm có slug NULL hoặc rỗng
+   */
+  async fixNullSlugs() {
+    return this.productRepository.fixNullSlugs();
+  }
+  /**
+   * Lấy danh sách sản phẩm bán chạy nhất
+   */
+  async getBestSellers(limit: number) {
+    return this.productRepository.findBestSellers(limit);
   }
 }

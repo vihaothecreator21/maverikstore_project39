@@ -1,22 +1,37 @@
 /**
  * products.js — Maverik Store
  * Fetch danh sách sản phẩm từ Backend API và render lên giao diện
+ *
+ * Flow chính:
+ * - DOMContentLoaded -> loadCategories() + loadProducts().
+ * - Sidebar category gọi GET /categories rồi gắn click listener cho từng category.
+ * - Danh sách sản phẩm gọi GET /products?page=&limit=&categoryId=&search=.
+ * - Search input dùng debounce để giảm số lần gọi API.
+ * - Nút add-to-cart được bắt bằng event delegation ở cuối file.
  */
 
-const API_BASE = "http://localhost:5000/api/v1";
+import { getApiBase } from "./api-config.js";
+
+const API_BASE = getApiBase();
+const FALLBACK_PRODUCT_IMAGE = "./assets/images/product-img-1.jpg";
 
 // ── State ─────────────────────────────────────────────────────
 let currentPage = 1;
 const LIMIT = 6;
 let currentCategoryId = null;
 let currentSearch = "";
+let currentMinPrice = null;
+let currentMaxPrice = null;
+let currentSort = "";
 let searchTimeout = null;
+let priceFilterTimeout = null;
 
 // ── Khởi động ─────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   loadCategories();
   loadProducts();
   setupSearch();
+  setupPriceFilter();
   setupSortSelect();
 });
 
@@ -46,10 +61,10 @@ async function loadCategories() {
       list.insertAdjacentHTML(
         "beforeend",
         `<li>
-          <a href="#" class="category-link text-dark" data-id="${cat.id}">
-            ${cat.name}
+          <a href="#" class="category-link text-dark" data-id="${escapeAttr(cat.id)}">
+            ${escapeHtml(cat.name)}
           </a>
-        </li>`
+        </li>`,
       );
     });
 
@@ -57,7 +72,9 @@ async function loadCategories() {
     list.querySelectorAll(".category-link").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
-        list.querySelectorAll(".category-link").forEach((l) => l.classList.remove("active-cat", "fw-semibold"));
+        list
+          .querySelectorAll(".category-link")
+          .forEach((l) => l.classList.remove("active-cat", "fw-semibold"));
         link.classList.add("active-cat", "fw-semibold");
         currentCategoryId = link.dataset.id || null;
         currentPage = 1;
@@ -65,7 +82,7 @@ async function loadCategories() {
       });
     });
   } catch (err) {
-    console.warn("Không thể tải danh mục:", err);
+    // Error loading categories - silent fail
   }
 }
 
@@ -83,6 +100,9 @@ async function loadProducts() {
     });
     if (currentCategoryId) params.append("categoryId", currentCategoryId);
     if (currentSearch) params.append("search", currentSearch);
+    if (currentMinPrice !== null) params.append("minPrice", String(currentMinPrice));
+    if (currentMaxPrice !== null) params.append("maxPrice", String(currentMaxPrice));
+    if (currentSort) params.append("sort", currentSort);
 
     const res = await fetch(`${API_BASE}/products?${params}`);
     const json = await res.json();
@@ -97,7 +117,6 @@ async function loadProducts() {
     updateProductCount(json.meta.total);
   } catch (err) {
     showError("Lỗi kết nối đến server. Vui lòng kiểm tra backend.");
-    console.error(err);
   }
 }
 
@@ -123,22 +142,25 @@ function renderProducts(products) {
 }
 
 function buildProductCard(product) {
-  const image = product.imageUrl || getPlaceholderImage(product.name);
-  const categoryName = product.category?.name || "Maverik";
-  const priceFormatted = formatVND(product.price);
+  const image = safeImageUrl(product.imageUrl || getPlaceholderImage(product.name));
+  const categoryName = escapeHtml(product.category?.name || "Maverik");
+  const discount = getDiscountInfo(product);
   const inStock = product.stockQuantity > 0;
-  const slug = product.slug;
+  const detailUrl = productDetailUrl(product);
+  const productName = escapeHtml(product.name);
+  const productDescription = escapeHtml(truncate(product.description || "", 80));
+  const productId = escapeAttr(product.id);
 
   return `
     <div class="col-sm-6 col-md-4 product-item" data-aos="fade-up">
       <div class="card product-card h-100 border-0 shadow-sm">
         <div class="position-relative overflow-hidden product-img-wrap">
-          <a href="product-detail.html?slug=${slug}">
+          <a href="${detailUrl}">
             <img
-              src="${image}"
+              src="${escapeAttr(image)}"
               class="card-img-top product-card-img"
-              alt="${product.name}"
-              onerror="this.src='./assets/images/product-img-1.jpg'"
+              alt="${productName}"
+              onerror="this.src='${FALLBACK_PRODUCT_IMAGE}'"
             />
           </a>
           ${!inStock ? `<span class="badge bg-secondary position-absolute top-0 end-0 m-2">Hết hàng</span>` : ""}
@@ -146,20 +168,21 @@ function buildProductCard(product) {
         <div class="card-body d-flex flex-column">
           <p class="text-muted mb-1 text-uppercase small">${categoryName}</p>
           <h3 class="h6 mb-2">
-            <a href="product-detail.html?slug=${slug}" class="text-dark text-decoration-none product-name">
-              ${product.name}
+            <a href="${detailUrl}" class="text-dark text-decoration-none product-name">
+              ${productName}
             </a>
           </h3>
           <p class="text-muted small mb-3 product-desc">
-            ${truncate(product.description || "", 80)}
+            ${productDescription}
           </p>
           <div class="mt-auto d-flex align-items-center justify-content-between">
-            <span class="fw-bold text-dark">${priceFormatted}</span>
+            ${renderPriceHtml(product)}
             <button
               class="btn btn-dark btn-sm add-to-cart-btn"
-              data-product-id="${product.id}"
-              data-product-name="${product.name}"
-              data-product-price="${product.price}"
+              data-product-id="${productId}"
+              data-product-name="${productName}"
+              data-product-price="${discount.salePrice}"
+              data-product-image="${escapeAttr(image)}"
               ${!inStock ? "disabled" : ""}
             >
               ${inStock ? '<i class="bi bi-cart-plus me-1"></i>Thêm giỏ' : "Hết hàng"}
@@ -168,6 +191,29 @@ function buildProductCard(product) {
         </div>
       </div>
     </div>
+  `;
+}
+
+function getDiscountInfo(product) {
+  const price = Number(product.price || 0);
+  const discountPercent = Number(product.discountPercent || 0);
+  const discountAmount = Number(product.discountAmount || 0);
+  const discountValue = discountPercent > 0 ? price * discountPercent / 100 : discountAmount;
+  const salePrice = Math.max(0, Math.round(price - discountValue));
+  return { price, salePrice, hasDiscount: discountValue > 0 && salePrice < price };
+}
+
+function renderPriceHtml(product) {
+  const discount = getDiscountInfo(product);
+  if (!discount.hasDiscount) {
+    return `<span class="fw-bold text-dark">${formatVND(discount.price)}</span>`;
+  }
+
+  return `
+    <span>
+      <span class="d-block text-muted text-decoration-line-through small">${formatVND(discount.price)}</span>
+      <span class="fw-bold text-danger">${formatVND(discount.salePrice)}</span>
+    </span>
   `;
 }
 
@@ -243,20 +289,56 @@ function setupSearch() {
 }
 
 // ════════════════════════════════════════════════════════════
-// 6. SORT
+// 6. PRICE FILTER
+// ════════════════════════════════════════════════════════════
+const PRICE_FILTERS = {
+  0: { label: "Tất cả mức giá", min: null, max: null },
+  1: { label: "Dưới 5.000.000đ", min: null, max: 5_000_000 },
+  2: { label: "Dưới 10.000.000đ", min: null, max: 10_000_000 },
+  3: { label: "Dưới 20.000.000đ", min: null, max: 20_000_000 },
+  4: { label: "Trên 20.000.000đ", min: 20_000_000.01, max: null },
+};
+
+function setupPriceFilter() {
+  const range = document.getElementById("price-filter-range");
+  const label = document.getElementById("price-filter-label");
+  const reset = document.getElementById("price-filter-reset");
+  if (!range || !label) return;
+
+  const applyPriceFilter = () => {
+    const filter = PRICE_FILTERS[range.value] || PRICE_FILTERS[0];
+    label.textContent = filter.label;
+    currentMinPrice = filter.min;
+    currentMaxPrice = filter.max;
+    currentPage = 1;
+    clearTimeout(priceFilterTimeout);
+    priceFilterTimeout = setTimeout(loadProducts, 250);
+  };
+
+  range.addEventListener("input", applyPriceFilter);
+  reset?.addEventListener("click", () => {
+    range.value = "0";
+    applyPriceFilter();
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// 7. SORT
 // ════════════════════════════════════════════════════════════
 function setupSortSelect() {
   const select = document.getElementById("sort-select");
   if (!select) return;
 
   select.addEventListener("change", () => {
+    currentSort = select.value;
+    currentPage = 1;
     // TODO: Thêm sort param vào API khi backend hỗ trợ
     loadProducts();
   });
 }
 
 // ════════════════════════════════════════════════════════════
-// 7. SKELETON LOADING
+// 8. SKELETON LOADING
 // ════════════════════════════════════════════════════════════
 function showSkeleton() {
   const grid = document.getElementById("product-grid");
@@ -276,7 +358,7 @@ function showSkeleton() {
         </div>
       </div>
     </div>
-  `
+  `,
     )
     .join("");
 
@@ -289,13 +371,13 @@ function showError(msg) {
   grid.innerHTML = `
     <div class="col-12 text-center py-5">
       <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block"></i>
-      <h5 class="text-muted">${msg}</h5>
+      <h5 class="text-muted">${escapeHtml(msg)}</h5>
     </div>
   `;
 }
 
 // ════════════════════════════════════════════════════════════
-// 8. HELPERS
+// 9. HELPERS
 // ════════════════════════════════════════════════════════════
 function updateProductCount(total) {
   const el = document.getElementById("product-total-count");
@@ -315,32 +397,95 @@ function truncate(str, maxLen) {
 }
 
 function getPlaceholderImage(name) {
-  const index = (name.charCodeAt(0) % 7) + 1;
+  const safeName = String(name || "Maverik");
+  const index = (safeName.charCodeAt(0) % 7) + 1;
   return `./assets/images/product-img-${index}.jpg`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function safeImageUrl(value) {
+  const url = String(value ?? "").trim();
+  if (!url) return FALLBACK_PRODUCT_IMAGE;
+  if (url.startsWith("./") || url.startsWith("/") || /^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return FALLBACK_PRODUCT_IMAGE;
+}
+
+function productDetailUrl(product) {
+  if (product.slug) {
+    return `product-detail.html?slug=${encodeURIComponent(product.slug)}`;
+  }
+  return `product-detail.html?id=${encodeURIComponent(String(product.id ?? ""))}`;
+}
+
 // ════════════════════════════════════════════════════════════
-// 9. ADD TO CART (placeholder — sẽ hoàn thiện ở bước Cart)
+// 10. ADD TO CART - Now supports guests with localStorage
 // ════════════════════════════════════════════════════════════
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".add-to-cart-btn");
   if (!btn) return;
 
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    // Chưa đăng nhập → mở modal login
-    const loginModal = document.getElementById("loginModal");
-    if (loginModal) {
-      new bootstrap.Modal(loginModal).show();
-    } else {
-      alert("Vui lòng đăng nhập để thêm vào giỏ hàng!");
-    }
-    return;
-  }
+  try {
+    const productId = parseInt(btn.dataset.productId);
+    const productName = btn.dataset.productName;
+    const productPrice = parseFloat(btn.dataset.productPrice);
+    const imageUrl =
+      btn.dataset.productImage || "./assets/images/product-img-1.jpg";
 
-  // TODO: Gọi API Cart khi đã làm module Cart
-  const name = btn.dataset.productName;
-  showToast(`✅ Đã thêm "${name}" vào giỏ hàng!`);
+    // ✅ Tạo item object
+    const newItem = {
+      id: Date.now(),
+      productId: productId,
+      name: productName,
+      price: productPrice,
+      imageUrl: imageUrl,
+      size: "Một kích cỡ", // Default cho products.html
+      color: "Mặc định", // Default cho products.html
+      quantity: 1,
+    };
+
+    // ✅ Lấy cart từ localStorage
+    let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+
+    // ✅ Kiểm tra xem đã có trong giỏ chưa
+    const existing = cart.findIndex(
+      (item) =>
+        item.productId === productId &&
+        item.size === newItem.size &&
+        item.color === newItem.color,
+    );
+
+    if (existing > -1) {
+      cart[existing].quantity += 1; // Tăng số lượng
+    } else {
+      cart.push(newItem); // Thêm mới
+    }
+
+    // ✅ Lưu vào localStorage
+    localStorage.setItem("maverik_cart", JSON.stringify(cart));
+
+    // ✅ Cập nhật navbar cart badge
+    window.dispatchEvent(new Event("cartUpdated"));
+
+    // Hiển thị thông báo gọn nhẹ sau khi thêm vào giỏ hàng.
+    showToast(`Đã thêm "${productName}" vào giỏ hàng.`);
+  } catch (err) {
+    console.error("Error adding to cart:", err);
+    showToast("Không thể thêm vào giỏ hàng. Vui lòng thử lại.");
+  }
 });
 
 function showToast(message) {
@@ -350,18 +495,22 @@ function showToast(message) {
     toast.id = "cart-toast";
     toast.style.cssText = `
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      background: #212529; color: white; padding: 12px 20px;
-      border-radius: 8px; font-size: 14px; font-weight: 500;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
+      max-width: min(360px, calc(100vw - 32px));
+      background: #fff; color: #242424; padding: 13px 18px;
+      border: 1px solid #ebe6dc; border-radius: 10px;
+      font-size: 14px; font-weight: 500; line-height: 1.45;
+      box-shadow: 0 14px 36px rgba(28, 24, 20, 0.14);
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
     `;
     document.body.appendChild(toast);
   }
   toast.textContent = message;
+  clearTimeout(toast.hideTimer);
   toast.style.opacity = "1";
   toast.style.transform = "translateY(0)";
-  setTimeout(() => {
+  toast.hideTimer = setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateY(10px)";
-  }, 3000);
+  }, 2600);
 }

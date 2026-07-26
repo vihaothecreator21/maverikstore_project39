@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contact eCommerce Bootstrap HTML Template - Furnish</title>
+  <title>Liên hệ - Maverik Furniture</title>
     
   </head>
   <body class="font-sans text-gray-800">
@@ -12,38 +12,55 @@
   <div class="container-fluid px-0">
     <a class="navbar-brand" href="index.html">
       <span class="d-flex flex-column text-uppercase text-xs  lh-sm fw-bold">
-      <span class="" style="letter-spacing: .12rem;">Furnish</span>
-      <span>Template</span>
+      <span class="" style="letter-spacing: 0.12rem;">Maverik</span>
+      <span>Furniture</span>
     </span></a>
   
     <div class="mx-auto  d-lg-block d-none">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
          <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="index.html">Home</a>
+          <a class="nav-link active" aria-current="page" href="index.html">Trang chủ</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="about.html">About us</a>
+          <a class="nav-link" href="about.html">Giới thiệu</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="products.html">Products</a>
+          <a class="nav-link" href="products.html">Sản phẩm</a>
         </li>
           <li class="nav-item">
-          <a class="nav-link" href="testimonials.html">Testimonials</a>
+          <a class="nav-link" href="testimonials.html">Đánh giá</a>
         </li>
          
 
         <li class="nav-item">
-          <a class="nav-link " href="contact.html" >Contact</a>
+          <a class="nav-link " href="contact.html" >Liên hệ</a>
         </li>
       </ul>
       </div>
     <div class="d-flex align-items-center gap-4">        <button type="button" class="btn btn-outline-dark btn-sm fw-semibold d-none d-lg-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#loginModal">
-            🔐 Login Now
-        </button>        <span class="d-flex align-items-center gap-2 ">
+            🔐 Đăng nhập
+        </button>
+        
+        <!-- User Dropdown (hidden by default, shown when logged in) -->
+        <div class="dropdown d-none d-lg-flex" id="userNavDropdown">
+          <button 
+            class="btn btn-outline-dark btn-sm fw-semibold" 
+            type="button" 
+            id="userMenuBtn"
+            data-bs-toggle="dropdown"
+          >
+            👤 <span id="userNameDisplay">Người dùng</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu">
+            <!-- Built dynamically by navbar.js -->
+          </ul>
+        </div>
+        
+        <span class="d-flex align-items-center gap-2 ">
             <span>
                 <i class="bi bi-telephone"></i>
             </span>
-            <span class="fw-bold">+901234576</span>
+            <span class="fw-bold">0822313183</span>
         </span>
         <a class="" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
@@ -61,9 +78,9 @@
       <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-6">
-        <h1 class="display-5 mb-3">Contact Us</h1>
+        <h1 class="display-5 mb-3">Liên hệ với chúng tôi</h1>
         <p class="text-muted lead">
-          We’d love to hear from you! Get in touch with our team for any questions or feedback.
+          Chúng tôi rất mong nhận được phản hồi của bạn. Hãy liên hệ với đội ngũ Maverik khi bạn cần hỗ trợ.
         </p>
         </div>
         </div>
@@ -76,14 +93,14 @@
         <div class="row g-5 align-items-start">
           <!-- Contact Info -->
           <div class="col-md-4">
-            <h4 class=" mb-4">Get in Touch</h4>
-            <p class="text-muted mb-4">Whether you have a question about our products, need assistance, or just want to talk furniture — we’re here for you.</p>
+            <h4 class=" mb-4">Liên hệ với chúng tôi</h4>
+            <p class="text-muted mb-4">Nếu bạn có câu hỏi về sản phẩm, cần hỗ trợ hoặc muốn trao đổi về nội thất, chúng tôi luôn sẵn sàng.</p>
 
             <div class=" d-flex align-items-start mb-3">
               <i class="bi bi-geo-alt-fill me-3 text-secondary"></i>
               <div>
-                <h5 class="fw-semibold mb-1 text-uppercase text-xs">Address</h5>
-                <p class="text-muted mb-0">123 Furniture Street, Mumbai, India</p>
+                <h5 class="fw-semibold mb-1 text-uppercase text-xs">Địa chỉ</h5>
+                <p class="text-muted mb-0">123 Đường Nội Thất, TP. Hồ Chí Minh, Việt Nam</p>
               </div>
             </div>
 
@@ -98,7 +115,7 @@
             <div class=" d-flex align-items-start mb-3">
               <i class="bi bi-telephone-fill me-3 text-secondary"></i>
               <div>
-                <h5 class="fw-semibold mb-1 text-uppercase text-xs">Phone</h6>
+                <h5 class="fw-semibold mb-1 text-uppercase text-xs">Số điện thoại</h6>
                 <p class="text-muted mb-0 ">+91 98765 43210</p>
               </div>
             </div>
@@ -108,27 +125,27 @@
           <div class="col-md-8">
             <div class="card ">
               <div class="card-body p-lg-5">
-                <h4 class=" mb-4">Send a Message</h4>
+                <h4 class=" mb-4">Gửi tin nhắn</h4>
                 <form>
                   <div class="row g-3">
                     <div class="col-md-6">
-                      <label class="form-label">Full Name</label>
-                      <input type="text" class="form-control" placeholder="Your name" required />
+                      <label class="form-label">Họ và tên</label>
+                      <input type="text" class="form-control" placeholder="Nguyễn Văn A" required />
                     </div>
                     <div class="col-md-6">
                       <label class="form-label">Email</label>
                       <input type="email" class="form-control" placeholder="you@example.com" required />
                     </div>
                     <div class="col-12">
-                      <label class="form-label">Subject</label>
-                      <input type="text" class="form-control" placeholder="Subject" />
+                      <label class="form-label">Chủ đề</label>
+                      <input type="text" class="form-control" placeholder="Chủ đề" />
                     </div>
                     <div class="col-12">
-                      <label class="form-label">Message</label>
-                      <textarea class="form-control" rows="5" placeholder="Write your message here..."></textarea>
+                      <label class="form-label">Nội dung</label>
+                      <textarea class="form-control" rows="5" placeholder="Nhập nội dung tin nhắn..."></textarea>
                     </div>
                     <div class="col-12 text-end">
-                      <button type="submit" class="btn btn-dark px-4">Send Message</button>
+                      <button type="submit" class="btn btn-dark px-4">Send Nội dung</button>
                     </div>
                   </div>
                 </form>
@@ -157,74 +174,66 @@
 
 
 </main>
-        <footer class="bg-dark  pt-8 footer">
+        <footer class="bg-dark pt-8 footer">
         <div class="container">
-          <div class="row">
-            <div class="col-lg-4 col-md-4 col-12">
-              <a class="navbar-brand" href="#">
-      <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
-      <span class="" style="letter-spacing: .12rem;">Furnish</span>
-      <span>Template</span>
-    </span></a>
+          <div class="row gy-5">
+            <div class="col-lg-3 col-md-6 col-12">
+              <a class="navbar-brand text-white" href="index.html">
+                <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+                  <span style="letter-spacing: 0.12rem;">Maverik</span>
+                  <span>Furniture</span>
+                </span>
+              </a>
+              <p class="text-secondary small mt-3 mb-0">
+                Maverik Furniture mang &#273;&#7871;n n&#7897;i th&#7845;t hi&#7879;n &#273;&#7841;i, tinh g&#7885;n v&#224; d&#7877; &#7913;ng d&#7909;ng cho kh&#244;ng gian s&#7889;ng h&#7857;ng ng&#224;y.
+              </p>
             </div>
-          <div class="col-lg-8 col-md-6 mb-4 d-flex justify-content-start justify-content-md-end gy-4">
-            <ul class="list-unstyled lh-lg d-flex flex-column flex-md-row gap-4">
-            <li><a href="#" class=" ft-links text-decoration-none">Home</a></li>
-             <li><a href="#" class=" ft-links text-decoration-none">Services</a></li>
-            <li><a href="#" class=" ft-links text-decoration-none">Products</a></li>
-            <li><a href="#" class=" ft-links text-decoration-none">About Us</a></li>
-            <li><a href="#" class=" ft-links text-decoration-none">Contact</a></li>
-            </ul>
-          </div>
-          <div class="row justify-content-center align-items-center pt-lg-8 pb-4">
-          <div class="col-lg-6 col-md-6 mb-4">
-            <h2 class="display-3 text-white">We Design all over the world</h2>
-          
-          </div>
-          
-          
-          <div class="col-lg-6 col-md-6 mb-4">
-           <div class="d-flex gap-3 justify-content-start justify-content-lg-end">
-            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-facebook"></i></a>
-            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-twitter"></i></a>
-            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-instagram"></i></a>
-            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-linkedin"></i></a>
+
+            <div class="col-lg-3 col-md-6 col-12">
+              <h6 class="text-white fw-semibold text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.1em;">Trang</h6>
+              <ul class="list-unstyled lh-lg mb-0">
+                <li><a href="index.html" class="ft-links text-decoration-none">Trang ch&#7911;</a></li>
+                <li><a href="products.html" class="ft-links text-decoration-none">S&#7843;n ph&#7849;m</a></li>
+                <li><a href="about.html" class="ft-links text-decoration-none">Gi&#7899;i thi&#7879;u</a></li>
+                <li><a href="testimonials.html" class="ft-links text-decoration-none">&#272;&#225;nh gi&#225;</a></li>
+                <li><a href="contact.html" class="ft-links text-decoration-none">Li&#234;n h&#7879;</a></li>
+              </ul>
             </div>
-          </div>
-          </div>
-            <div class="row justify-content-center align-items-center py-lg-8">
-          <div class="col-lg-6 col-md-6 mb-4">
-            <div class="d-flex flex-column">
-            <span>Email Id</span>
-            <span class="h3 fw-light">Info@example.com</span>
-          </div>
-          </div>
-          
-          
-          <div class="col-lg-6 col-md-6 mb-4">
-           <div class="d-flex gap-3 justify-content-lg-end">
-           <a href="#" class="btn btn-outline-light">Contact us</a>
+
+            <div class="col-lg-3 col-md-6 col-12">
+              <h6 class="text-white fw-semibold text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.1em;">Showroom &#10024;</h6>
+              <ul class="list-unstyled lh-lg mb-0">
+                <li class="d-flex gap-2"><i class="bi bi-geo-alt"></i><span>Tr&#432;&#7901;ng &#272;&#7841;i H&#7885;c Hoa Sen, TP. HCM</span></li>
+                <li class="d-flex gap-2"><i class="bi bi-envelope"></i><a href="mailto:HoaSen@gmail.com" class="ft-links text-decoration-none">HoaSen@gmail.com</a></li>
+                <li class="d-flex gap-2"><i class="bi bi-telephone"></i><a href="tel:0822313183" class="ft-links text-decoration-none">0822 313 183</a></li>
+              </ul>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-12">
+              <h6 class="text-white fw-semibold text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.1em;">K&#7871;t n&#7889;i</h6>
+              <div class="d-flex gap-3">
+                <a href="https://www.facebook.com/" class="btn btn-outline-light btn-icon" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                <a href="https://www.instagram.com/" class="btn btn-outline-light btn-icon" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                <a href="https://www.tiktok.com/" class="btn btn-outline-light btn-icon" aria-label="TikTok"><i class="bi bi-tiktok"></i></a>
+                <a href="https://www.youtube.com/" class="btn btn-outline-light btn-icon" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+              </div>
             </div>
           </div>
-          </div>
-          <hr class="bg-secondary">
+
+          <hr class="bg-secondary my-5">
           <div class="row pb-3">
-          <div class="col-md-6 text-center text-md-start">
-            <p class=" mb-0">&copy; 2025 Furnish. Developed by <a href="https://codescandy.com" class="text-white" target="_blank">CodesCandy</a> • Distributed by <a href="https://themewagon.com" class="text-white" target="_blank">ThemeWagon</a>. All rights reserved.</p>
-          </div>
-          <div class="col-md-6 text-center text-md-end">
-            <a href="#" class=" ft-links text-decoration-none me-3">Privacy Policy</a>
-            <a href="#" class=" ft-links text-decoration-none">Terms of Service</a>
-          </div>
+            <div class="col-12 text-center">
+              <p class="mb-0">&copy; 2026 Maverik Furniture. All rights reserved.</p>
+            </div>
           </div>
         </div>
-          </footer>
+        </footer>
         <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
   <div class="offcanvas-header px-4">
      <a class="navbar-brand" href="#">
       <span class="d-flex flex-column text-uppercase text-xs  lh-sm fw-bold">
-      <span class="" style="letter-spacing: .12rem;">Furnish</span>
-      <span>Template</span>
+      <span class="" style="letter-spacing: 0.12rem;">Maverik</span>
+      <span>Furniture</span>
     </span></a>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
@@ -233,21 +242,21 @@
     <div class="navbar-custom">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
          <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="index.html">Home</a>
+          <a class="nav-link active" aria-current="page" href="index.html">Trang chủ</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="about.html">About us</a>
+          <a class="nav-link" href="about.html">Giới thiệu</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="products.html">Products</a>
+          <a class="nav-link" href="products.html">Sản phẩm</a>
         </li>
           <li class="nav-item">
-          <a class="nav-link" href="testimonials.html">Testimonials</a>
+          <a class="nav-link" href="testimonials.html">Đánh giá</a>
         </li>
          
 
         <li class="nav-item">
-          <a class="nav-link " href="contact.html" >Contact</a>
+          <a class="nav-link " href="contact.html" >Liên hệ</a>
         </li>
       </ul>
       </div>
@@ -261,35 +270,35 @@
       <div class="modal-header border-0 pb-0">
         <div class="w-100 text-center">
           <h5 class="modal-title fw-bold" id="loginModalLabel">
-            <i class="bi bi-lock-fill me-2" style="color: #d47f31;"></i>Sign In
+            <i class="bi bi-lock-fill me-2" style="color: #d47f31;"></i>Đăng nhập
           </h5>
-          <p class="text-muted small mb-0">Access your Furnish Store account</p>
+          <p class="text-muted small mb-0">Đăng nhập tài khoản Maverik Store</p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <form id="loginFormModal" class="needs-validation" novalidate>
           <div class="mb-3">
-            <label for="loginEmailModal" class="form-label fw-semibold">Email Address</label>
+            <label for="loginEmailModal" class="form-label fw-semibold">Email</label>
             <input type="email" class="form-control" id="loginEmailModal" placeholder="your@email.com" required>
-            <div class="invalid-feedback">Please enter a valid email.</div>
+            <div class="invalid-feedback">Vui lòng nhập email hợp lệ.</div>
           </div>
           <div class="mb-3">
-            <label for="loginPasswordModal" class="form-label fw-semibold">Password</label>
+            <label for="loginPasswordModal" class="form-label fw-semibold">Mật khẩu</label>
             <div class="input-group">
               <input type="password" class="form-control" id="loginPasswordModal" placeholder="••••••••" required>
               <button class="btn btn-light" type="button" id="toggleLoginPwdModal"><i class="bi bi-eye"></i></button>
             </div>
-            <div class="invalid-feedback">Password is required.</div>
+            <div class="invalid-feedback">Vui lòng nhập mật khẩu.</div>
           </div>
           <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="rememberMeModal">
-            <label class="form-check-label" for="rememberMeModal">Remember me</label>
+            <label class="form-check-label" for="rememberMeModal">Ghi nhớ tôi</label>
           </div>
-          <button type="submit" class="btn btn-dark w-100 fw-semibold py-2 mb-2">Sign In</button>
+          <button type="submit" class="btn btn-dark w-100 fw-semibold py-2 mb-2">Đăng nhập</button>
           <p class="text-center text-muted small">
-            Don't have an account? 
-            <button type="button" class="btn btn-link p-0 fw-semibold" style="color: #d47f31;" data-bs-toggle="modal" data-bs-target="#registerModal">Create one</button>
+            Chưa có tài khoản? 
+            <button type="button" class="btn btn-link p-0 fw-semibold" style="color: #d47f31;" data-bs-toggle="modal" data-bs-target="#registerModal">Tạo tài khoản</button>
           </p>
         </form>
       </div>
@@ -304,47 +313,47 @@
       <div class="modal-header border-0 pb-0">
         <div class="w-100 text-center">
           <h5 class="modal-title fw-bold" id="registerModalLabel">
-            <i class="bi bi-person-plus-fill me-2" style="color: #d47f31;"></i>Create Account
+            <i class="bi bi-person-plus-fill me-2" style="color: #d47f31;"></i>Tạo tài khoản
           </h5>
-          <p class="text-muted small mb-0">Join Furnish Store today</p>
+          <p class="text-muted small mb-0">Tham gia Maverik Store hôm nay</p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <form id="registerFormModal" class="needs-validation" novalidate>
           <div class="mb-3">
-            <label for="registerNameModal" class="form-label fw-semibold">Full Name</label>
-            <input type="text" class="form-control" id="registerNameModal" placeholder="John Doe" required>
-            <div class="invalid-feedback">Full name is required.</div>
+            <label for="registerNameModal" class="form-label fw-semibold">Họ và tên</label>
+            <input type="text" class="form-control" id="registerNameModal" placeholder="Nguyễn Văn A" required>
+            <div class="invalid-feedback">Vui lòng nhập họ và tên.</div>
           </div>
           <div class="mb-3">
-            <label for="registerEmailModal" class="form-label fw-semibold">Email Address</label>
+            <label for="registerEmailModal" class="form-label fw-semibold">Email</label>
             <input type="email" class="form-control" id="registerEmailModal" placeholder="your@email.com" required>
-            <div class="invalid-feedback">Please enter a valid email.</div>
+            <div class="invalid-feedback">Vui lòng nhập email hợp lệ.</div>
           </div>
           <div class="mb-3">
-            <label for="registerPhoneModal" class="form-label fw-semibold">Phone Number</label>
-            <input type="tel" class="form-control" id="registerPhoneModal" placeholder="+1 (555) 123-4567" required>
-            <div class="invalid-feedback">Phone number is required.</div>
+            <label for="registerPhoneModal" class="form-label fw-semibold">Số điện thoại</label>
+            <input type="tel" class="form-control" id="registerPhoneModal" placeholder="0901234567" required>
+            <div class="invalid-feedback">Vui lòng nhập số điện thoại.</div>
           </div>
           <div class="mb-3">
-            <label for="registerPasswordModal" class="form-label fw-semibold">Password</label>
+            <label for="registerPasswordModal" class="form-label fw-semibold">Mật khẩu</label>
             <div class="input-group">
               <input type="password" class="form-control" id="registerPasswordModal" placeholder="••••••••" required>
               <button class="btn btn-light" type="button" id="toggleRegisterPwdModal"><i class="bi bi-eye"></i></button>
             </div>
-            <small class="text-muted">Min 8 characters, 1 uppercase, 1 number</small>
-            <div class="invalid-feedback">Password must be at least 8 characters.</div>
+            <small class="text-muted">Tối thiểu 8 ký tự, 1 chữ hoa, 1 số</small>
+            <div class="invalid-feedback">Mật khẩu phải có ít nhất 8 ký tự.</div>
           </div>
           <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="agreeTermsModal" required>
-            <label class="form-check-label" for="agreeTermsModal">I agree to the <span style="color: #d47f31; cursor: pointer;">Terms & Conditions</span></label>
-            <div class="invalid-feedback">You must accept the terms.</div>
+            <label class="form-check-label" for="agreeTermsModal">Tôi đồng ý với <span style="color: #d47f31; cursor: pointer;">Điều khoản và Điều kiện</span></label>
+            <div class="invalid-feedback">Vui lòng đồng ý với điều khoản.</div>
           </div>
-          <button type="submit" class="btn btn-dark w-100 fw-semibold py-2 mb-2">Create Account</button>
+          <button type="submit" class="btn btn-dark w-100 fw-semibold py-2 mb-2">Tạo tài khoản</button>
           <p class="text-center text-muted small">
-            Already have an account? 
-            <button type="button" class="btn btn-link p-0 fw-semibold" style="color: #d47f31;" onclick="document.getElementById('registerModal').style.display='none'; document.getElementById('loginModal').style.display='block'; new bootstrap.Modal(document.getElementById('loginModal')).show();">Sign in</button>
+            Đã có tài khoản? 
+            <button type="button" class="btn btn-link p-0 fw-semibold" style="color: #d47f31;" onclick="document.getElementById('registerModal').style.display='none'; document.getElementById('loginModal').style.display='block'; new bootstrap.Modal(document.getElementById('loginModal')).show();">Đăng nhập</button>
           </p>
         </form>
       </div>
@@ -352,7 +361,26 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+  import { showConfirm, showToast } from "./assets/js/ui-feedback.js";
+  // Expose logout function globally
+  window.handleLogout = async function() {
+    const confirmed = await showConfirm('Bạn có chắc muốn đăng xuất?', { title: "Đăng xuất", confirmText: "Đăng xuất" });
+    if (!confirmed) return;
+    try {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('maverik_cart');
+      window.dispatchEvent(new Event('cartUpdated'));
+      showToast('✅ Đã đăng xuất');
+      window.location.href = './index.html';
+    } catch (err) {
+      console.error('Logout error:', err);
+      window.location.href = './index.html';
+    }
+  };
+  
   document.getElementById('toggleLoginPwdModal')?.addEventListener('click', function() {
     const input = document.getElementById('loginPasswordModal');
     const icon = this.querySelector('i');
@@ -383,13 +411,13 @@
         localStorage.setItem('authToken', data.data.token);
         if (rememberMe) localStorage.setItem('userEmail', email);
         localStorage.setItem('user', JSON.stringify(data.data.user));
-        alert('✅ Login successful!');
+        showToast('✅ Đăng nhập thành công!');
         window.location.reload();
       } else {
-        alert('❌ ' + (data.message || 'Login failed'));
+        showToast('❌ ' + (data.message || 'Đăng nhập thất bại'));
       }
     } catch (error) {
-      alert('❌ Network error');
+      showToast('❌ Lỗi kết nối');
     }
   });
   document.getElementById('registerFormModal')?.addEventListener('submit', async function(e) {
@@ -406,18 +434,19 @@
       });
       const data = await response.json();
       if (response.ok && data.status === 'success') {
-        alert('✅ Account created! Please log in.');
+        showToast('✅ Tạo tài khoản thành công! Vui lòng đăng nhập.');
         document.getElementById('registerModal').style.display = 'none';
         new bootstrap.Modal(document.getElementById('loginModal')).show();
       } else {
-        alert('❌ ' + (data.message || 'Registration failed'));
+        showToast('❌ ' + (data.message || 'Đăng ký thất bại'));
       }
     } catch (error) {
-      alert('❌ Network error');
+      showToast('❌ Lỗi kết nối');
     }
   });
 </script>
 
-    <script type="module" src="./assets/js/main.js"></script>
+<script type="module" src="./assets/js/main.js"></script>
+<script type="module" src="./assets/js/support-chat.js"></script>
   </body>
 </html>

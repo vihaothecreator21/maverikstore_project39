@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kết quả thanh toán - Maverik Store</title>
+    <meta name="robots" content="noindex" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        margin: 0;
+        background: #f8f8f6;
+        font-family: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: #1a1a1a;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .loading {
+        text-align: center;
+        padding: 48px;
+      }
+      .spinner {
+        width: 40px; height: 40px;
+        border: 3px solid #e8e8e8;
+        border-top-color: #1a1a1a;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 16px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      p { font-size: 0.9rem; color: #888; }
+    </style>
+  </head>
+  <body>
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Đang chuyển hướng...</p>
+    </div>
+    <script>
+      /**
+       * vnpay-return.html — REDIRECT ONLY
+       *
+       * ✅ SECURITY FIX: Trang này KHÔNG render dữ liệu từ URL params nữa.
+       * Thay vào đó, đọc responseCode và redirect sang trang phù hợp:
+       *   "00" → payment-success.html
+       *   "24" → payment-cancel.html
+       *   else → payment-failed.html
+       *
+       * Điều này loại bỏ hoàn toàn rủi ro XSS từ innerHTML cũ.
+       */
+
+      const params = new URLSearchParams(window.location.search);
+      const responseCode = params.get("responseCode") || "99";
+
+      // Forward tất cả query params sang trang đích
+      const query = window.location.search;
+
+      if (responseCode === "00") {
+        window.location.replace("payment-success.html" + query);
+      } else if (responseCode === "24") {
+        window.location.replace("payment-cancel.html" + query);
+      } else {
+        window.location.replace("payment-failed.html" + query);
+      }
+    </script>
+  </body>
+</html>

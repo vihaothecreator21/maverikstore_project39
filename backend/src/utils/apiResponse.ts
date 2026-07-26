@@ -1,8 +1,8 @@
 import { Response } from "express";
 
 /**
- * Standardized API Error Class
- * Extends Error to provide consistent error structure across app
+ * Lớp lỗi API chuẩn hóa
+ * Kế thừa Error để cung cấp cấu trúc lỗi nhất quán trên toàn bộ ứng dụng
  */
 export class APIError extends Error {
   constructor(
@@ -18,21 +18,22 @@ export class APIError extends Error {
 }
 
 /**
- * Validtion Error Class
- * Specialized error for Zod validation failures
+ * Lớp lỗi Validation
+ * Lỗi chuyên biệt cho các trường hợp Zod validation thất bại
  */
 export class ValidationError extends APIError {
   constructor(message: string, public errors: Record<string, string[]>) {
     super(400, message, errors, "VALIDATION_ERROR");
     this.name = "ValidationError";
+    Object.setPrototypeOf(this, ValidationError.prototype);
   }
 }
 
 /**
- * Generic API Response Interface
- * All successful responses follow this structure
+ * Interface Response API chung
+ * Tất cả response thành công đều theo cấu trúc này
  * 
- * @template T - The data type being returned
+ * @template T - Kiểu dữ liệu trả về
  * 
  * @example
  * interface ApiResponse<User> {
@@ -43,39 +44,41 @@ export class ValidationError extends APIError {
  * }
  */
 export interface ApiResponse<T> {
+  success?: boolean;
   status: "success" | "error";
   code: number;
+  errorCode?: string;
   message: string;
   data?: T;
   details?: Record<string, any>;
   errors?: Record<string, string[]>;
   meta?: {
-    /** Current page number (for pagination) */
+    /** Số trang hiện tại (dùng cho phân trang) */
     page?: number;
-    /** Items per page (for pagination) */
+    /** Số mục mỗi trang (dùng cho phân trang) */
     limit?: number;
-    /** Total items count (for pagination) */
+    /** Tổng số mục (dùng cho phân trang) */
     total?: number;
-    /** Total pages (for pagination) */
+    /** Tổng số trang (dùng cho phân trang) */
     pages?: number;
   };
   timestamp: string;
 }
 
 /**
- * Success Response Helper
- * Creates a standardized success response
+ * Hàm trợ giúp Response Thành công
+ * Tạo response thành công theo chuẩn định sẵn
  * 
- * @template T - Type of data being returned
- * @param res - Express Response object
- * @param data - The data to return
- * @param message - Optional success message
- * @param statusCode - HTTP status code (default: 200)
- * @param meta - Optional metadata (for pagination, etc.)
+ * @template T - Kiểu dữ liệu trả về
+ * @param res - Đối tượng Response của Express
+ * @param data - Dữ liệu cần trả về
+ * @param message - Thông điệp thành công (tùy chọn)
+ * @param statusCode - Mã HTTP status (mặc định: 200)
+ * @param meta - Metadata tùy chọn (dùng cho phân trang, ...)
  * 
  * @example
  * const users = await UserService.getAll();
- * sendSuccess(res, users, 'Users retrieved successfully', 200);
+ * sendSuccess(res, users, 'Lấy danh sách thành công', 200);
  */
 export const sendSuccess = <T>(
   res: Response,
@@ -95,20 +98,20 @@ export const sendSuccess = <T>(
 };
 
 /**
- * Error Response Helper
- * Creates a standardized error response
- * Used primarily by error handler middleware
+ * Hàm trợ giúp Response Lỗi
+ * Tạo response lỗi theo chuẩn định sẵn
+ * Được dùng chủ yếu bởi middleware xử lý lỗi
  * 
- * @param res - Express Response object
- * @param error - Error to process
- * @param fallbackMessage - Message if error has no message
- * @param statusCode - HTTP status code (auto-detected if not provided)
+ * @param res - Đối tượng Response của Express
+ * @param error - Lỗi cần xử lý
+ * @param fallbackMessage - Thông điệp dự phòng nếu lỗi không có message
+ * @param statusCode - Mã HTTP status (tự phát hiện nếu không truyền)
  * 
  * @example
  * try {
- *   // ... some operation
+ *   // ... một thao tác nào đó
  * } catch (error) {
- *   sendError(res, error, 'Operation failed', 400);
+ *   sendError(res, error, 'Thao tác thất bại', 400);
  * }
  */
 export const sendError = (
@@ -124,15 +127,15 @@ export const sendError = (
   let errors: Record<string, string[]> | undefined;
   const isDevelopment = process.env.NODE_ENV === "development";
 
-  if (error instanceof APIError) {
-    status = error.statusCode;
-    message = error.message;
-    details = error.details;
-    code = error.code;
-  } else if (error instanceof ValidationError) {
+  if (error instanceof ValidationError) {
     status = error.statusCode;
     message = error.message;
     errors = error.errors;
+    code = error.code;
+  } else if (error instanceof APIError) {
+    status = error.statusCode;
+    message = error.message;
+    details = error.details;
     code = error.code;
   } else if (error instanceof SyntaxError) {
     status = 400;
@@ -147,7 +150,7 @@ export const sendError = (
     message,
     ...(details && { details }),
     ...(errors && { errors }),
-    ...(code && { code }),
+    ...(code && { errorCode: code }),
     timestamp: new Date().toISOString(),
     ...(isDevelopment && {
       debug: {
@@ -159,16 +162,16 @@ export const sendError = (
 };
 
 /**
- * Common HTTP Status Codes & Messages
+ * Các mã HTTP Status phổ biến
  */
 export const HTTP_STATUS = {
-  // Success
+  // Thành công
   OK: 200,
   CREATED: 201,
   ACCEPTED: 202,
   NO_CONTENT: 204,
 
-  // Client Error
+  // Lỗi phía Client
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
@@ -176,14 +179,14 @@ export const HTTP_STATUS = {
   CONFLICT: 409,
   UNPROCESSABLE_ENTITY: 422,
 
-  // Server Error
+  // Lỗi phía Server
   INTERNAL_SERVER_ERROR: 500,
   NOT_IMPLEMENTED: 501,
   UNAVAILABLE: 503,
 } as const;
 
 /**
- * Error Messages
+ * Các thông điệp lỗi chuẩn
  */
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",

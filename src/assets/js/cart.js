@@ -1,4 +1,5 @@
-
+import { getApiBase } from "./api-config.js";
+import { handleExpiredSession } from "./auth-utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   injectCartOffcanvas();
@@ -7,8 +8,13 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("cartUpdated", fetchCart);
 });
 
+// ✅ API Base configuration
+const API_BASE = getApiBase();
+
 function injectCartOffcanvas() {
-  const navContainer = document.querySelector(".navbar .d-flex.align-items-center.gap-4");
+  const navContainer = document.querySelector(
+    ".navbar .d-flex.align-items-center.gap-4",
+  );
   if (!navContainer) return;
 
   // Insert Cart Styling
@@ -179,7 +185,7 @@ function injectCartOffcanvas() {
           <div class="d-flex gap-2 w-100 mt-3 p-3 pt-0">
             <!-- No URL for checkout yet -->
             <a href="cart.html" class="btn btn-outline-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em; font-size: 0.85rem;">XEM GIỎ HÀNG</a>
-            <a href="#" class="btn btn-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em; font-size: 0.85rem;">THANH TOÁN</a>
+            <a href="checkout.html" class="btn btn-dark rounded-0 fw-bold flex-fill py-3 text-uppercase" style="letter-spacing: .08em; font-size: 0.85rem;">THANH TOÁN</a>
           </div>
         </div>
       </div>
@@ -188,49 +194,78 @@ function injectCartOffcanvas() {
   document.body.appendChild(ocWrapper);
 }
 
-// Read from localStorage
-function fetchCart() {
+// ✅ Read from API (if logged in) or localStorage (if guest)
+async function fetchCart() {
   const bodyEl = document.getElementById("ocCartBody");
   const badgeEl = document.getElementById("navCartBadge");
   const footerEl = document.getElementById("ocCartFooter");
   const totalEl = document.getElementById("ocCartTotal");
+  const token = localStorage.getItem("authToken");
+  let cart = [];
 
   try {
-    const cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-    
+    if (token) {
+      // ✅ If logged in, fetch from API
+      try {
+        const response = await fetch(`${API_BASE}/cart`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === "success") {
+            cart = data.data.items || [];
+          }
+        } else if (response.status === 401) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
+          cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+        }
+      } catch (err) {
+        console.error("Error fetching cart from API:", err);
+        // Fallback to localStorage
+        cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+      }
+    } else {
+      // ✅ If guest, use localStorage
+      cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+    }
+
     // Calculate totals
     let totalItems = 0;
     let totalPrice = 0;
-    cart.forEach(item => {
+    cart.forEach((item) => {
+      // API items: { priceAtCheckout, product: { price } }
+      // Guest localStorage items: { price }
+      const unitPrice = Number(item.priceAtCheckout ?? item.price ?? item.product?.price ?? 0);
       totalItems += item.quantity;
-      totalPrice += item.price * item.quantity;
+      totalPrice += unitPrice * item.quantity;
     });
 
     if (badgeEl) badgeEl.textContent = totalItems.toString();
-    
+
     if (cart.length > 0) {
       let html = "";
-      cart.forEach(item => {
+      cart.forEach((item) => {
         html += `
           <div class="oc-item">
-            <img src="${item.imageUrl}" alt="${item.name}" onerror="this.src='./assets/images/product-img-1.jpg'" />
+            <img src="${item.imageUrl || item.product?.imageUrl}" alt="${item.name || item.product?.name}" onerror="this.src='./assets/images/product-img-1.jpg'" />
             <div class="oc-item-info">
-              <div class="oc-name">${item.name}</div>
-              <div class="oc-variant">${item.size} / ${item.color || 'Default'}</div>
+              <div class="oc-name">${item.name || item.product?.name}</div>
+              <div class="oc-variant">${item.size} / ${item.color || "Default"}</div>
               <div class="oc-price-row">
                 <span class="oc-qty">${item.quantity}</span>
-                <span class="oc-price">${formatVND(item.price)}đ</span>
+                <span class="oc-price">${formatVND(Number(item.priceAtCheckout ?? item.price ?? item.product?.price ?? 0))}đ</span>
               </div>
             </div>
             <button class="oc-remove" onclick="removeCartItemOc(${item.id})">×</button>
           </div>
         `;
       });
-      if(bodyEl) bodyEl.innerHTML = html;
-      if(footerEl) footerEl.classList.remove("d-none");
-      if(totalEl) totalEl.textContent = formatVND(totalPrice) + "đ";
+      if (bodyEl) bodyEl.innerHTML = html;
+      if (footerEl) footerEl.classList.remove("d-none");
+      if (totalEl) totalEl.textContent = formatVND(totalPrice) + "đ";
     } else {
-      if(bodyEl) {
+      if (bodyEl) {
         bodyEl.innerHTML = `
           <div class="oc-empty">
             <i class="bi bi-cart3" style="font-size:2.5rem;color:#ccc;margin-bottom:12px;display:block;"></i>
@@ -238,10 +273,11 @@ function fetchCart() {
           </div>
         `;
       }
-      if(footerEl) footerEl.classList.add("d-none");
+      if (footerEl) footerEl.classList.add("d-none");
     }
   } catch (err) {
-    console.error("Cart rendering error:", err);
+    // Cart rendering error - silent fail
+    console.error("Error rendering cart:", err);
   }
 }
 
@@ -249,16 +285,39 @@ function formatVND(amount) {
   return new Intl.NumberFormat("vi-VN").format(amount);
 }
 
-// Global remove method for the offcanvas
-window.removeCartItemOc = function(itemId) {
+// ✅ Global remove method for the offcanvas (supports both API and localStorage)
+window.removeCartItemOc = async function (itemId) {
+  const token = localStorage.getItem("authToken");
+
   try {
-    let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
-    cart = cart.filter(item => item.id !== itemId);
-    localStorage.setItem("maverik_cart", JSON.stringify(cart));
-    
-    fetchCart();
+    if (token) {
+      // ✅ If logged in, call API
+      try {
+        const response = await fetch(`${API_BASE}/cart/items/${itemId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          fetchCart(); // Refresh
+        } else if (response.status === 401) {
+          handleExpiredSession();
+        } else {
+          console.error("Failed to remove item via API");
+        }
+      } catch (err) {
+        console.error("Error removing item via API:", err);
+      }
+    } else {
+      // ✅ If guest, use localStorage
+      let cart = JSON.parse(localStorage.getItem("maverik_cart") || "[]");
+      cart = cart.filter((item) => item.id !== itemId);
+      localStorage.setItem("maverik_cart", JSON.stringify(cart));
+      fetchCart();
+    }
+
     window.dispatchEvent(new Event("cartUpdatedGlobal"));
   } catch (err) {
-    console.error("Failed to remove item", err);
+    // Failed to remove item - silent fail
+    console.error("Error in removeCartItemOc:", err);
   }
 };

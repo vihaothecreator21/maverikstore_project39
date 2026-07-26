@@ -3,12 +3,12 @@ import { z } from "zod";
 /**
  * Environment Variables Schema Validation
  * Uses Zod to validate and parse environment variables at application startup
- * 
+ *
  * Ensures:
  * - All required variables are present
  * - Variables have correct types and formats
  * - Invalid configs fail fast at boot time (not during runtime)
- * 
+ *
  * @throws {Error} If any environment variable is invalid
  */
 const envSchema = z.object({
@@ -43,17 +43,90 @@ const envSchema = z.object({
     .max(12, "BCRYPT_ROUNDS should not exceed 12 (too slow)")
     .default(10),
 
+  // Email OTP Registration
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+  OTP_SECRET: z
+    .string()
+    .min(32, "OTP_SECRET must be at least 32 characters")
+    .describe("Secret key for OTP HMAC hashing"),
+
   // CORS Configuration
+  // Production: set CORS_ORIGINS=https://yourdomain.com (comma-separated, NO wildcard)
+  // Development fallback only - will warn in production
   CORS_ORIGINS: z
     .string()
-    .default("http://localhost:3000,http://localhost:5173")
-    .transform((val) => val.split(",").map((url) => url.trim()))
-    .refine((urls) => urls.length > 0, "At least one CORS origin must be defined"),
+    .transform((val) => val.split(",").map((url) => url.trim()).filter(Boolean))
+    .refine(
+      (urls) => urls.length > 0,
+      "CORS_ORIGINS must contain at least one origin",
+    )
+    .refine(
+      (urls) => {
+        // Block wildcard in production
+        if (process.env.NODE_ENV === "production") {
+          return !urls.includes("*");
+        }
+        return true;
+      },
+      "Wildcard '*' is NOT allowed in production CORS_ORIGINS",
+    ),
 
   // Logging Configuration
   LOG_LEVEL: z
     .enum(["debug", "info", "warn", "error"])
     .default("debug"),
+
+  // Gemini AI Chatbot
+  // Optional so the server can start in dev when chatbot is not configured.
+  // Missing key is handled by support chat service at request time.
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+
+  // VNPay Configuration
+  // SECURITY: NEVER hardcode real secrets here. Always set via .env file.
+  // These will throw at startup in production if missing.
+  VNPAY_TMN_CODE: z.string().optional(),
+  VNPAY_HASH_SECRET: z.string().optional(),
+  VNPAY_RETURN_URL: z
+    .string()
+    .url()
+    .default("http://localhost:5000/api/v1/payments/vnpay/return"),
+  VNPAY_FRONTEND_RETURN: z
+    .string()
+    .url()
+    .default("http://localhost:3000/vnpay-return.html"),
+  VNPAY_IPN_URL: z
+    .string()
+    .default("http://localhost:5000/api/v1/payments/vnpay/ipn"),
+}).superRefine((env, ctx) => {
+  if (env.NODE_ENV !== "production") return;
+
+  const requiredInProduction: Array<keyof typeof env> = [
+    "RESEND_API_KEY",
+    "EMAIL_FROM",
+    "GEMINI_API_KEY",
+    "VNPAY_TMN_CODE",
+    "VNPAY_HASH_SECRET",
+  ];
+
+  requiredInProduction.forEach((key) => {
+    if (!env[key]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: `${key} is required in production`,
+      });
+    }
+  });
+
+  if (env.VNPAY_HASH_SECRET && env.VNPAY_HASH_SECRET.length < 16) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["VNPAY_HASH_SECRET"],
+      message: "VNPAY_HASH_SECRET must be at least 16 chars in production",
+    });
+  }
 });
 
 /**
@@ -67,10 +140,10 @@ let env: Environment;
 /**
  * Initialize and validate environment variables
  * Call this function at application startup (in server.ts)
- * 
+ *
  * @throws {ZodError} If validation fails
  * @returns {Environment} Validated environment variables
- * 
+ *
  * @example
  * // In server.ts
  * const env = initializeEnv();
@@ -80,11 +153,11 @@ export const initializeEnv = (): Environment => {
   try {
     env = envSchema.parse(process.env);
 
-    console.log("✓ Environment variables validated successfully");
+    console.log("Environment variables validated successfully");
 
     // Log non-sensitive config in development
     if (env.NODE_ENV === "development") {
-      console.log("📋 Environment Config:", {
+      console.log("Environment Config:", {
         NODE_ENV: env.NODE_ENV,
         PORT: env.PORT,
         API_VERSION: env.API_VERSION,
@@ -93,13 +166,14 @@ export const initializeEnv = (): Environment => {
         BCRYPT_ROUNDS: env.BCRYPT_ROUNDS,
         CORS_ORIGINS: env.CORS_ORIGINS.join(", "),
         LOG_LEVEL: env.LOG_LEVEL,
+        EMAIL_FROM: env.EMAIL_FROM,
       });
     }
 
     return env;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("❌ Environment variable validation failed:");
+      console.error("Environment variable validation failed:");
       error.errors.forEach((err) => {
         console.error(`  - ${String(err.path)}: ${err.message}`);
       });
@@ -109,7 +183,7 @@ export const initializeEnv = (): Environment => {
         .map((e) => e.path.join("."))
         .join(", ");
       console.error(`\nMissing or invalid: ${missingVars}`);
-      console.error("\n⚠️ Server cannot start with invalid configuration");
+      console.error("\nServer cannot start with invalid configuration");
     }
 
     process.exit(1);
@@ -119,10 +193,10 @@ export const initializeEnv = (): Environment => {
 /**
  * Get validated environment variables
  * Safe to use after initializeEnv() has been called
- * 
+ *
  * @throws {Error} If called before initializeEnv()
  * @returns {Environment} Validated environment variables
- * 
+ *
  * @example
  * const env = getEnv();
  * const dbUrl = env.DATABASE_URL;
@@ -139,7 +213,7 @@ export const getEnv = (): Environment => {
 /**
  * Set environment for testing purposes
  * Use only in test files
- * 
+ *
  * @internal
  */
 export const __setEnvForTesting = (testEnv: Partial<Environment>): void => {

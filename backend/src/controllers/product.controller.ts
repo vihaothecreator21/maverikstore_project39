@@ -1,21 +1,25 @@
 import { Request, Response } from "express";
-import { ProductService } from "../services/product.service";
+import { productService } from "../container.js";
 import {
   CreateProductSchema,
   UpdateProductSchema,
   ProductQuerySchema,
-} from "../schemas/product.schema";
-import { ValidationError, sendSuccess, HTTP_STATUS } from "../utils/apiResponse";
+} from "../schemas/product.schema.js";
+import {
+  ValidationError,
+  sendSuccess,
+  HTTP_STATUS,
+} from "../utils/apiResponse.js";
 
 /**
- * Product Controller - HTTP Request Handler Layer
- * Only handles req/res — delegates all logic to ProductService
+ * Product Controller - Tầng xử lý HTTP Request
+ * Chỉ xử lý req/res — ủy toàn bộ logic cho ProductService
  */
 
 export class ProductController {
   /**
    * GET /api/v1/products
-   * Get all products with optional filtering and pagination
+   * Lấy danh sách tất cả sản phẩm (có hỗ trợ lọc và phân trang)
    */
   static async getAll(req: Request, res: Response) {
     const validation = ProductQuerySchema.safeParse(req.query);
@@ -26,10 +30,10 @@ export class ProductController {
         if (!errors[path]) errors[path] = [];
         errors[path].push(err.message);
       });
-      throw new ValidationError("Invalid query parameters", errors);
+      throw new ValidationError("Tham số truy vấn không hợp lệ", errors);
     }
 
-    const result = await ProductService.getAll(validation.data);
+    const result = await productService.getAll(validation.data);
 
     return sendSuccess(
       res,
@@ -42,7 +46,7 @@ export class ProductController {
 
   /**
    * GET /api/v1/products/:id
-   * Get a single product by ID
+   * Lấy thông tin một sản phẩm theo ID
    */
   static async getById(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
@@ -52,26 +56,36 @@ export class ProductController {
       });
     }
 
-    const product = await ProductService.getById(id);
-    return sendSuccess(res, product, "Product retrieved successfully", HTTP_STATUS.OK);
+    const product = await productService.getById(id);
+    return sendSuccess(
+      res,
+      product,
+      "Product retrieved successfully",
+      HTTP_STATUS.OK,
+    );
   }
 
   /**
    * GET /api/v1/products/slug/:slug
-   * Get a single product by slug
+   * Lấy thông tin một sản phẩm theo slug
    */
   static async getBySlug(req: Request, res: Response) {
     const { slug } = req.params;
-    const product = await ProductService.getBySlug(slug);
-    return sendSuccess(res, product, "Product retrieved successfully", HTTP_STATUS.OK);
+    const product = await productService.getBySlug(slug);
+    return sendSuccess(
+      res,
+      product,
+      "Product retrieved successfully",
+      HTTP_STATUS.OK,
+    );
   }
 
   /**
    * POST /api/v1/products
-   * Create a new product (Admin only)
+   * Tạo sản phẩm mới (chỉ Admin)
    */
   static async create(req: Request, res: Response) {
-    const validation = CreateProductSchema.safeParse(req.body);
+    const validation = await CreateProductSchema.safeParseAsync(req.body);
     if (!validation.success) {
       const errors: Record<string, string[]> = {};
       validation.error.errors.forEach((err) => {
@@ -82,13 +96,18 @@ export class ProductController {
       throw new ValidationError("Validation failed", errors);
     }
 
-    const product = await ProductService.create(validation.data);
-    return sendSuccess(res, product, "Product created successfully", HTTP_STATUS.CREATED);
+    const product = await productService.create(validation.data);
+    return sendSuccess(
+      res,
+      product,
+      "Product created successfully",
+      HTTP_STATUS.CREATED,
+    );
   }
 
   /**
    * PUT /api/v1/products/:id
-   * Update an existing product (Admin only)
+   * Cập nhật sản phẩm theo ID (chỉ Admin)
    */
   static async update(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
@@ -98,7 +117,7 @@ export class ProductController {
       });
     }
 
-    const validation = UpdateProductSchema.safeParse(req.body);
+    const validation = await UpdateProductSchema.safeParseAsync(req.body);
     if (!validation.success) {
       const errors: Record<string, string[]> = {};
       validation.error.errors.forEach((err) => {
@@ -109,13 +128,18 @@ export class ProductController {
       throw new ValidationError("Validation failed", errors);
     }
 
-    const product = await ProductService.update(id, validation.data);
-    return sendSuccess(res, product, "Product updated successfully", HTTP_STATUS.OK);
+    const product = await productService.update(id, validation.data);
+    return sendSuccess(
+      res,
+      product,
+      "Product updated successfully",
+      HTTP_STATUS.OK,
+    );
   }
 
   /**
    * DELETE /api/v1/products/:id
-   * Delete a product (Admin only)
+   * Xóa sản phẩm theo ID (chỉ Admin)
    */
   static async delete(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
@@ -125,12 +149,35 @@ export class ProductController {
       });
     }
 
-    const deleted = await ProductService.delete(id);
+    const deleted = await productService.delete(id);
     return sendSuccess(
       res,
       deleted,
       `Product "${deleted.name}" deleted successfully`,
       HTTP_STATUS.OK,
     );
+  }
+
+  /**
+   * POST /api/v1/products/admin/fix-null-slugs
+   * Sửa các sản phẩm có slug NULL hoặc rỗng (endpoint Admin/Debug)
+   */
+  static async fixNullSlugs(_req: Request, res: Response) {
+    const result = await productService.fixNullSlugs();
+    return sendSuccess(
+      res,
+      result,
+      `Fixed ${result.fixed} products with NULL slugs`,
+      HTTP_STATUS.OK,
+    );
+  }
+  /**
+   * GET /api/v1/products/featured/best-sellers
+   * Lấy danh sách sản phẩm bán chạy nhất cho trang chủ
+   */
+  static async getBestSellers(req: Request, res: Response) {
+    const limit = parseInt(req.query.limit as string) || 8;
+    const products = await productService.getBestSellers(limit);
+    return sendSuccess(res, products, "Best sellers retrieved successfully", HTTP_STATUS.OK);
   }
 }

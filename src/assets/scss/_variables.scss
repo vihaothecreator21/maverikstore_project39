@@ -1,26 +1,26 @@
 // Example: override Bootstrap color variables
 
-$gray-50: #f6f5f4 !default;
-$gray-100: #ecebe9 !default;
-$gray-200: #dad7d2 !default;
-$gray-300: #c5c0b9 !default;
-$gray-400: #b3aca3 !default;
-$gray-500: #a0988d !default;
-$gray-600: #837a6d !default;
-$gray-700: #615b51 !default;
-$gray-800: #433e38 !default;
-$gray-900: #211f1c !default;
-$gray-950: #11100e !default;
-$primary: #000;
-$secondary: #d47f31;
+$gray-50: #faf8f4 !default;
+$gray-100: #f1ede5 !default;
+$gray-200: #e4ddd1 !default;
+$gray-300: #d2c8b8 !default;
+$gray-400: #b6aa99 !default;
+$gray-500: #938778 !default;
+$gray-600: #71675b !default;
+$gray-700: #514940 !default;
+$gray-800: #302b25 !default;
+$gray-900: #191612 !default;
+$gray-950: #0d0b09 !default;
+$primary: #17130f;
+$secondary: #b88954;
 $light: $gray-100 !default;
 $border-color: $gray-100 !default;
 $border-color-translucent:   $gray-100 !default;
 
 $enable-negative-margins: true !default;
-$enable-rounded:              false !default;
+$enable-rounded:              true !default;
 
-$headings-font-weight: 400 !default;
+$headings-font-weight: 600 !default;
 $grid-gutter-width:           2.5rem !default;
 
 // scss-docs-start position-map
@@ -68,7 +68,7 @@ $spacers: (
 ) !default;
 // scss-docs-end spacer-variables-maps
 
-$font-family-base: 'Poppins', sans-serif !default;
+$font-family-base: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif !default;
 $font-size-root:              null !default;
 $font-size-base:              1rem !default; // Assumes the browser default, typically `16px`
 $font-size-sm:                $font-size-base * .85 !default;
@@ -88,7 +88,7 @@ $h6-font-size:                $font-size-base !default;
 
 
 
-$input-btn-padding-y: 0.85rem !default;
+$input-btn-padding-y: 1rem !default;
 $input-btn-padding-x: 1.5rem !default;
 
 

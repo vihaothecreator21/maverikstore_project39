@@ -1,13 +1,30 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path'
-import glob from 'fast-glob'
-// Grab all HTML files inside src (including subfolders)
-const htmlFiles = glob.sync('./src/**/*.html')
+import { fileURLToPath } from 'url'
+import { readdirSync } from 'fs'
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
+const srcDir = resolve(__dirname, 'src')
+
+const findHtmlFiles = (dir) => {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = resolve(dir, entry.name)
+
+    if (entry.isDirectory()) {
+      return findHtmlFiles(fullPath)
+    }
+
+    return entry.isFile() && entry.name.endsWith('.html') ? [fullPath] : []
+  })
+}
+
+const htmlFiles = findHtmlFiles(srcDir)
 
 
 export default defineConfig({
    base: './', 
-   root: resolve(__dirname, 'src'),   // ✅ keeps dev server working
+   root: srcDir,   // ✅ keeps dev server working
+   envDir: resolve(__dirname),        // ✅ load .env from the project root instead of src/
    server: {
     host: true,
     port: 3000,
@@ -28,8 +45,8 @@ export default defineConfig({
       input: htmlFiles.length
         ? Object.fromEntries(
             htmlFiles.map(file => [
-              file.replace(/^\.\/src\//, '').replace(/\.html$/, ''),
-              resolve(__dirname, file),
+              file.replace(`${srcDir}\\`, '').replace(`${srcDir}/`, '').replace(/\.html$/, ''),
+              file,
             ])
           )
         : resolve(__dirname, 'src/index.html'),

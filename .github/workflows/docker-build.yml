@@ -1,0 +1,51 @@
+name: Docker Build
+
+on:
+  push:
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: maverik-store-frontend:ci
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: maverik-store-backend:ci
+
+      - name: Validate Compose config
+        run: docker compose config
+        env:
+          MYSQL_ROOT_PASSWORD: ci-password
+          DATABASE_URL: mysql://root:ci-password@db:3306/maverik_store
+          JWT_SECRET: ci-jwt-secret-must-be-at-least-32-chars
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ci-supabase-service-role-key
+          GEMINI_API_KEY: ci-gemini-api-key
+          VNPAY_TMN_CODE: ci-vnpay-code
+          VNPAY_HASH_SECRET: ci-vnpay-hash-secret
+          RESEND_API_KEY: ci-resend-api-key
+          OTP_SECRET: ci-otp-secret-must-be-at-least-32-chars
