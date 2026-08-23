@@ -1,6 +1,7 @@
 # Maverik Store
 
 Maverik Store is a full-stack fashion e-commerce project built for learning and portfolio use. It combines a Vite storefront, a Bootstrap admin UI, an Express TypeScript API, Prisma ORM, and MySQL.
+https://maverikstore-project39.vercel.app/
 
 ## Project Overview
 
